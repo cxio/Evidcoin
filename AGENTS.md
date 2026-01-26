@@ -130,6 +130,8 @@ func processBlocks(ctx context.Context, blocks <-chan *Block) error {
 - 模块指令段：`[210-249]`，40 个
 - 扩展指令段：`[250-254]`，5 个
 
+详细的脚本指令被定义在 `docs/7.脚本基础指令集.md` 中，悬挂式缩进解释指令。
+
 ### 关键常量
 
 ```go
