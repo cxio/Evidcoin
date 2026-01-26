@@ -6,7 +6,7 @@
             ".DS_Store",
             ".gitignore",
             "_**",
-            "opencode.json",
+            "opencode.json"
         ]
     }
 }
