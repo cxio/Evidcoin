@@ -5,6 +5,7 @@
             ".git/**",
             ".DS_Store",
             ".gitignore",
+            ".vscode",
             "_**",
             "opencode.json"
         ]

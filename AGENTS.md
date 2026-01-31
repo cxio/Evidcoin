@@ -2,6 +2,7 @@
 
 本文件为 AI 编程代理提供开发指导，涵盖构建命令、代码风格和项目规范。
 
+
 ## 项目概览
 
 Evidcoin（证信链）是基于区块链技术的通用信用载体系统，包含三种基本信元：
@@ -13,6 +14,7 @@ Evidcoin（证信链）是基于区块链技术的通用信用载体系统，包
 - 共识机制：历史证明（PoH）
 - 出块时间：固定 6 分钟
 - 脚本系统：类 Bitcoin 栈式脚本，具备基本图灵完备性
+
 
 ## 构建/测试/Lint 命令
 
@@ -27,15 +29,19 @@ golangci-lint run                                 # 静态检查
 go mod tidy && go mod verify                      # 依赖管理
 ```
 
+
 ## 项目结构
 
 ```
-├── docs/           # 设计文档（中文）
+├── conception/     # 设计构想（中文）
 ├── cmd/evidcoin/   # 主程序入口
 ├── internal/       # 私有包：blockchain/, consensus/, script/, tx/, utxo/
 ├── pkg/            # 公共包：crypto/, types/
 └── test/           # 集成测试
 ```
+
+> **注**：以上结构可根据需要进行调整。
+
 
 ## 代码风格
 
@@ -145,10 +151,6 @@ const (
 )
 ```
 
-### 指令定义
-
-文档 `@docs/7.脚本基础指令集.md` 中详细定义了指令，采用悬挂式缩进风格。
-在编写脚本模块时需要阅读此文档。
 
 ## 测试规范
 
@@ -193,8 +195,10 @@ func TestHash512(t *testing.T) {
 }
 ```
 
+
 ## 相关资源
 
-- 设计文档：`docs/README.md`
-- 实现参考：`docs/实现参考.md`
+- 设计文档：`conception/README.md`
+- 实现参考：`conception/solution.md`
+- 指令集定义：`conception/7.脚本基础指令集.md`
 - P2P 项目：https://github.com/cxio/p2p
