@@ -92,10 +92,14 @@ type MintSchedule struct {
 // 长期：持续3币/块
 var MintSchedules = []MintSchedule{
 	// 预发布期
+    // 从第一年10币/块开始，逐年递增到第三年30币/块止。
 	{0, 87661, 10_0000_0000, MintPhasePrelaunch},           // 第1年：10币/块
 	{87661, 175322, 20_0000_0000, MintPhasePrelaunch},      // 第2年：20币/块
 	{175322, 262983, 30_0000_0000, MintPhasePrelaunch},     // 第3年：30币/块
-	// 正式发行期（从第4年开始）
+
+    // 正式发行期（从第4年开始）
+    // 每2年为前一阶段的80%，直到3币/块为止。
+    // 注：计算精确到 币/块。
 	{262983, 438305, 40_0000_0000, MintPhaseNormal},        // 年4-5：40币
 	{438305, 613627, 32_0000_0000, MintPhaseNormal},        // 年6-7：32币
 	{613627, 788949, 25_0000_0000, MintPhaseNormal},        // 年8-9：25币
@@ -107,6 +111,7 @@ var MintSchedules = []MintSchedule{
 	{1665559, 1840881, 5_0000_0000, MintPhaseNormal},       // 年20-21：5币
 	{1840881, 2016203, 4_0000_0000, MintPhaseNormal},       // 年22-23：4币
 	{2016203, 2191525, 3_0000_0000, MintPhaseNormal},       // 年24-25：3币
+
 	// 长期低通胀
 	{2191525, 0, 3_0000_0000, MintPhaseLongTerm},           // 26年+：持续3币
 }
@@ -353,7 +358,7 @@ func (c *Credential) Bytes() []byte {
 	buf := make([]byte, 2+64+2+pubLen+2+signLen)
 
 	offset := 0
-	
+
 	// Year
 	binary.BigEndian.PutUint16(buf[offset:], c.Year)
 	offset += 2

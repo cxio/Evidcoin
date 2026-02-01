@@ -62,7 +62,7 @@ type Entry struct {
 	Amount     types.Amount  // 金额（币金）或 0（凭信）
 	Address    types.Address // 接收地址
 	Script     []byte        // 锁定脚本
-	
+
 	// 元数据
 	Height     uint64 // 所在区块高度
 	Timestamp  int64  // 交易时间戳
@@ -217,13 +217,13 @@ import (
 type Set struct {
 	mu      sync.RWMutex
 	entries map[EntryKey]*Entry
-	
+
 	// 按年度索引
 	byYear map[uint16]map[EntryKey]*Entry
-	
+
 	// 按地址索引
 	byAddress map[types.Address]map[EntryKey]*Entry
-	
+
 	// 短键索引（用于快速查找）
 	shortIndex map[ShortKey][]EntryKey
 }
@@ -1053,7 +1053,7 @@ import (
 func TestEntry(t *testing.T) {
 	txID := crypto.Hash512([]byte("test_tx"))
 	addr := types.Address{}
-	
+
 	entry := &Entry{
 		Year:      2024,
 		TxID:      txID,
@@ -1295,7 +1295,7 @@ go test -v ./internal/utxo/...
 ## 注意事项
 
 1. **线程安全**: Set 使用 RWMutex 保护并发访问
-2. **指纹计算**: 4层哈希树结构（年度->交易->输出->条目）
+2. **指纹计算**: 4层哈希树结构（年度->TxID[0]->TxID[1]->TxID[2]），叶子：TxID+输出条目标志位序列）
 3. **短ID索引**: 支持 20 字节短 ID 查找
 4. **币权计算**: 基于区块高度差和金额
 5. **存储抽象**: 便于后续替换为 LevelDB/RocksDB 等持久化存储

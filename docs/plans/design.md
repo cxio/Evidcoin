@@ -231,7 +231,7 @@ evidcoin/
 │       ├── design-m7-checkteam.md
 │       └── design-m8-blockchain.md
 │
-├── conception/                  # 设计构想文档（已有）
+├── proposal/                   # 设计构想文档（已有）
 │
 ├── go.mod
 ├── go.sum
@@ -250,12 +250,12 @@ evidcoin/
 |------|----------|------|
 | M1: crypto | [design-m1-crypto.md](design-m1-crypto.md) | ✅ |
 | M2: types | [design-m2-types.md](design-m2-types.md) | ✅ |
-| M3: script | [design-m3-script.md](design-m3-script.md) | ✅ |
+| M3: script | [design-m3-script.md](design-m3-script.md) | ❌ |
 | M4: tx | [design-m4-tx.md](design-m4-tx.md) | ✅ |
 | M5: utxo | [design-m5-utxo.md](design-m5-utxo.md) | ✅ |
 | M6: consensus | [design-m6-consensus.md](design-m6-consensus.md) | ✅ |
-| M7: checkteam | [design-m7-checkteam.md](design-m7-checkteam.md) | ✅ |
-| M8: blockchain | [design-m8-blockchain.md](design-m8-blockchain.md) | ✅ |
+| M7: checkteam | [design-m7-checkteam.md](design-m7-checkteam.md) | ❌ |
+| M8: blockchain | [design-m8-blockchain.md](design-m8-blockchain.md) | ❌ |
 
 ---
 
@@ -352,7 +352,7 @@ const (
     MintTxMaxHeight    = 80000            // 铸凭交易最大高度偏移（约11个月）
     PreferencePoolSize = 20               // 择优池容量
     ForkCompeteBlocks  = 25               // 分叉竞争区块数
-    CoinbaseConfirms   = 25               // 新币确认数
+    CoinbaseConfirms   = 25               // 新币确认区块数（大于）
 
     // 铸造冗余
     MintDelayFirst     = 30 * time.Second // 首个区块延迟发布
@@ -361,14 +361,16 @@ const (
     // 组队校验
     RedundancyFactor   = 2                // 冗余校验系数
     ReviewBlocks       = 48               // 兑奖评估区块数
-    MinConfirms        = 2                // 最低确认数
+    MinConfirms        = 2                // 兑奖最低确认数
 
     // 激励参数
-    MinterShare        = 50               // 铸造者分成（%）
-    DepotsShare        = 20               // depots 分成（%）
-    BlockqsShare       = 20               // blockqs 分成（%）
-    Stun2pShare        = 10               // stun2p 分成（%）
-    TxFeeBurn          = 50               // 交易费销毁比例（%）
+    MinterSharePercent  = 50              // 铸造者总分成比例（%）
+    CheckTeamShare      = 40              // 校验组分成（%）
+    MintCredentialShare = 10              // 铸凭者分成（%）
+    DepotsSharePercent  = 20              // depots 分成（%）
+    BlockqsSharePercent = 20              // blockqs 分成（%）
+    Stun2pSharePercent  = 10              // stun2p 分成（%）
+    TxFeeBurnPercent    = 50              // 交易费销毁比例（%）
 
     // 附件参数
     MaxAttachmentSlice = 2 * 1024 * 1024  // 分片最大尺寸（2MB）

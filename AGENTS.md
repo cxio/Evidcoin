@@ -33,7 +33,8 @@ go mod tidy && go mod verify                      # 依赖管理
 ## 项目结构
 
 ```
-├── conception/     # 设计构想（中文）
+├── proposal/       # 设计提案
+├── docs/plan/      # 根据提案由AI创建的实现方案
 ├── cmd/evidcoin/   # 主程序入口
 ├── internal/       # 私有包：blockchain/, consensus/, script/, tx/, utxo/
 ├── pkg/            # 公共包：crypto/, types/
