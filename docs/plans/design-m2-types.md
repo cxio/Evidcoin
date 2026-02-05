@@ -50,7 +50,7 @@ const (
 
     // === 交易限制 ===
     MaxTxSize        = 8192 // 单笔交易最大尺寸（字节，不含解锁）
-    MaxOutputCount   = 2048 // 最大输出项数量
+    MaxOutputCount   = 1024 // 最大输出项数量
     MaxInputCount    = 256  // 最大输入项数量
     TxExpireBlocks   = 240  // 交易过期区块数（24小时）
     MaxMemoLength    = 255  // 附言最大长度
@@ -631,16 +631,16 @@ func TestHash512(t *testing.T) {
     for i := range data {
         data[i] = byte(i)
     }
-    
+
     h, err := NewHash512(data)
     if err != nil {
         t.Fatalf("failed to create Hash512: %v", err)
     }
-    
+
     if !bytes.Equal(h.Bytes(), data) {
         t.Error("hash bytes mismatch")
     }
-    
+
     // 测试空哈希
     if !EmptyHash512.IsEmpty() {
         t.Error("EmptyHash512 should be empty")
@@ -652,21 +652,21 @@ func TestHash512(t *testing.T) {
 
 func TestVarInt(t *testing.T) {
     tests := []int64{0, 1, 127, 128, 255, 256, 65535, 1<<20, -1, -128, -129}
-    
+
     for _, val := range tests {
         v := VarInt(val)
         encoded := v.Encode()
-        
+
         decoded, n, err := DecodeVarInt(encoded)
         if err != nil {
             t.Errorf("failed to decode %d: %v", val, err)
             continue
         }
-        
+
         if int(decoded) != int(val) {
             t.Errorf("expected %d, got %d", val, decoded)
         }
-        
+
         if n != len(encoded) {
             t.Errorf("size mismatch: encoded %d bytes, decoded %d", len(encoded), n)
         }
@@ -679,22 +679,22 @@ func TestAmount(t *testing.T) {
     if err != nil {
         t.Fatalf("failed to create amount: %v", err)
     }
-    
+
     if a.ToChx() != 1_500_000 {
         t.Errorf("expected 1500000 Chx, got %d", a.ToChx())
     }
-    
+
     // 测试加法
     b, _ := FromBi(0.5)
     sum, err := a.Add(b)
     if err != nil {
         t.Fatalf("failed to add: %v", err)
     }
-    
+
     if sum.ToBi() != 2.0 {
         t.Errorf("expected 2.0 Bi, got %f", sum.ToBi())
     }
-    
+
     // 测试百分比
     half := sum.Percent(50)
     if half.ToBi() != 1.0 {
@@ -704,13 +704,13 @@ func TestAmount(t *testing.T) {
 
 func TestBlockTimestamp(t *testing.T) {
     genesis := Timestamp(0)
-    
+
     // 第0块
     ts0 := BlockTimestamp(genesis, 0)
     if ts0 != genesis {
         t.Errorf("block 0 timestamp should be genesis")
     }
-    
+
     // 第1块（6分钟后）
     ts1 := BlockTimestamp(genesis, 1)
     expected := genesis + Timestamp(6*60*1000)
@@ -731,7 +731,7 @@ func TestYearFromHeight(t *testing.T) {
         {87662, 1},
         {175322, 2},
     }
-    
+
     for _, tt := range tests {
         got := YearFromHeight(tt.height)
         if got != tt.year {

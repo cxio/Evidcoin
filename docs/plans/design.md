@@ -343,7 +343,7 @@ const (
 
     // 交易限制
     MaxTxSize       = 8192                // 单笔交易最大尺寸（字节，不含解锁）
-    MaxOutputCount  = 2048                // 最大输出项数量
+    MaxOutputCount  = 1024                // 最大输出项数量
     TxExpireBlocks  = 240                 // 交易过期区块数（24小时）
 
     // 共识参数
