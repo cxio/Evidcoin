@@ -195,11 +195,3 @@ func TestHash512(t *testing.T) {
     }
 }
 ```
-
-
-## 相关资源
-
-- 设计文档：`conception/README.md`
-- 实现参考：`conception/solution.md`
-- 指令集定义：`conception/7.脚本基础指令集.md`
-- P2P 项目：https://github.com/cxio/p2p
