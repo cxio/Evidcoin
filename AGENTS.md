@@ -38,11 +38,10 @@ Evidcoin（证信链）是基于区块链技术的通用信用载体系统，包
 | 共识 | `1.共识-历史证明（PoH）.md`, `2.共识-端点约定.md` |
 | 服务 | `3.公共服务.md`, `4.激励机制.md` |
 | 信用 | `5.信用结构.md` |
-| 脚本 | `5.信用结构.md`, `6.脚本系统.md` |
-| 校验 | `附.组队校验.md`。附属关联：`4.激励机制.md`, `3.公共服务.md`, `1.共识-历史证明（PoH）.md`, `2.共识-端点约定.md`  |
-| 核心总管 | `blockchain.md` |
-
-另外，脚本指令集的设计存放在 `conception/Instruction/` 目录下的各个 Markdown 文件中。
+| 脚本 | `5.信用结构.md`, `6.脚本系统.md`, `Instruction/*.md` |
+| 交易 | `附.交易.md`, `5.信用结构.md`, `6.脚本系统.md` |
+| 校验 | `附.组队校验.md`, `附.交易.md`。相关牵涉：`6.脚本系统.md`, `5.信用结构.md`, `4.激励机制.md`, `3.公共服务.md`, `2.共识-端点约定.md`, `1.共识-历史证明（PoH）.md`  |
+| 核心总管 | `blockchain.md`, `README.md` |
 
 
 ### 输出提案
@@ -55,8 +54,12 @@ Evidcoin（证信链）是基于区块链技术的通用信用载体系统，包
 | 服务 | `2.Services(Third-party).md` |
 | 信用 | `3.Evidence-Design.md` |
 | 脚本 | `4.Script-of-Stack.md` |
-| 校验 | `5.Checks-by-Team.md` |
+| 交易 | `5.Transaction.md` |
+| 校验 | `6.Checks-by-Team.md` |
 | 核心总管 | `blockchain-core.md` |
+
+> **注：**
+> 命名文件已经存在（为空），输出内容直接填充即可。
 
 
 ## 构建/测试/Lint 命令
