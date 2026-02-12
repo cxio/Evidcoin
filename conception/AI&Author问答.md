@@ -1,4 +1,4 @@
-# AI存疑与用户问答
+# AI存疑与作者问答
 
 > **注：**
 > 在 opencode TUI 界面下，AI Agent（Claude Opus 4.6）作为主体身份。
