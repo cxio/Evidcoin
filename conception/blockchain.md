@@ -21,7 +21,7 @@ Blockchain Core 是区块链系统的核心组件，主要着眼于区块链整�
 BlockHeader: {
     Version   int       // 版本号
     PrevBlock [64]byte  // 前一区块哈希
-    CheckRoot [64]byte  // 校验根（由交易哈希树根、UTXO指纹及签名合并计算）
+    CheckRoot [64]byte  // 校验根（由交易哈希树根、UTXO/UTCO指纹合并计算）
     Stakes    int       // 币权销毁（币天）
     Height    int       // 区块高度
     YearBlock [64]byte  // 前一年块哈希（height % 87661 == 0 时）
