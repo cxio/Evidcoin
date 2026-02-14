@@ -82,7 +82,7 @@ go mod tidy && go mod verify                      # 依赖管理
 ├── proposal/       # 设计提案
 ├── docs/plan/      # 根据提案由AI创建的实现方案
 ├── cmd/evidcoin/   # 主程序入口
-├── internal/       # 私有包：blockchain/, consensus/, script/, tx/, utxo/
+├── internal/       # 私有包：blockchain/, consensus/, script/, tx/, utxo/, utco/
 ├── pkg/            # 公共包：crypto/, types/
 └── test/           # 集成测试
 ```
@@ -172,8 +172,13 @@ func processBlocks(ctx context.Context, blocks <-chan *Block) error {
 
 ### 哈希计算
 
-- 默认使用 SHA-512（64 字节）提升安全性
-- 附件使用 BLAKE3 算法
+- 默认使用 SHA-512（64 字节），主要考虑安全和性能。
+- 附件使用 BLAKE3 算法计算本体数据的指纹，以支持长度可变的用户选择。
+- 附件分片哈希树使用 SHA3-384 算法，兼顾空间占用和安全性。
+- UTXO/UTCO 指纹使用 SHA3-512 算法，与默认的哈希相区分，提升长期安全性。
+- 公钥哈希使用 SHA3-384（48 字节），兼顾安全性和空间占用。
+
+```go
 
 ### 脚本系统
 
