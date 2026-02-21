@@ -22,7 +22,7 @@ BlockHeader: {
     Version   int       // 版本号
     PrevBlock [64]byte  // 前一区块哈希
     CheckRoot [64]byte  // 校验根（由交易哈希树根、UTXO/UTCO指纹合并计算）
-    Stakes    int       // 币权销毁（币天）
+    Stakes    int       // 币权销毁，按「聪*秒」计算汇总，最终精确到「币*天」
     Height    int       // 区块高度，代替时间戳信息
     YearBlock [64]byte  // 前一年块哈希（height % 87661 == 0 时）
 }
