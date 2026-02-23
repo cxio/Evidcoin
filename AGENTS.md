@@ -114,9 +114,10 @@ go mod tidy && go mod verify                      # 依赖管理
 type Hash512 [64]byte  // 512 位哈希值
 
 type TxHeader struct {
-    Version   int      // 版本号
-    Timestamp int64    // 交易时间戳（Unix 纳秒）
-    HashBody  Hash512  // 数据体哈希
+    Version   int        // 版本号
+    Timestamp int64      // 交易时间戳（Unix 纳秒）
+    HashInputs  Hash512  // 输入项根哈希
+    HashOutputs Hash512  // 输出项根哈希
 }
 ```
 
