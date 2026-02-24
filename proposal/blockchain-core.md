@@ -22,7 +22,7 @@ Blockchain Core 采用**极致简化**的设计原则，仅专注于区块头链
 |-------|------|------|-------------|
 | `Version` | int32 | 4 bytes | 协议版本号 |
 | `PrevBlock` | [64]byte | 64 bytes | 前一区块的 SHA-512 哈希 |
-| `CheckRoot` | [64]byte | 64 bytes | 校验根：由交易哈希树根 + UTXO 指纹合并计算的哈希 |
+| `CheckRoot` | [64]byte | 64 bytes | 校验根：由交易哈希树根 + UTXO/UTCO 双指纹合并计算的哈希 |
 | `Stakes` | int32 | 4 bytes | 币权销毁量（币天），反映交易活跃度 |
 | `Height` | int32 | 4 bytes | 区块高度（从 0 开始） |
 
@@ -63,7 +63,7 @@ BlockTime = GenesisTimestamp + Height × 6min
 
 ### 2.6 CheckRoot（校验根）
 
-CheckRoot 是交易哈希树根与 UTXO 指纹的合并哈希，由铸造者签名确认。具体计算方式参见 Transaction 提案和 Consensus-PoH 提案中的相关章节。
+CheckRoot 是交易哈希树根与 UTXO/UTCO 双指纹的合并哈希，由铸造者签名确认。具体计算方式参见 Transaction 提案和 Consensus-PoH 提案中的相关章节。
 
 
 ## 3. Block Admission（入块验证）
