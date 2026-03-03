@@ -62,7 +62,7 @@ BlockTime = GenesisTimestamp + Height × 6min
 
 一旦某输出被花费，币权即归零。新的输出重新开始累计币权。
 
-区块头中的 `Stakes` 字段记录该区块所有交易消耗的币权总量，反映区块的交易活跃度。在新区块的候选竞争中，`Stakes` 可作为辅助判断因子（详见 Consensus-PoH 提案 §4.5）。
+区块头中的 `Stakes` 字段记录该区块所有交易消耗的币权总量，反映区块的交易活跃度。在新区块的候选竞争中，`Stakes` 可作为辅助判断因子（详见 Consensus-PoH 提案 §4.5）。此外，`Stakes` 也是铸凭哈希的计算因子之一。
 
 > **单位换算：**
 > - 1币 = 100,000,000 聪。
@@ -267,7 +267,40 @@ func (bc *Blockchain) SwitchChain(forkHeight int, headers []*BlockHeader) error
 手动切换主链本质上是一种"用脚投票"的社会性选择机制，不属于算法逻辑的范畴。在未来天基互联网（卫星互联网）的强连接环境下，全球网络长时间分区的情况应极为罕见。
 
 
-## 8. Security Considerations（安全考量）
+## 7A. Initial Chain Verification（初始主链验证）
+
+没有任何数据的初始节点上线时，需要获取主链信息并验证其合法性。主链信息由 Blockqs 或某个校验组提供。
+
+### 验证所需数据
+
+| 序号 | 数据 | 说明 |
+|------|------|------|
+| 1 | **创世区块及区块头** | 客户端硬编码内置，作为链的信任锚点 |
+| 2 | **区块头链** | 从当前区块高度到创世块的完整区块头链，可局部用年块衔接以减轻负载 |
+| 3 | **末端部分区块的 Coinbase 交易及其哈希验证路径** | 包含 UTXO/UTCO 指纹以及铸造者对 `CheckRoot` 的签名，用于验证末端区块的真实性 |
+| 4 | **当前 UTXO/UTCO 集与末端部分区块数据**（可选） | 用于逆推式严格验证（参见 Checks-by-Team 提案 §8.5 Chain Constraint） |
+
+> **注：**
+> - 末端部分区块长度可能为 **25 个区块**，以涵盖分叉竞争区间。
+> - 校验组通常至少保存最近一天的铸造者签名数据，即 **240 个区块**长度。
+
+### 验证流程
+
+初始节点可向不同的 Blockqs 节点或校验组请求上述数据，相互比对以确保找到真实的主链。
+
+```go
+// BootstrapVerify 初始主链验证。
+// 从多个数据源获取主链信息并交叉验证，确认目标主链的合法性。
+func (bc *Blockchain) BootstrapVerify(sources []string) (*BootstrapResult, error)
+
+// BootstrapResult 初始验证结果。
+type BootstrapResult struct {
+    ChainTip    *BlockHeader // 验证通过的链顶区块头
+    Height      int          // 当前链高度
+    Confidence  float64      // 置信度（基于多源一致性）
+    Sources     int          // 参与验证的数据源数量
+}
+```
 
 ### 8.1 Trust Model（信任模型）
 

@@ -200,7 +200,7 @@ const (
     MaxStackItem    = 1024                // 栈数据项最大尺寸
     MaxLockScript   = 1024                // 锁定脚本最大长度
     MaxUnlockScript = 4096                // 解锁脚本最大长度
-    MaxTxSize       = 8192                // 单笔交易最大尺寸
+    MaxTxSize       = 65535               // 单笔交易最大尺寸
 )
 ```
 
