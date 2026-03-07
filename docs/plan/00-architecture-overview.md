@@ -141,7 +141,7 @@ Layer 5 (集成层):
 | 1.5 | `pkg/crypto/multisig.go` | 多重签名逻辑 |
 | 1.6 | `pkg/types/address.go` | 地址编码/解码/验证 |
 
-**详细方案**：`plan/01-foundation-types-crypto.md`
+**详细方案**：`docs/plan/01-foundation-types-crypto.md`
 
 ### Phase 2：区块链核心（Blockchain Core）
 **目标**：实现极简的区块头链管理。
@@ -154,7 +154,7 @@ Layer 5 (集成层):
 | 2.4 | `internal/blockchain/yearblock.go` | 年块机制 |
 | 2.5 | `internal/blockchain/bootstrap.go` | 初始验证 |
 
-**详细方案**：`plan/02-blockchain-core.md`
+**详细方案**：`docs/plan/02-blockchain-core.md`
 
 ### Phase 3：交易模型（Transaction Model）
 **目标**：实现完整的交易数据结构。
@@ -170,7 +170,7 @@ Layer 5 (集成层):
 | 3.7 | `internal/tx/sigflag.go` | 签名授权标志 |
 | 3.8 | `internal/tx/fee.go` | 费用与优先级 |
 
-**详细方案**：`plan/03-transaction-model.md`
+**详细方案**：`docs/plan/03-transaction-model.md`
 
 ### Phase 4：UTXO/UTCO 集（State Management）
 **目标**：实现 UTXO/UTCO 集管理与 4 级层次哈希指纹。
@@ -187,7 +187,7 @@ Layer 5 (集成层):
 | 4.8 | `internal/utco/expiry.go` | 凭信过期索引 |
 | 4.9 | `internal/utco/cache.go` | UTCO 缓存器 |
 
-**详细方案**：`plan/04-utxo-utco.md`
+**详细方案**：`docs/plan/04-utxo-utco.md`
 
 ### Phase 5：脚本引擎（Script Engine）
 **目标**：实现脚本引擎框架与约 30 条核心指令。
@@ -205,7 +205,7 @@ Layer 5 (集成层):
 | 5.9 | `internal/script/system.go` | SYS_CHKPASS, SYS_TIME, SYS_AWARD |
 | 5.10 | `internal/script/pipeline.go` | 解锁→锁定执行管道 |
 
-**详细方案**：`plan/05-script-engine.md`
+**详细方案**：`docs/plan/05-script-engine.md`
 
 ### Phase 6：PoH 共识（Consensus）
 **目标**：实现历史证明共识机制。
@@ -219,7 +219,7 @@ Layer 5 (集成层):
 | 6.5 | `internal/consensus/bootstrap.go` | 引导启动 |
 | 6.6 | `internal/consensus/coinday.go` | 币权计算 |
 
-**详细方案**：`plan/06-consensus-poh.md`
+**详细方案**：`docs/plan/06-consensus-poh.md`
 
 ### Phase 7：组队校验框架（Verification Framework）
 **目标**：定义组队校验的接口与协作协议。
@@ -230,7 +230,7 @@ Layer 5 (集成层):
 | 7.2 | 首领校验 | Leader Verification 实现 |
 | 7.3 | 冗余校验 | 扩展复核机制 |
 
-**详细方案**：`plan/07-team-verification.md`
+**详细方案**：`docs/plan/07-team-verification.md`
 
 ### Phase 8：公共服务接口（Service Interfaces）
 **目标**：定义与第三方服务交互的接口。
@@ -240,7 +240,7 @@ Layer 5 (集成层):
 | 8.1 | 接口定义 | BlockqsClient, DepotsClient, StunClient |
 | 8.2 | 奖励分配 | 收益分配与兑换机制 |
 
-**详细方案**：`plan/08-services-interfaces.md`
+**详细方案**：`docs/plan/08-services-interfaces.md`
 
 
 ## 4. 关键设计决策
@@ -293,11 +293,11 @@ Layer 5 (集成层):
 
 | 方案文件 | 内容 |
 |----------|------|
-| `plan/01-foundation-types-crypto.md` | 基础类型与密码学原语 |
-| `plan/02-blockchain-core.md` | 区块头链管理 |
-| `plan/03-transaction-model.md` | 交易结构与模型 |
-| `plan/04-utxo-utco.md` | UTXO/UTCO 集与指纹 |
-| `plan/05-script-engine.md` | 脚本引擎框架与核心指令 |
-| `plan/06-consensus-poh.md` | PoH 共识与铸造 |
-| `plan/07-team-verification.md` | 组队校验接口 |
-| `plan/08-services-interfaces.md` | 公共服务接口 |
+| `docs/plan/01-foundation-types-crypto.md` | 基础类型与密码学原语 |
+| `docs/plan/02-blockchain-core.md` | 区块头链管理 |
+| `docs/plan/03-transaction-model.md` | 交易结构与模型 |
+| `docs/plan/04-utxo-utco.md` | UTXO/UTCO 集与指纹 |
+| `docs/plan/05-script-engine.md` | 脚本引擎框架与核心指令 |
+| `docs/plan/06-consensus-poh.md` | PoH 共识与铸造 |
+| `docs/plan/07-team-verification.md` | 组队校验接口 |
+| `docs/plan/08-services-interfaces.md` | 公共服务接口 |

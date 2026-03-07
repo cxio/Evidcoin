@@ -31,9 +31,9 @@ Evidcoin（证信链）是基于区块链技术的通用信用载体系统，包
 
 ## 开发提案
 
-当由设计构想（conception/*）生成提案时，输出应存放在 `proposal/` 目录下，对应文件如下：
+当由设计构想（docs/conception/*）生成提案时，输出应存放在 `docs/proposal/` 目录下，对应文件如下：
 
-| 功能 | 输出文件（proposal/*） |
+| 功能 | 输出文件（docs/proposal/*） |
 |------|-----------------|
 | 共识 | `1.Consensus-PoH.md` |
 | 服务 | `2.Services(Third-party).md` |
@@ -61,7 +61,7 @@ go mod tidy && go mod verify                      # 依赖管理
 ## 项目结构
 
 ```
-├── proposal/       # 设计提案
+├── docs/proposal/  # 设计提案
 ├── docs/plan/      # 根据提案由AI创建的实现方案
 ├── cmd/evidcoin/   # 主程序入口
 ├── internal/       # 私有包：blockchain/, consensus/, script/, tx/, utxo/, utco/
