@@ -29,11 +29,31 @@ Evidcoin（证信链）是基于区块链技术的通用信用载体系统，包
 > 附件数据的获取由数据驿站服务（`Depots`）支持（以文件P2P分享的方式）。
 
 
+## 设计构想
+
+设计构想文档位于 `docs/conception/` 目录下，包含以下内容：
+
+| 功能 | 设计构想文件 |
+|------|-----------------|
+| 共识 | `1.共识-历史证明（PoH）.md` |
+| 共识 | `2.共识-端点约定.md` |
+| 服务 | `3.公共服务.md` |
+| 经济 | `4.激励机制.md` |
+| 信用 | `5.信用结构.md` |
+| 脚本 | `6.脚本系统.md` |
+| 交易 | `附.交易.md` |
+| 校验 | `附.组队校验.md` |
+| 总体 | `blockchain.md` |
+| 图示 | `images/*.svg` |
+| 脚本指令集 | `Instruction/*.md` |
+| 示例 | `examples/*.md` |
+
+
 ## 开发提案
 
 当由设计构想（docs/conception/*）生成提案时，输出应存放在 `docs/proposal/` 目录下，对应文件如下：
 
-| 功能 | 输出文件（docs/proposal/*） |
+| 功能 | 输出文件 |
 |------|-----------------|
 | 共识 | `1.Consensus-PoH.md` |
 | 服务 | `2.Services(Third-party).md` |
@@ -41,7 +61,7 @@ Evidcoin（证信链）是基于区块链技术的通用信用载体系统，包
 | 脚本 | `4.Script-of-Stack.md` |
 | 交易 | `5.Transaction.md` |
 | 校验 | `6.Checks-by-Team.md` |
-| 核心总管 | `blockchain-core.md` |
+| 核心 | `blockchain-core.md` |
 
 
 ## 构建/测试/Lint 命令
@@ -61,8 +81,10 @@ go mod tidy && go mod verify                      # 依赖管理
 ## 项目结构
 
 ```
-├── docs/proposal/  # 设计提案
-├── docs/plan/      # 根据提案由AI创建的实现方案
+├── docs/           # 文档主目录
+│   ├──conception/  # 设计构想（人工）
+│   ├──proposal/    # 技术提案（根据设计构想由AI生成，人工审核）
+│   ├──plan/        # 实现方案（根据提案由AI创建，人工审阅）
 ├── cmd/evidcoin/   # 主程序入口
 ├── internal/       # 私有包：blockchain/, consensus/, script/, tx/, utxo/, utco/
 ├── pkg/            # 公共包：crypto/, types/
