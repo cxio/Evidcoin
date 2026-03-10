@@ -310,10 +310,10 @@ const (
 	TxExpiryBlocks       = 240   // 交易过期区块数
 	FeeRecalcPeriod      = 6000  // 最低手续费重算周期
 	CoinbaseConfirmDepth = 25    // 新币确认深度
-	MintTxMinDepth       = 25    // 铸凭交易最小深度
+	MintTxMinDepth       = 28    // 铸凭交易最小深度
 	MintTxMaxDepth       = 80000 // 铸凭交易最大深度
 	RefBlockOffset       = 9     // 评参区块偏移
-	CoinAgeOffset        = 24    // 币权源区块偏移
+	CoinAgeOffset        = 27    // 币权源区块偏移
 )
 ```
 

@@ -336,7 +336,7 @@ func TestIsMintTxEligible(t *testing.T) {
 		txHeight      int
 		want          bool
 	}{
-		// 初段：currentHeight < 25，所有合法交易均可参与
+		// 初段：currentHeight < 28，所有合法交易均可参与
 		{
 			name:          "early stage height=0",
 			currentHeight: 0,
@@ -350,34 +350,40 @@ func TestIsMintTxEligible(t *testing.T) {
 			want:          true,
 		},
 		{
-			name:          "early stage height=24",
-			currentHeight: 24,
+			name:          "early stage height=27",
+			currentHeight: 27,
 			txHeight:      0,
 			want:          true,
 		},
 		{
-			name:          "early stage height=24 tx at 23",
-			currentHeight: 24,
-			txHeight:      23,
+			name:          "early stage height=27 tx at 26",
+			currentHeight: 27,
+			txHeight:      26,
 			want:          true,
 		},
-		// 正常阶段：currentHeight >= 25
-		// depth = currentHeight - txHeight，需满足 depth > 24 && depth <= 80000
+		// 正常阶段：currentHeight >= 28
+		// depth = currentHeight - txHeight，需满足 depth > 27 && depth <= 80000
 		{
-			name:          "boundary: height=25, tx at 1, depth=24 (not eligible)",
-			currentHeight: 25,
+			name:          "boundary: height=28, tx at 1, depth=27 (not eligible)",
+			currentHeight: 28,
 			txHeight:      1,
-			want:          false, // depth=24，需要 > 24
+			want:          false, // depth=27，需要 > 27
 		},
 		{
-			name:          "boundary: height=25, tx at 0, depth=25 (eligible)",
-			currentHeight: 25,
+			name:          "boundary: height=28, tx at 1, depth=27 (not eligible)",
+			currentHeight: 28,
+			txHeight:      1,
+			want:          false, // depth=27，需要 > 27
+		},
+		{
+			name:          "boundary: height=28, tx at 0, depth=28 (eligible)",
+			currentHeight: 28,
 			txHeight:      0,
-			want:          true, // depth=25 > 24 && <= 80000
+			want:          true, // depth=28 > 27 && <= 80000
 		},
 		{
-			name:          "boundary: height=26, tx at 1, depth=25 (eligible)",
-			currentHeight: 26,
+			name:          "boundary: height=29, tx at 1, depth=28 (eligible)",
+			currentHeight: 29,
 			txHeight:      1,
 			want:          true,
 		},
@@ -389,14 +395,14 @@ func TestIsMintTxEligible(t *testing.T) {
 		},
 		{
 			name:          "depth exactly 80000 (eligible)",
-			currentHeight: 80025,
-			txHeight:      25,
+			currentHeight: 80028,
+			txHeight:      28,
 			want:          true, // depth=80000
 		},
 		{
 			name:          "depth 80001 (not eligible)",
-			currentHeight: 80026,
-			txHeight:      25,
+			currentHeight: 80029,
+			txHeight:      28,
 			want:          false, // depth=80001 > 80000
 		},
 		{
@@ -412,16 +418,16 @@ func TestIsMintTxEligible(t *testing.T) {
 			want:          false,
 		},
 		{
-			name:          "depth=24 boundary",
+			name:          "depth=27 boundary",
 			currentHeight: 100,
-			txHeight:      76,
-			want:          false, // depth=24，需 > 24
+			txHeight:      73,
+			want:          false, // depth=27，需 > 27
 		},
 		{
-			name:          "depth=25 just eligible",
+			name:          "depth=28 just eligible",
 			currentHeight: 100,
-			txHeight:      75,
-			want:          true, // depth=25
+			txHeight:      72,
+			want:          true, // depth=28
 		},
 	}
 	for _, tt := range tests {
@@ -466,7 +472,7 @@ const Mix int64 = 0x517cc1b727220a95
 const MintTxMaxDepth = 80000
 
 // MintTxMinDepth 铸凭交易最小深度（排除尾部区块，防塑造）。
-const MintTxMinDepth = 25
+const MintTxMinDepth = 28
 
 // MintingHash 计算铸凭哈希。
 // 算法共四个阶段：
@@ -478,7 +484,7 @@ const MintTxMinDepth = 25
 // 参数说明：
 //   txID:           铸凭交易 ID
 //   refMintHash:    评参区块（Height-9）的铸凭哈希
-//   stakes:         第 Height-24 区块的币权总值
+//   stakes:         第 Height-27 区块的币权总值
 //   blockTimestamp: 当前区块时间戳（由公式计算，非本地时钟）
 //   privateKey:     铸造者的私钥
 func MintingHash(txID types.Hash512, refMintHash types.Hash512, stakes int64,
@@ -510,8 +516,8 @@ func CompareMintHash(a, b types.Hash512) int {
 }
 
 // IsMintTxEligible 判断铸凭交易是否在合法区块范围内。
-// 在初段（currentHeight < 25）所有合法交易均可参与。
-// 正常阶段要求 depth > 24 && depth <= 80000。
+// 在初段（currentHeight < 28）所有合法交易均可参与。
+// 正常阶段要求 depth > 27 && depth <= 80000。
 //
 // 参数说明：
 //   currentHeight: 当前区块高度
@@ -522,7 +528,7 @@ func IsMintTxEligible(currentHeight, txHeight int) bool {
 		return true
 	}
 
-	// 正常阶段：depth > 24 && depth <= 80000
+	// 正常阶段：depth > 27 && depth <= 80000
 	depth := currentHeight - txHeight
 	return depth > MintTxMinDepth-1 && depth <= MintTxMaxDepth
 }
