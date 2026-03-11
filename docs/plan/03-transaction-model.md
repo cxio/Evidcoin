@@ -4421,9 +4421,9 @@ git commit -m "feat(tx): add SigFlag validation and SigningData builder"
 - 50% 永久销毁，50% 分配给铸造团队
 
 **优先级排序（降序）：**
-1. HasPrematureDestroy = true 的交易最优先
-2. BurnedCoinAge 越高越优先
-3. Fee 越高越优先
+1. BurnedCoinAge（币权销毁）越高越优先
+2. Fee（交易费）越高越优先
+3. HasPrematureDestroy = true（凭信提前销毁）的交易优先
 
 ### Step 1: 写失败测试
 
@@ -4819,15 +4819,42 @@ func TestCheckPrematureDestroy_Empty(t *testing.T) {
 
 // --- ComparePriority 测试 ---
 
-func TestComparePriority_PrematureDestroyWins(t *testing.T) {
-	a := &TxPriority{HasPrematureDestroy: true, BurnedCoinAge: 0, Fee: 0}
-	b := &TxPriority{HasPrematureDestroy: false, BurnedCoinAge: 999999, Fee: 999999}
+func TestComparePriority_CoinAgeBeatsDestroy(t *testing.T) {
+	// BurnedCoinAge 是最高优先级，胜过 HasPrematureDestroy
+	a := &TxPriority{HasPrematureDestroy: false, BurnedCoinAge: 1, Fee: 0}
+	b := &TxPriority{HasPrematureDestroy: true, BurnedCoinAge: 0, Fee: 999999}
 
 	if ComparePriority(a, b) <= 0 {
-		t.Error("premature destroy should win regardless of other fields")
+		t.Error("higher BurnedCoinAge should win over premature destroy")
 	}
 	if ComparePriority(b, a) >= 0 {
-		t.Error("non-destroy should lose to destroy")
+		t.Error("premature destroy should lose to higher BurnedCoinAge")
+	}
+}
+
+func TestComparePriority_FeeBeatsDestroy(t *testing.T) {
+	// Fee 是第二优先级，胜过 HasPrematureDestroy（BurnedCoinAge 相同时）
+	a := &TxPriority{HasPrematureDestroy: false, BurnedCoinAge: 100, Fee: 1}
+	b := &TxPriority{HasPrematureDestroy: true, BurnedCoinAge: 100, Fee: 0}
+
+	if ComparePriority(a, b) <= 0 {
+		t.Error("higher Fee should win over premature destroy when BurnedCoinAge is equal")
+	}
+	if ComparePriority(b, a) >= 0 {
+		t.Error("premature destroy should lose to higher Fee")
+	}
+}
+
+func TestComparePriority_PrematureDestroyBreaksTie(t *testing.T) {
+	// HasPrematureDestroy 是第三优先级，仅在 BurnedCoinAge 和 Fee 均相等时起作用
+	a := &TxPriority{HasPrematureDestroy: true, BurnedCoinAge: 100, Fee: 500}
+	b := &TxPriority{HasPrematureDestroy: false, BurnedCoinAge: 100, Fee: 500}
+
+	if ComparePriority(a, b) <= 0 {
+		t.Error("premature destroy should win when BurnedCoinAge and Fee are equal")
+	}
+	if ComparePriority(b, a) >= 0 {
+		t.Error("non-destroy should lose when BurnedCoinAge and Fee are equal")
 	}
 }
 
@@ -4835,7 +4862,7 @@ func TestComparePriority_BothPrematureDestroy(t *testing.T) {
 	a := &TxPriority{HasPrematureDestroy: true, BurnedCoinAge: 100, Fee: 50}
 	b := &TxPriority{HasPrematureDestroy: true, BurnedCoinAge: 200, Fee: 10}
 
-	// 都有提前销毁，比较 BurnedCoinAge
+	// 都有提前销毁，BurnedCoinAge 更高的优先
 	if ComparePriority(a, b) >= 0 {
 		t.Error("higher BurnedCoinAge should win when both have premature destroy")
 	}
@@ -4884,13 +4911,13 @@ func TestComparePriority_BothZero(t *testing.T) {
 }
 
 func TestComparePriority_AllLevels(t *testing.T) {
-	// 先按 PrematureDestroy，再按 BurnedCoinAge，最后按 Fee
+	// 先按 BurnedCoinAge，再按 Fee，最后按 HasPrematureDestroy
 	priorities := []*TxPriority{
-		{HasPrematureDestroy: true, BurnedCoinAge: 200, Fee: 100},   // 最高
-		{HasPrematureDestroy: true, BurnedCoinAge: 100, Fee: 100},   // 次之
-		{HasPrematureDestroy: false, BurnedCoinAge: 9999, Fee: 100}, // 第三
-		{HasPrematureDestroy: false, BurnedCoinAge: 9999, Fee: 50},  // 第四
-		{HasPrematureDestroy: false, BurnedCoinAge: 0, Fee: 0},      // 最低
+		{HasPrematureDestroy: false, BurnedCoinAge: 9999, Fee: 100}, // 最高（BurnedCoinAge 最大）
+		{HasPrematureDestroy: true, BurnedCoinAge: 200, Fee: 100},   // 次之（BurnedCoinAge 次大）
+		{HasPrematureDestroy: true, BurnedCoinAge: 100, Fee: 500},   // 第三（BurnedCoinAge 更小，Fee 更高）
+		{HasPrematureDestroy: true, BurnedCoinAge: 100, Fee: 200},   // 第四（BurnedCoinAge 相同，Fee 次之）
+		{HasPrematureDestroy: false, BurnedCoinAge: 100, Fee: 200},  // 最低（BurnedCoinAge/Fee 相同，无提前销毁）
 	}
 
 	for i := 0; i < len(priorities)-1; i++ {
@@ -4973,28 +5000,20 @@ func CalculateFee(inputValues []int64, tx *Tx) (fee int64, burned int64, distrib
 
 // TxPriority 交易优先级信息。
 type TxPriority struct {
-	HasPrematureDestroy bool  // 是否包含提前销毁凭信
-	BurnedCoinAge       int64 // 销毁的币龄总和
+    BurnedCoinAge       int64 // 销毁的币龄总和
 	Fee                 int64 // 交易手续费
+	HasPrematureDestroy bool  // 是否包含提前销毁凭信
 }
 
 // ComparePriority 比较两个交易优先级。
 // 返回值：正数表示 a 优先于 b，负数表示 b 优先于 a，0 表示相等。
 //
 // 优先级排序规则（降序）：
-//  1. HasPrematureDestroy = true 的交易优先
-//  2. BurnedCoinAge 越高越优先
-//  3. Fee 越高越优先
+//  1. BurnedCoinAge（币权销毁）越高越优先
+//  2. Fee（交易费）越高越优先
+//  3. HasPrematureDestroy = true（凭信提前销毁）的交易优先
 func ComparePriority(a, b *TxPriority) int {
-	// 第一级：提前销毁凭信
-	if a.HasPrematureDestroy != b.HasPrematureDestroy {
-		if a.HasPrematureDestroy {
-			return 1
-		}
-		return -1
-	}
-
-	// 第二级：币龄销毁
+	// 第一级：币权销毁（最高优先级）
 	if a.BurnedCoinAge != b.BurnedCoinAge {
 		if a.BurnedCoinAge > b.BurnedCoinAge {
 			return 1
@@ -5002,9 +5021,17 @@ func ComparePriority(a, b *TxPriority) int {
 		return -1
 	}
 
-	// 第三级：交易费用
+	// 第二级：交易费用
 	if a.Fee != b.Fee {
 		if a.Fee > b.Fee {
+			return 1
+		}
+		return -1
+	}
+
+	// 第三级：凭信提前销毁（最低优先级，仅在前两级相等时起作用）
+	if a.HasPrematureDestroy != b.HasPrematureDestroy {
+		if a.HasPrematureDestroy {
 			return 1
 		}
 		return -1
@@ -5117,7 +5144,7 @@ go build ./...
    - SIGSCRIPT 对 Proof 输出使用 IdentScript
    - CalculateFee 仅累加 Coin 类型输出金额，负费用报错
    - 50/50 分配中 burned = fee/2, distributed = fee - burned（无整数损失）
-   - ComparePriority 严格按三级优先级排序
+   - ComparePriority 严格按三级优先级排序：BurnedCoinAge > Fee > HasPrematureDestroy
    - CalculateBurnedCoinAge 正确计算 sum(amount * age)
    - CheckPrematureDestroy 仅检测 Credit + Destroy 组合
 
