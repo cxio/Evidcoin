@@ -233,7 +233,7 @@ func (bc *Blockchain) Subscribe(ch chan<- *BlockHeader)
 
 ### 7.1 Background（背景）
 
-当全球网络发生长时间分区（超过 2.5 小时 / 25 个区块），分叉竞争机制将终结，两条链均被视为合法。此时系统无法自动决策，需要用户人工介入。
+当全球网络发生长时间分区（超过 2 小时 / 20 个区块），分叉竞争机制将终结（被拒绝参与），两条链均会被视为合法。此时系统无法自动决策，需要用户人工介入。
 
 ### 7.2 Switching Process（切换流程）
 
@@ -267,11 +267,29 @@ func (bc *Blockchain) SwitchChain(forkHeight int, headers []*BlockHeader) error
 手动切换主链本质上是一种"用脚投票"的社会性选择机制，不属于算法逻辑的范畴。在未来天基互联网（卫星互联网）的强连接环境下，全球网络长时间分区的情况应极为罕见。
 
 
-## 7A. Initial Chain Verification（初始主链验证）
+## 8. Security（安全性）
+
+### 8.1 Trust Model（信任模型）
+
+Core 自身不执行深度校验，它信任外部提交者的合法性判断。不同场景下的信任模型不同：
+- **校验节点**：外挂完整的共识和校验模块，自行验证后再提交给 Core
+- **轻客户端**：默认信任从 Blockqs 获取的区块头链数据
+- **公共服务节点**：可能运行部分校验逻辑
+
+### 8.2 Year-Block Anchoring（年块锚定）
+
+年块机制提供了一种高效的完整性验证手段：即使中间区块头缺失，只要年块哈希链完整，就能确认链的宏观连续性。这类似于区块链的"骨架"。
+
+### 8.3 Connection Security（连接安全）
+
+与 Blockqs 等外部服务的连接采用自签名证书（SPKI 指纹验证），证书有效期建议为 30 天，兼顾安全性与运维便捷性。
+
+
+## 9. Initial Chain Verification（初始主链验证）
 
 没有任何数据的初始节点上线时，需要获取主链信息并验证其合法性。主链信息由 Blockqs 或某个校验组提供。
 
-### 验证所需数据
+### 9.1 Verify the required data（验证所需数据）
 
 | 序号 | 数据 | 说明 |
 |------|------|------|
@@ -281,10 +299,10 @@ func (bc *Blockchain) SwitchChain(forkHeight int, headers []*BlockHeader) error
 | 4 | **当前 UTXO/UTCO 集与末端部分区块数据**（可选） | 用于逆推式严格验证（参见 Checks-by-Team 提案 §8.5 Chain Constraint） |
 
 > **注：**
-> - 末端部分区块长度可能为 **25 个区块**，以涵盖分叉竞争区间。
+> - 末端部分区块长度可能为 **29 个区块**，以涵盖分叉竞争区间。
 > - 校验组通常至少保存最近一天的铸造者签名数据，即 **240 个区块**长度。
 
-### 验证流程
+### 9.2 Verification process（验证流程）
 
 初始节点可向不同的 Blockqs 节点或校验组请求上述数据，相互比对以确保找到真实的主链。
 
@@ -302,17 +320,52 @@ type BootstrapResult struct {
 }
 ```
 
-### 8.1 Trust Model（信任模型）
 
-Core 自身不执行深度校验，它信任外部提交者的合法性判断。不同场景下的信任模型不同：
-- **校验节点**：外挂完整的共识和校验模块，自行验证后再提交给 Core
-- **轻客户端**：默认信任从 Blockqs 获取的区块头链数据
-- **公共服务节点**：可能运行部分校验逻辑
+## 10. Chain Identity（主链和分叉标识）
 
-### 8.2 Year-Block Anchoring（年块锚定）
+### 10.1 Identity Fields（标识字段）
 
-年块机制提供了一种高效的完整性验证手段：即使中间区块头缺失，只要年块哈希链完整，就能确认链的宏观连续性。这类似于区块链的"骨架"。
+标识一条区块链需要以下几项信息：
 
-### 8.3 Connection Security（连接安全）
+| 字段 | 说明 | 示例 |
+|------|------|------|
+| `Protocol-ID` | 区分本区块链与其它区块链 | `Evidcoin@V1` |
+| `Chain-ID` | 当前区块链的运行态 | `mainnet`（正式主链） |
+| `Genesis-ID` | 创始块信息，即创世区块的区块 ID | — |
+| `Bound-ID` | 主链绑定（可选），为 -29 号区块 ID 的前 20 字节 | — |
 
-与 Blockqs 等外部服务的连接采用自签名证书（SPKI 指纹验证），证书有效期建议为 30 天，兼顾安全性与运维便捷性。
+**Bound-ID 说明：**
+- 主要用于分叉后绑定主链，避免新交易在支链上被重放。
+- **可选**：仅在分叉竞争完成后有用，随着时间推移可能无需此标识。
+- 分叉后依然为可选（关乎未来交易），用户需自行承担不绑定主链的风险。
+
+### 10.2 Usage in Transaction Signing（参与交易签名）
+
+标识信息参与交易的签名，作为链区分前置于交易消息之前：
+
+```
+// 识别信息前置
+// TxMSG 为交易相关的签名消息（有内在结构）
+MixData = ( Protocol-ID || Chain-ID || Genesis-ID || Bound-ID ) || TxMSG
+signData = Sign( MixData )
+```
+
+> **设计意图：**
+> 放在签名中可方便后期签名数据剪枝，同时维持交易信息纯粹。
+
+### 10.3 Usage in P2P Handshake（参与 P2P 握手）
+
+标识信息同样用于节点在 P2P 连接握手时声明身份，以便节点之间相互识别所属链网络，拒绝来自不同链的连接请求。
+
+```go
+// ChainIdentity 链标识信息。
+type ChainIdentity struct {
+    ProtocolID string // 协议标识，如 "Evidcoin@V1"
+    ChainID    string // 运行态标识，如 "mainnet"
+    GenesisID  Hash512 // 创世区块 ID
+    BoundID    []byte  // 主链绑定（可选，取 -29 号区块 ID 前 20 字节）
+}
+
+// Identity 返回当前节点的链标识信息。
+func (bc *Blockchain) Identity() *ChainIdentity
+```
