@@ -36,6 +36,7 @@
 
 由设计构想（conception/*）生成提案时，输出存放于 `proposal/` 之下。
 
+
 ### 逆向关系：Proposal → Conception（以开发提案为基准）
 
 | 开发提案文件（proposal/） | 相关设计构想文件（conception/） | 说明 |
@@ -48,6 +49,7 @@
 | `6.Checks-by-Team.md` | `附.组队校验.md`<br>`2.共识-端点约定.md` | 校验团队架构、首领校验、冗余机制 |
 | `blockchain-core.md` | `blockchain.md`<br>`1.共识-历史证明（PoH）.md`<br>`2.共识-端点约定.md` | 区块头结构、年块机制、分叉处理、链连续性 |
 | `Instruction/*.md` | `Instruction/*.md` | 脚本指令集（见下文） |
+
 
 ### 正向关系总结
 
