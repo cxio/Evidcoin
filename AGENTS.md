@@ -80,13 +80,13 @@ go mod tidy && go mod verify                      # 依赖管理
 ### 类型定义示例
 
 ```go
-type Hash512 [64]byte  // 512 位哈希值
+type Hash384 [48]byte  // 512 位哈希值
 
 type TxHeader struct {
     Version   int        // 版本号
     Timestamp int64      // 交易时间戳（Unix 毫秒）
-    HashInputs  Hash512  // 输入项根哈希
-    HashOutputs Hash512  // 输出项根哈希
+    HashInputs  Hash384  // 输入项根哈希
+    HashOutputs Hash384  // 输出项根哈希
 }
 ```
 
@@ -186,7 +186,7 @@ const (
 ```go
 func TestTxHeader_Validate(t *testing.T) { }
 func TestBlockchain_AddBlock(t *testing.T) { }
-func BenchmarkHash512(b *testing.B) { }
+func BenchmarkHash384(b *testing.B) { }
 ```
 
 ### 表驱动测试
@@ -194,10 +194,10 @@ func BenchmarkHash512(b *testing.B) { }
 ```go
 // 命名：Test<Type>_<Method> 或 Test<Function>
 func TestTxHeader_Validate(t *testing.T) {}
-func BenchmarkHash512(b *testing.B) {}
+func BenchmarkHash384(b *testing.B) {}
 
 // 表驱动测试
-func TestHash512(t *testing.T) {
+func TestHash384(t *testing.T) {
     tests := []struct {
         name    string
         input   []byte
@@ -208,9 +208,9 @@ func TestHash512(t *testing.T) {
     }
     for _, tt := range tests {
         t.Run(tt.name, func(t *testing.T) {
-            _, err := Hash512Sum(tt.input)
+            _, err := Hash384Sum(tt.input)
             if (err != nil) != tt.wantErr {
-                t.Errorf("Hash512Sum() error = %v, wantErr %v", err, tt.wantErr)
+                t.Errorf("Hash384Sum() error = %v, wantErr %v", err, tt.wantErr)
             }
         })
     }
