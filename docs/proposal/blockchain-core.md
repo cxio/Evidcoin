@@ -21,29 +21,29 @@ Blockchain Core 采用**极致简化**的设计原则，仅专注于区块头链
 | Field | Type | Size | Description |
 |-------|------|------|-------------|
 | `Version` | int32 | 4 bytes | 协议版本号 |
-| `PrevBlock` | [64]byte | 64 bytes | 前一区块的 SHA-512 哈希 |
-| `CheckRoot` | [64]byte | 64 bytes | 校验根：由交易哈希树根 + UTXO/UTCO 双指纹合并计算的哈希 |
-| `Stakes` | int32 | 4 bytes | 币权销毁量（币*天），反映交易活跃度 |
 | `Height` | int32 | 4 bytes | 区块高度（从 0 开始） |
+| `PrevBlock` | [48]byte | 48 bytes | 前一区块的 SHA3-384 哈希 |
+| `CheckRoot` | [48]byte | 48 bytes | 校验根：由交易哈希树根 + UTXO/UTCO 双指纹合并计算的哈希 |
+| `Stakes` | uint64 | 8 bytes | 币权销毁量（聪时），反映交易活跃度 |
 
-**常规区块头大小：140 bytes**
+**常规区块头大小：112 bytes**
 
 ### 2.2 Year-Block Field（年块字段）
 
 | Field | Type | Size | Condition |
-|-------|------|------|-----------|
-| `YearBlock` | [64]byte | 64 bytes | 仅当 `Height % 87661 == 0` 时存在 |
+|------|------|------|-----------|
+| `YearBlock` | [48]byte | 48 bytes | 仅当 `Height % 87661 == 0` 时存在 |
 
 当区块高度是 87661 的整数倍时（即年度边界），区块头额外包含 `YearBlock` 字段，引用前一个年块的哈希值。
 
 **年块机制的意义：**
 - 提供年度粒度的链锚点，使节点无需存储完整区块头即可验证链的连续性
 - 大幅降低存储需求：仅需存储年块哈希即可跨越整年数据
-- 年数据量约 140 × 87661 ≈ 11.7 MB（不含年块字段本身）
+- 年数据量约 112 × 87661 ≈ 9.36 MB（不含年块字段本身）
 
 ### 2.3 Block ID（区块 ID）
 
-区块 ID 由区块头的 SHA-512 哈希计算得出。连续的区块 ID 通过 `PrevBlock` 字段相互链接，形成区块头链。
+区块 ID 由区块头的 SHA3-384 哈希计算得出。连续的区块 ID 通过 `PrevBlock` 字段相互链接，形成区块头链。
 
 ### 2.4 Timestamps（时间戳）
 
@@ -57,17 +57,17 @@ BlockTime = GenesisTimestamp + Height × 6min
 
 ### 2.5 Stakes（币权销毁）
 
-- 币权 = 未花费输出金额（聪） × 持有时间（秒）
-- 币权总值 = 区块内全部交易的币权之和 => 精确到「币*天」
+- 币权 = 未花费输出金额（聪） × 持有时间（小时，不足 1 小时记为零）
+- 币权总值 = 区块内全部交易的币权之和，单位：聪时（聪*小时）
 
-一旦某输出被花费，币权即归零。新的输出重新开始累计币权。
+一旦某输出被花费，币权即归零。新的输出重新开始累计币权。不足 1 小时的持有时间计为零，可滤除高频交易的影响。
 
 区块头中的 `Stakes` 字段记录该区块所有交易消耗的币权总量，反映区块的交易活跃度。在新区块的候选竞争中，`Stakes` 可作为辅助判断因子（详见 Consensus-PoH 提案 §4.5）。此外，`Stakes` 也是铸凭哈希的计算因子之一。
 
-> **单位换算：**
-> - 1币 = 100,000,000 聪。
-> - 1天 = 86400 秒。
-> - 1币天 = 100000000 * 86400 = 8640,000,000,000 聪秒。
+> **单位说明：**
+> - 1 币 = 100,000,000 聪。
+> - 币权单位为「聪时」（聪 × 小时）。
+> - 1 币持有 1 天 = 100,000,000 × 24 = 2,400,000,000 聪时。
 
 ### 2.6 CheckRoot（校验根）
 
@@ -113,7 +113,7 @@ func (bc *Blockchain) ReplaceBlock(height int, header *BlockHeader) error
 
 Core 采用**年块衔接机制**下的灵活存储策略：
 
-- **完整存储**：存储从创世块至今的所有区块头（约 11.7 MB/年）
+- **完整存储**：存储从创世块至今的所有区块头（约 9.36 MB/年）
 - **年块骨架存储**：仅存储年度边界区块头，中间区块头按需从 Blockqs 获取
 - **混合存储**：近期（如最近 1-2 年）完整存储，更早的年份仅保留年块骨架
 - **自由存储**：在保持链的连续性前提下，自由选择忽略某些年度的区块头
@@ -139,7 +139,7 @@ type HeaderStore interface {
     Get(height int) (*BlockHeader, error)
 
     // GetByHash 按区块哈希获取区块头。
-    GetByHash(hash Hash512) (*BlockHeader, error)
+    GetByHash(hash Hash384) (*BlockHeader, error)
 
     // Put 存储一个区块头。
     Put(header *BlockHeader) error
@@ -184,7 +184,7 @@ type BlockqsClient interface {
     FetchHeaders(from, to int) ([]*BlockHeader, error)
 
     // FetchHeaderByHash 按哈希获取区块头。
-    FetchHeaderByHash(hash Hash512) (*BlockHeader, error)
+    FetchHeaderByHash(hash Hash384) (*BlockHeader, error)
 }
 ```
 
@@ -202,7 +202,7 @@ type Blockchain struct { /* ... */ }
 func (bc *Blockchain) HeaderByHeight(height int) (*BlockHeader, error)
 
 // HeaderByHash 按哈希查询区块头。
-func (bc *Blockchain) HeaderByHash(hash Hash512) (*BlockHeader, error)
+func (bc *Blockchain) HeaderByHash(hash Hash384) (*BlockHeader, error)
 
 // HeadersByYear 获取指定年份的所有区块头。
 func (bc *Blockchain) HeadersByYear(year int) ([]*BlockHeader, error)
@@ -362,7 +362,7 @@ signData = Sign( MixData )
 type ChainIdentity struct {
     ProtocolID string // 协议标识，如 "Evidcoin@V1"
     ChainID    string // 运行态标识，如 "mainnet"
-    GenesisID  Hash512 // 创世区块 ID
+    GenesisID  Hash384 // 创世区块 ID
     BoundID    []byte  // 主链绑定（可选，取 -29 号区块 ID 前 20 字节）
 }
 

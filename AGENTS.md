@@ -82,8 +82,6 @@ Layer 0 基础层:    pkg/types/, pkg/crypto/  ← 无内部依赖
 
 ### 哈希算法分配
 
-基于 `docs/conception/blockchain.md` 的哈希策略：
-
 | 用途 | 算法 | 长度 | 备注 |
 |------|------|------|----|
 | 区块头 | SHA3-384 | 48B | 兼顾量子安全与数据量 |
