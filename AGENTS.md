@@ -97,7 +97,6 @@ Layer 0 基础层:    pkg/types/, pkg/crypto/  ← 无内部依赖
 ### 核心常量（实现时参考）
 
 ```go
-HashLength      = 64              // SHA-512 字节长度
 BlockInterval   = 6 * time.Minute
 BlocksPerYear   = 87661
 MaxStackHeight  = 256
