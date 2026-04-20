@@ -108,3 +108,21 @@
 ## 实施方案（Plan）
 
 由开发提案（proposal/*）生成实施方案时，输出存放于 `plan/` 之下。
+
+
+### Proposal → Plan 关联表
+
+| 开发提案文件（proposal/） | 相关实施方案文件（plan/） | 说明 |
+|--------------------------|--------------------------|------|
+| `blockchain-core.md` | `phase1-types-crypto.md`<br>`phase2-blockchain-core.md` | 基础类型/密码学 + 区块链核心结构 |
+| `3.Evidence-Design.md` | `phase1-types-crypto.md`<br>`phase3-transaction-model.md` | 三种信元类型定义 + 交易输出结构 |
+| `5.Transaction.md` | `phase3-transaction-model.md`<br>`phase4-utxo-utco-state.md` | 交易完整模型 + UTXO/UTCO 状态 |
+| `6.Checks-by-Team.md` | `phase4-utxo-utco-state.md`<br>`phase7-checkteam-verification.md` | UTXO/UTCO 指纹结构 + 组队校验逻辑 |
+| `1.Consensus-PoH.md` | `phase6-poh-consensus.md` | PoH 铸凭哈希、择优池、分叉解决 |
+| `2.Services(Third-party).md` | `phase8-services-interfaces.md` | 第三方服务接口 + 铸造时间表 |
+| `4.Script-of-Stack.md` | *(Phase 5，暂缓编写)* | 脚本引擎，设计复杂，延后实施 |
+
+> **说明：**
+> - Phase 5（脚本引擎）方案暂缓，待整体架构稳定后单独编写。
+> - `phase1-types-crypto.md` 被多个提案依赖（作为基础层）。
+> - 关系分析基于 2026年4月份内容比对。
