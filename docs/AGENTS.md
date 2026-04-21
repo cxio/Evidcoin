@@ -120,9 +120,8 @@
 | `6.Checks-by-Team.md` | `phase4-utxo-utco-state.md`<br>`phase7-checkteam-verification.md` | UTXO/UTCO 指纹结构 + 组队校验逻辑 |
 | `1.Consensus-PoH.md` | `phase6-poh-consensus.md` | PoH 铸凭哈希、择优池、分叉解决 |
 | `2.Services(Third-party).md` | `phase8-services-interfaces.md` | 第三方服务接口 + 铸造时间表 |
-| `4.Script-of-Stack.md` | *(Phase 5，暂缓编写)* | 脚本引擎，设计复杂，延后实施 |
+| `4.Script-of-Stack.md`<br>`Instruction/*.md` | `phase5-script-engine.md` | 脚本引擎完整实现（254 条操作码、执行环境、锁定/解锁管道） |
 
 > **说明：**
-> - Phase 5（脚本引擎）方案暂缓，待整体架构稳定后单独编写。
 > - `phase1-types-crypto.md` 被多个提案依赖（作为基础层）。
 > - 关系分析基于 2026年4月份内容比对。
