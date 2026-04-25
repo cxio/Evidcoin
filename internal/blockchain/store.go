@@ -33,17 +33,17 @@ type HeaderStore interface {
 
 // MemoryStore 基于内存的区块头存储实现（用于测试）。
 type MemoryStore struct {
-	mu      sync.RWMutex
+	mu       sync.RWMutex
 	byHeight map[int32]*BlockHeader
-	byHash  map[types.Hash384]*BlockHeader
-	tip     *BlockHeader
+	byHash   map[types.Hash384]*BlockHeader
+	tip      *BlockHeader
 }
 
 // NewMemoryStore 创建新的内存存储。
 func NewMemoryStore() *MemoryStore {
 	return &MemoryStore{
 		byHeight: make(map[int32]*BlockHeader),
-		byHash:  make(map[types.Hash384]*BlockHeader),
+		byHash:   make(map[types.Hash384]*BlockHeader),
 	}
 }
 

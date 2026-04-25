@@ -10,11 +10,11 @@ import (
 
 // BlockHeader 区块头结构（112 字节常规，年块额外 +48 字节）。
 type BlockHeader struct {
-	Version   int32        // 协议版本号（4 字节）
-	Height    int32        // 区块高度，从 0 开始（4 字节）
+	Version   int32         // 协议版本号（4 字节）
+	Height    int32         // 区块高度，从 0 开始（4 字节）
 	PrevBlock types.Hash384 // 前一区块 SHA3-384 哈希（48 字节）
 	CheckRoot types.Hash384 // 校验根（48 字节）
-	Stakes    uint64       // 币权销毁量，单位：聪时（8 字节）
+	Stakes    uint64        // 币权销毁量，单位：聪时（8 字节）
 	YearBlock types.Hash384 // 前一年块哈希（仅 Height % 87661 == 0 时存在）
 }
 

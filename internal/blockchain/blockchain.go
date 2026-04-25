@@ -33,7 +33,7 @@ type Blockchain struct {
 	blockqs  BlockqsClient
 	identity *ChainIdentity
 	// subscribers 新区块订阅者列表
-	subMu      sync.Mutex
+	subMu       sync.Mutex
 	subscribers []chan<- *BlockHeader
 }
 
@@ -43,7 +43,7 @@ type Config struct {
 	Blockqs  BlockqsClient
 	Identity *ChainIdentity
 	// Genesis 创世区块头（必须提供）
-	Genesis  *BlockHeader
+	Genesis *BlockHeader
 }
 
 // New 创建一个新的 Blockchain 实例。
@@ -56,8 +56,8 @@ func New(cfg Config) (*Blockchain, error) {
 		cfg.Blockqs = NoopBlockqsClient()
 	}
 	bc := &Blockchain{
-		store:   cfg.Store,
-		blockqs: cfg.Blockqs,
+		store:    cfg.Store,
+		blockqs:  cfg.Blockqs,
 		identity: cfg.Identity,
 	}
 	// 若存储为空且提供了创世块，写入创世块
