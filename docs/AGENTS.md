@@ -43,10 +43,15 @@
 
 | 开发提案文件（proposal/） | 相关设计构想文件（conception/） | 说明 |
 |--------------------------|-------------------------------|------|
-| 待更新 | 待更新 | 待更新 |
+| `blockchain-core.md` | `blockchain.md`<br>`1.共识-历史证明（PoH）.md`<br>`2.共识-端点约定.md`<br>`附.组队校验.md` | 区块头链、年块衔接、CheckRoot、初始主链验证、手动切链与链标识 |
+| `1.Consensus-PoH.md` | `1.共识-历史证明（PoH）.md`<br>`2.共识-端点约定.md`<br>`blockchain.md`<br>`附.组队校验.md` | PoH 铸凭哈希、择优池、出块约定、区块竞争、分叉进入与裁决规则 |
+| `2.Services(Third-party).md` | `README.md`<br>`3.公共服务.md`<br>`4.激励机制.md`<br>`附.交易.md` | 公共服务网络、Depots/Blockqs/stun2p、铸币时间表、交易费销毁、公共服务奖励与兑奖 |
+| `3.Evidence-Design.md` | `5.信用结构.md`<br>`附.交易.md`<br>`blockchain.md` | 币金、凭信、存证、输出配置、附件 ID、公钥哈希、地址和签名模型 |
+| `5.Transaction.md` | `附.交易.md`<br>`5.信用结构.md`<br>`blockchain.md`<br>`附.组队校验.md`<br>`4.激励机制.md` | 交易头/体、输入输出、Coinbase、UTXO/UTCO 指纹、交易存储与费用约束 |
+| `6.Checks-by-Team.md` | `附.组队校验.md`<br>`附.交易.md`<br>`blockchain.md`<br>`1.共识-历史证明（PoH）.md`<br>`2.共识-端点约定.md` | 校验组角色、首领校验、冗余复核、铸造协作、区块发布、UTXO/UTCO 指纹 |
+| `4.Script-of-Stack.md` | `6.脚本系统.md`<br>`Instruction/*.md`<br>`examples/*.md` | 栈式脚本系统设计相对独立，本轮按用户要求暂未修订 |
 
 > **说明：**
-> 表格为多对多关系，某个提案可能涉及多个构想文件，某个构想的内容也可能分布到多个提案中。
 > 如果有多个文件，每个文件引用用换行分隔。
 
 
