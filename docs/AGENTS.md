@@ -49,7 +49,7 @@
 | `3.Evidence-Design.md` | `5.信用结构.md`<br>`附.交易.md`<br>`blockchain.md` | 币金、凭信、存证、输出配置、附件 ID、公钥哈希、地址和签名模型 |
 | `5.Transaction.md` | `附.交易.md`<br>`5.信用结构.md`<br>`blockchain.md`<br>`附.组队校验.md`<br>`4.激励机制.md` | 交易头/体、输入输出、Coinbase、UTXO/UTCO 指纹、交易存储与费用约束 |
 | `6.Checks-by-Team.md` | `附.组队校验.md`<br>`附.交易.md`<br>`blockchain.md`<br>`1.共识-历史证明（PoH）.md`<br>`2.共识-端点约定.md` | 校验组角色、首领校验、冗余复核、铸造协作、区块发布、UTXO/UTCO 指纹 |
-| `4.Script-of-Stack.md` | `6.脚本系统.md`<br>`Instruction/*.md`<br>`examples/*.md` | 栈式脚本系统设计相对独立，本轮按用户要求暂未修订 |
+| `4.Script-of-Stack.md`<br>`Instruction/*.md` | `6.脚本系统.md`<br>`Instruction/*.md`<br>`examples/*.md` | 栈式脚本总纲、指令集细则、执行边界与示例用法 |
 
 > **说明：**
 > 如果有多个文件，每个文件引用用换行分隔。
