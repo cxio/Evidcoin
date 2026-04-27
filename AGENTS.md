@@ -4,7 +4,7 @@ This file provides guidance to AI Coding Agent when working with code in this re
 
 ## 项目概述
 
-**Evidcoin（证信链）** 是一个基于区块链的通用信用载体系统，使用 Go 1.25+ 开发。目前处于**预实施阶段**——设计文档完整，但尚无生产代码。
+**Evidcoin（证信链）** 是一个基于区块链的通用信用载体系统，使用 Go 1.26+ 开发。目前处于**预实施阶段**——设计文档完整，但尚无生产代码。
 
 项目的核心特色：
 - **三种凭证单元**：Coin（可分割货币）、Credit（不可分割证书/合约）、Proof（不可转让存证）
