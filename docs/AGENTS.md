@@ -10,8 +10,8 @@
 ## 目录结构概览
 
 - `Conception`: 设计构想，包含了作者对项目整体以及各个功能模块的设计构思。
-- `Proposal`: 开发提案，基于设计构想生成的具体开发方案和技术细节，为生成 `plan` 提供依据。
-- `Plan`: 实施方案，包含了具体的开发计划、任务分配、时间表和测试与验证等。
+- `Proposal`: 开发提案/技术规格（`Proposal / Technical Spec`），基于设计构想生成，为生成实施方案提供依据。
+- `Plan`: 实施方案（`Implementation Plan`），包含了具体的开发计划、任务分配、时间表和测试与验证等。
 
 
 ## 设计构想（Conception）
@@ -45,7 +45,21 @@
 
 | 开发提案文件（proposal/） | 相关设计构想文件（conception/） | 说明 |
 |--------------------------|-------------------------------|------|
-| 待定 | 待定 | 待定 |
+| `proposal/00.Project-Scope.md` | `conception/README.md`<br>`conception/blockchain.md` | 第一阶段边界、文档层级、包分层。 |
+| `proposal/01.Types-And-Encoding.md` | `conception/blockchain.md`<br>`conception/附.交易.md`<br>`conception/5.信用结构.md`<br>`conception/6.脚本系统.md` | 基础类型、整数、字节串、列表和结构体编码。 |
+| `proposal/02.Cryptography-And-Hashing.md` | `conception/blockchain.md`<br>`conception/附.交易.md`<br>`conception/5.信用结构.md`<br>`conception/1.共识-历史证明（PoH）.md` | 密码学算法分配、Hash 输入、地址哈希、签名抽象。 |
+| `proposal/03.Identifiers-And-Constants.md` | `conception/blockchain.md`<br>`conception/附.交易.md`<br>`conception/5.信用结构.md`<br>`conception/6.脚本系统.md`<br>`conception/1.共识-历史证明（PoH）.md` | 标识符长度、系统常量、时间高度换算。 |
+| `proposal/04.Hash-Trees.md` | `conception/blockchain.md`<br>`conception/附.交易.md`<br>`conception/5.信用结构.md`<br>`conception/附.组队校验.md` | 哈希树、含序叶子、证明路径、状态指纹树。 |
+| `proposal/05.Blockchain-Core.md` | `conception/blockchain.md`<br>`conception/附.交易.md` | 区块头链、入块验证、CheckRoot、年块、初始主链验证。 |
+| `proposal/06.Transaction-Model.md` | `conception/附.交易.md`<br>`conception/blockchain.md`<br>`conception/5.信用结构.md` | 交易头、输入输出、签名消息、单签/多签、Coinbase 边界。 |
+| `proposal/07.Coin-Credit-Proof-Units.md` | `conception/README.md`<br>`conception/5.信用结构.md`<br>`conception/附.交易.md` | Coin、Credit、Proof、附件 ID、Mediator、Custom 输出。 |
+| `proposal/08.UTXO-UTCO-State.md` | `conception/附.交易.md`<br>`conception/5.信用结构.md`<br>`conception/blockchain.md` | UTXO/UTCO 状态、状态转移、状态指纹、状态同步与回滚。 |
+| `proposal/09.Script-System.md` | `conception/6.脚本系统.md`<br>`conception/Instruction/*.md`<br>`conception/examples/*.md` | 脚本 VM、运行时空间、公共验证、私有监听、资源与成本边界。 |
+| `proposal/10.PoH-Consensus.md` | `conception/1.共识-历史证明（PoH）.md`<br>`conception/2.共识-端点约定.md`<br>`conception/附.组队校验.md` | PoH 铸凭交易、铸凭哈希、择优池、同步池。 |
+| `proposal/11.Endpoint-Conventions-And-Fork-Choice.md` | `conception/2.共识-端点约定.md`<br>`conception/1.共识-历史证明（PoH）.md`<br>`conception/附.组队校验.md` | 出块共约、快速转播、区块竞争、分叉选择、交易池共约。 |
+| `proposal/12.Team-Validation.md` | `conception/附.组队校验.md`<br>`conception/2.共识-端点约定.md`<br>`conception/1.共识-历史证明（PoH）.md` | 校验组角色、首领校验、冗余复核、铸造协作、区块发布。 |
+| `proposal/13.Public-Service-Interfaces.md` | `conception/README.md`<br>`conception/3.公共服务.md`<br>`conception/4.激励机制.md`<br>`conception/附.组队校验.md` | 节点发现、Depots、Blockqs、stun2p 的接口边界。 |
+| `proposal/14.Incentives-And-Coinbase-Rewards.md` | `conception/4.激励机制.md`<br>`conception/3.公共服务.md`<br>`conception/附.组队校验.md`<br>`conception/附.交易.md` | 发行、交易费销毁、奖励分配、公共服务兑奖、成熟期。 |
 
 > **说明：**
 > 如果有多个文件，每个文件引用用换行分隔。
@@ -78,6 +92,13 @@
 | `16.函数指令.md` | `16.Function-Instructions.md` |
 | `17.模块指令.md` | `17.Module-Instructions.md` |
 | `18.扩展指令.md` | `18.Extension-Instructions.md` |
+
+指令集 Proposal 已输出至 `proposal/Instruction/`，另含索引文件 `proposal/Instruction/README.md`。
+
+
+### 架构决策记录（ADR）
+
+本项目较大，考虑追加一层架构决策记录 ADR（Architecture Decision Records），存放在 `docs/adr` 目录下。
 
 
 ## 实施方案（Plan）
