@@ -45,10 +45,18 @@
 
 | 开发提案文件（proposal/） | 相关设计构想文件（conception/） | 说明 |
 |--------------------------|-------------------------------|------|
-| 待定 | 待定 | 待定 |
+| `00-Overview.md` | `README.md`<br>`blockchain.md` | 项目总览，综合各构想文件的整体架构概述 |
+| `01-Cryptography-Primitives.md` | `blockchain.md`<br>`附.交易.md` | 哈希策略、签名算法（ML-DSA-65）、多签与地址编码 |
+| `02-Block-and-Chain.md` | `blockchain.md`<br>`2.共识-端点约定.md`<br>`附.组队校验.md` | 区块头结构、链结构、出块时序、区块发布流程 |
+| `03-Transaction-Model.md` | `附.交易.md`<br>`5.信用结构.md`<br>`4.激励机制.md` | 交易结构、三种信元（Coin/Credit/Proof）、Coinbase 分成 |
+| `04-State-UTXO-UTCO.md` | `blockchain.md`<br>`附.组队校验.md`<br>`5.信用结构.md` | UTXO/UTCO 4 层宽树状态、指纹与逆推、UTCO 生命周期 |
+| `05-Script-Engine.md` | `6.脚本系统.md`<br>`Instruction/0.基本约束.md` | 栈式准图灵完备脚本引擎、四段操作码空间、约束规则 |
+| `06-Consensus-PoH.md` | `1.共识-历史证明（PoH）.md`<br>`2.共识-端点约定.md`<br>`4.激励机制.md` | 历史证明共识、铸凭哈希、铸币递减、分叉规则 |
+| `07-Validator-Group.md` | `附.组队校验.md`<br>`3.公共服务.md`<br>`4.激励机制.md` | 校验组（管理层/守卫者/校验员）、公共服务接口、兑奖机制 |
 
 > **说明：**
 > 如果有多个文件，每个文件引用用换行分隔。
+> 脚本指令集（`Instruction/*`）的对应关系见下文「脚本指令集」一节，为严格 1:1 对应。
 
 
 ### 脚本指令集
