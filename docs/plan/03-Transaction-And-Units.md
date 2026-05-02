@@ -15,6 +15,11 @@
 - `docs/proposal/14.Incentives-And-Coinbase-Rewards.md` 的 Coinbase 和交易费边界
 - 依赖 `docs/proposal/01.Types-And-Encoding.md`
 - 依赖 `docs/proposal/04.Hash-Trees.md`
+- 依赖 ADR-0010：Coinbase `HashInputs` 使用 `BLAKE3-256(DomainTag(CoinbaseInputs) || bigEndianUint64(blockHeight))`。
+- 依赖 ADR-0023：Coinbase 独立处理，只允许 Coin 输出。
+- 依赖 ADR-0024：签名 Witness 与 UnlockScript 分离，Witness 不参与 `TxID`。
+- 依赖 ADR-0021：Credit `Config[9:0]` 约束 `len(description)` 最大值。
+- 依赖 ADR-0031：Coin `Amount` 以 `chx` 为单位。
 
 ## 非目标
 
@@ -39,6 +44,7 @@
 | `internal/tx/mediator.go` | Mediator payload |
 | `internal/tx/custom.go` | Custom payload 边界 |
 | `internal/tx/signature_message.go` | 签名 flag 与签名消息构造 |
+| `internal/tx/witness.go` | Witness 签名附件、完整交易编码和 TxID 排除规则 |
 | `internal/tx/fees.go` | Coin 输入输出金额差额计算接口 |
 | `internal/tx/coinbase.go` | Coinbase 结构骨架和位置规则 |
 | `internal/tx/validate.go` | 本地结构验证 |
@@ -139,6 +145,7 @@ git commit -m "feat: add transaction output envelope"
 测试：
 
 - Coin payload 编码包含 `Receiver`、`Amount`、`Memo optional Bytes`、`LockScript`。
+- `Amount` 类型和测试向量明确以 `chx` 为单位，使用 `uint64` 表示；不得用小数 Coin 参与协议编码。
 - `Amount == 0` 是否允许必须按 Proposal 标注；未决时测试拒绝 0 并加 `TODO(spec)`。
 - `LockScript` 超过 `MaxLockScript` 拒绝。
 - Coin 不接受 AttachmentID。
@@ -162,6 +169,7 @@ git commit -m "feat: add coin payload"
 测试：
 
 - Credit payload 编码包含 receiver、creator、config、title、description、optional attachment、lock script。
+- `len(description) <= config & 0x03FF`；覆盖 0 表示必须为空、边界等于上限接受、超过上限拒绝。
 - 可修改性只能降级，不能恢复。
 - 创建者、标题、附件 ID 作为不可变字段参与转移比较。
 - 高度截止超过相对 100 年拒绝。
@@ -237,7 +245,9 @@ git commit -m "feat: add transaction output hashing"
 
 **Files:**
 - Create: `internal/tx/signature_message.go`
+- Create: `internal/tx/witness.go`
 - Create: `internal/tx/signature_message_test.go`
+- Create: `internal/tx/witness_test.go`
 
 **Step 1: 写失败测试**
 
@@ -247,12 +257,15 @@ git commit -m "feat: add transaction output hashing"
 - 非法 flag 组合拒绝。
 - 签名消息包含链识别信息。
 - 修改链身份、输入范围或输出范围会改变签名消息。
+- 交易包含 Witness 字段和完整交易编码，但 `TxID` 编码必须排除 Witness。
+- 修改 Witness 签名字节不得改变 `TxID`，但应改变完整交易编码或签名附件摘要。
+- UnlockScript 中不嵌入 ML-DSA 签名字节；签名由 Witness 传递给脚本环境。
 
 **Step 2: 实现并提交**
 
 ```bash
-go test ./internal/tx -run 'TestSignatureMessage' -v
-git add internal/tx/signature_message.go internal/tx/signature_message_test.go
+go test ./internal/tx -run 'Test(SignatureMessage|Witness)' -v
+git add internal/tx/signature_message.go internal/tx/witness.go internal/tx/signature_message_test.go internal/tx/witness_test.go
 git commit -m "feat: add transaction signature messages"
 ```
 
@@ -272,7 +285,10 @@ git commit -m "feat: add transaction signature messages"
 - 输出总额大于输入总额拒绝。
 - Coinbase 无输入。
 - Coinbase 必须位于区块交易序列第 0 项。
-- Coinbase 字段未完全固定时，编码函数返回明确未实现错误或只编码已固定字段。
+- Coinbase 使用独立 parser，不套用普通输出 envelope 的低 4 位类型字段。
+- Coinbase 输出只能是 Coin；出现 Credit、Proof、Mediator 或 Custom 输出必须拒绝。
+- Coinbase `HashInputs` 测试覆盖高度 `0`、`1`、`math.MaxUint64`。
+- Coinbase 已固定字段必须规范编码；奖励拆分未固定部分返回明确未实现错误或只编码已固定字段。
 
 **Step 2: 实现**
 

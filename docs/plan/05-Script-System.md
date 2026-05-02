@@ -14,6 +14,7 @@
 - `docs/proposal/Instruction/README.md`
 - `docs/proposal/Instruction/0.Base-Constraints.md`
 - `docs/proposal/Instruction/1.Value-Instructions.md` 到 `18.Extension-Instructions.md`
+- 依赖 ADR-0024：签名 Witness 与 UnlockScript 分离，`SYS_CHKPASS` 只从系统环境读取签名。
 
 ## 非目标
 
@@ -226,6 +227,7 @@ git commit -m "feat: add core script instructions"
 - 环境字段注册表包含字段名、类型、确定性、可用域、成本、错误规则。
 - `SIGNED` 通过注入 verifier 验证，不直接依赖交易包实现。
 - `SYS_CHKPASS` 通过注入接口查询，不直接依赖状态包。
+- `SYS_CHKPASS` 签名只能来自环境中的 Witness 数据；普通数据栈、实参区或 UnlockScript 字节流中的签名字节必须不被读取为签名来源。
 - Hash 函数指令复用 `pkg/crypto`。
 - `SYS_NULL` 可用于 unlock script。
 
