@@ -41,4 +41,4 @@
 - 私有监听逻辑必须位于 `END`、隐式 `INPUT` 或等价公共结束边界之后。
 - opcode、附参、关联数据和运行时实参必须区分。
 - 文本源码不是链上规范表示。
-- 未确认 varint、signed integer、domain tag、地址文本编码和成本公式前，不得生成最终协议测试向量。
+- unsigned varint、domain tag 和地址文本编码已分别由 ADR-0003、ADR-0004、ADR-0020 关闭；signed integer 和成本公式确认前，不得生成依赖这些未决项的最终协议测试向量。
