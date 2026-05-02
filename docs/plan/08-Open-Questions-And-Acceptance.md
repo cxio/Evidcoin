@@ -27,10 +27,10 @@
 | OQ-013 | Script | VM 初始 pass 状态和 `CHECK` 覆盖规则 | 脚本结果验证 | 先按测试写明临时语义 |
 | OQ-014 | Script | 成本公式 | 公共验证 DoS 防护 | 先实现预算框架和保守拒绝 |
 | OQ-015 | Address | 文本地址编码、前缀、checksum | CLI/钱包 | 基础层只固定 32B `AddressHash` |
-| OQ-016 | PoH | 内层 `Hash(...)` 算法和 domain tag | `MintHash` 最终向量 | 注入 hasher 或返回未决错误 |
-| OQ-017 | PoH | `timeStamp * Stakes * Mix` 宽度、溢出和编码 | `MintHash` 最终向量 | 注入 X encoder 或新增 ADR |
+| OQ-016 | PoH | 内层 `Hash(...)` 算法和 domain tag | `MintHash` 最终向量 | ADR-0001 已关闭，内层 Hash 为 `BLAKE3-256` |
+| OQ-017 | PoH | `timeStamp * Stakes * Mix` 宽度、溢出和编码 | `MintHash` 最终向量 | ADR-0002 已关闭，使用 BigInt 和大端最小字节编码 |
 | OQ-018 | PoH | `Stakes` 精确定义和单位 | 区块头和 PoH | 独立类型，不参与经济语义测试 |
-| OQ-019 | PoH | `MintHash` 相等 tie-breaker | pool/fork 排序 | 相等时返回未决错误 |
+| OQ-019 | PoH | `MintHash` 相等 tie-breaker | pool/fork 排序 | ADR-0011/ADR-0027 已关闭：入池先到者保留，分叉平局按 BlockID 字典序 |
 | OQ-020 | Fork | 3 倍币权销毁比较是否包含等于 | 区块竞争 | 策略参数化 |
 | OQ-021 | Incentive | 发行递减取整规则 | 奖励测试向量 | 正式期向量延后 |
 | OQ-022 | Incentive | 交易费奇数最小单位余数归属 | 费用分配 | 策略参数化 |

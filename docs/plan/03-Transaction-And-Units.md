@@ -20,6 +20,7 @@
 - 依赖 ADR-0024：签名 Witness 与 UnlockScript 分离，Witness 不参与 `TxID`。
 - 依赖 ADR-0021：Credit `Config[9:0]` 约束 `len(description)` 最大值。
 - 依赖 ADR-0031：Coin `Amount` 以 `chx` 为单位。
+- 依赖 ADR-0029：百日扩张为客户端运行策略，核心交易验证不检查输入输出数量比例。
 
 ## 非目标
 
@@ -28,6 +29,7 @@
 - 不验证 PoH 铸凭资格。
 - 不实现完整公共服务兑奖。
 - 不选择交易池策略。
+- 不在核心交易验证中检查百日扩张的输入输出数量比例；该检查仅可作为交易构造器或钱包的可选客户端策略。
 
 ## 建议文件
 
@@ -283,6 +285,7 @@ git commit -m "feat: add transaction signature messages"
 
 - 普通交易费 = Coin 输入总额 - Coin 输出总额。
 - 输出总额大于输入总额拒绝。
+- 不因输出项数量超过输入项数量 2 倍而拒绝普通交易；百日扩张比例检查只属于交易构造器或钱包的可选客户端策略（ADR-0029）。
 - Coinbase 无输入。
 - Coinbase 必须位于区块交易序列第 0 项。
 - Coinbase 使用独立 parser，不套用普通输出 envelope 的低 4 位类型字段。
