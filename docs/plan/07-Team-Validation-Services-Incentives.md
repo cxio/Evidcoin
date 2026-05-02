@@ -13,8 +13,13 @@
 - `docs/proposal/12.Team-Validation.md`
 - `docs/proposal/13.Public-Service-Interfaces.md`
 - `docs/proposal/14.Incentives-And-Coinbase-Rewards.md`
+- 依赖 ADR-0009：奖励分配和交易费分配使用整数顺序公式，奖励余数归 `stun2p`，交易费余数归 `destroyed`。
+- 依赖 ADR-0012：铸造者签名消息为 `domainTag || chainIdentityBytes || CheckRoot`，签名不进入 `BlockID`。
+- 依赖 ADR-0017：公共服务质量评估保持铸造者主观确认，不引入链上客观质量证明。
 - 依赖 ADR-0026：首领黑名单冻结为本地共约，只影响入池和传播。
+- 依赖 ADR-0028：全网通告通过普通 Proof 交易承载，授权公钥过滤属于客户端或服务展示层。
 - 依赖 ADR-0029：百日扩张为客户端运行策略，不参与区块验证或奖励计算。
+- 依赖 ADR-0031：协议层金额统一使用 `chx`，`1 Coin = 100,000,000 chx`。
 
 ## 非目标
 
@@ -136,6 +141,9 @@ git commit -m "feat: add validation review flow"
 - 管理层返回交易费、校验组收益地址、公共服务推荐地址、铸币量、兑奖截留、兑奖槽推荐。
 - 铸造者必须能验证 Coinbase 未被篡改。
 - 管理层不能伪造铸造者签名。
+- 铸造者签名消息构造固定为 `domainTag || chainIdentityBytes || CheckRoot`。
+- 铸造者签名验证不把签名数据纳入 `BlockID` 或区块头哈希输入。
+- 相同 `CheckRoot` 在不同 `chainIdentityBytes` 下签名消息不同，防止跨链重放。
 - Coinbase 纳入证明缺失时拒绝进入区块证明阶段。
 
 **Step 2: 实现接口和数据结构**
@@ -169,6 +177,10 @@ git commit -m "feat: define validation block building"
 - Blockqs 返回 PoH 所需交易片段和证明路径，但结果默认不可信。
 - stun2p 不参与区块、交易、PoH 或脚本验证。
 - 服务不可达不改变区块合法性。
+- 公共服务质量评估只记录铸造者主观确认，不生成链上客观质量证明。
+- 全网通告检索返回普通 Proof 交易、纳入证明和附件证明，客户端本地验证后再做授权展示过滤。
+- 未授权公钥发布的 Announcement Proof 仍可作为普通 Proof 被检索，但默认不进入可信通告展示列表。
+- 授权公钥列表支持初始公钥加载、公钥更新通告轮换、撤销通告失效处理和按初始授权区块高度进行权威级排序。
 
 **Step 2: 实现接口**
 
@@ -194,14 +206,15 @@ git commit -m "feat: define public service interfaces"
 
 测试：
 
-- 第 1 年 `10 coins/block`。
-- 第 2 年 `20 coins/block`。
-- 第 3 年 `30 coins/block`。
-- 正式期从 `40 coins/block` 开始，每 2 年乘 80%。
-- 长期低通胀 `3 coins/block`。
+- 第 1 年 `1,000,000,000 chx/block`。
+- 第 2 年 `2,000,000,000 chx/block`。
+- 第 3 年 `3,000,000,000 chx/block`。
+- 正式期从 `4,000,000,000 chx/block` 开始，每 2 年乘 80%。
+- 长期低通胀 `300,000,000 chx/block`。
 - 取整规则未固定时，正式递减测试只覆盖边界和返回未决错误。
 - 交易费 50% 回收、50% 销毁。
-- 奇数最小单位余数未固定时返回未决错误或配置化策略。
+- 奇数交易费余数归 `destroyed`，例如 `TxFee = 101 chx` 时 `recovered = 50 chx`、`destroyed = 51 chx`。
+- 交易费分配禁止使用浮点中间计算。
 - 百日扩张不参与奖励计算、交易费回收或销毁计算；如实现提示，仅放在客户端、钱包或交易构造器策略层。
 
 **Step 2: 实现并提交**
@@ -228,7 +241,10 @@ git commit -m "feat: add reward subsidy rules"
 - Depots 20%。
 - Blockqs 20%。
 - stun2p 10%。
-- 除法余数未固定时返回未决错误或要求策略参数。
+- 所有断言使用 `chx`，不得使用小数 Coin 或浮点金额。
+- 分配公式为 `validation=R*40/100`、`minter=R*10/100`、`depots=R*20/100`、`blockqs=R*20/100`、`stun2p=R-validation-minter-depots-blockqs`。
+- 奖励余数归 `stun2p`，例如 `RewardTotal = 101 chx` 时 `validation = 40 chx`、`minter = 10 chx`、`depots = 20 chx`、`blockqs = 20 chx`、`stun2p = 11 chx`。
+- 奖励分配禁止使用浮点中间计算。
 
 **Step 2: 实现并提交**
 
@@ -290,4 +306,4 @@ golangci-lint run
 - 服务失败不改变区块合法性。
 - 首领黑名单和百日扩张均不得写入区块合法性或奖励计算路径，分别只作为本地策略和客户端策略。
 - Coinbase 成熟期和兑奖窗口测试覆盖。
-- 未决奖励余数和 bit 顺序不被默认固化。
+- 奖励余数归 `stun2p`、交易费余数归 `destroyed` 必须被测试覆盖；兑奖槽 bit 顺序待 ADR 固定前不被默认固化。
