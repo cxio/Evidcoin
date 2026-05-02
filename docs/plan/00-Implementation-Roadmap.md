@@ -62,7 +62,7 @@
 - 所有测试使用 table-driven tests。
 - 所有协议字节序列必须由显式编码函数生成，不使用 JSON、反射、map 遍历顺序或平台字节序。
 - 低层包不能 import 高层包。
-- 未决协议细节必须表现为 `TODO(spec)`、策略参数、接口注入或明确拒绝，不能默认选一个值并当作协议事实。
+- 开放协议细节必须表现为开放规格项、策略参数、接口注入或明确拒绝，不能默认选一个值并当作协议事实；已由 ADR 关闭的规则（如 ADR-0003 varint、ADR-0004 domain tag、ADR-0020 地址文本编码、ADR-0031 Coin/chx）必须按 ADR 执行。
 
 ## 全局验证命令
 
@@ -105,11 +105,11 @@ git commit -m "feat: add canonical encoding types"
 
 ## 主要风险
 
-- `canonical unsigned varint` 算法尚未最终确认，涉及所有结构体编码和测试向量。
-- Hash domain tag 策略未完全固定，不能生成最终跨实现测试向量。
-- 哈希树空根、单叶根和奇数叶策略未固定，必须延迟或参数化。
-- PoH 内层 Hash、整数宽度、`Stakes` 定义和 tie-breaker 未固定。
-- Coinbase 字段、输出顺序、奖励余数、兑奖槽 bit 顺序未固定。
+- `canonical unsigned varint` 算法未决项已由 ADR-0003 关闭，必须实现 LEB128 / Protocol Buffers varint 并拒绝非最短编码。
+- Hash domain tag 策略已由 ADR-0004 关闭，协议 Hash 测试向量必须使用固定 Purpose 和 tag 字节。
+- 哈希树空根、单叶根和奇数叶策略已由 ADR-0013 关闭，必须按 ADR-0013 实现。
+- PoH 内层 Hash 已由 ADR-0001 固定为 `BLAKE3-256`，X 整数宽度与编码已由 ADR-0002 固定，同 MintHash 入池规则与分叉平局分别由 ADR-0011/ADR-0027 固定；`Stakes` 精确定义仍需后续固定。
+- Coinbase `HashInputs` 由 ADR-0010 关闭；奖励分配余数由 ADR-0009 关闭；金额单位由 ADR-0031 关闭。兑奖槽 bit 顺序属于未被 ADR-0001 至 ADR-0031 覆盖的剩余开放问题。
 - 脚本 VM 指令全集很大，必须按元数据和公共验证安全边界分批实现。
 
 ## 完成定义

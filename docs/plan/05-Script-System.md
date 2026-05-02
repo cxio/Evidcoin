@@ -14,6 +14,12 @@
 - `docs/proposal/Instruction/README.md`
 - `docs/proposal/Instruction/0.Base-Constraints.md`
 - `docs/proposal/Instruction/1.Value-Instructions.md` 到 `18.Extension-Instructions.md`
+- 依赖 ADR-0005：脚本 Float 使用 binary64、round-to-nearest-even、NaN 规范化和公共验证限制。
+- 依赖 ADR-0006：脚本初始 pass 状态为 `true`，空脚本默认通过。
+- 依赖 ADR-0007：`CHECK` 可双向覆盖 pass 状态，最终态决定结果。
+- 依赖 ADR-0014：脚本资源上限按 `< N` 语义修正为 255/1023/1023/4095。
+- 依赖 ADR-0019：`SYS_NULL` 是 unlock script 唯一超范围例外。
+- 依赖 ADR-0024：签名 Witness 与 UnlockScript 分离，`SYS_CHKPASS` 只从系统环境读取签名。
 
 ## 非目标
 
@@ -104,8 +110,9 @@ git commit -m "feat: add script opcode registry"
 - 附参长度不足拒绝。
 - 关联数据长度不足拒绝。
 - 多余尾随数据拒绝，除非明确是下一条指令。
-- `MaxLockScript`、`MaxUnlockScript` 超限拒绝。
-- unlock script 只允许 opcode `0-50` 和 `SYS_NULL`。
+- `MaxLockScript` 边界：1023 bytes 合法，1024 bytes 拒绝。
+- `MaxUnlockScript` 边界：4095 bytes 合法，4096 bytes 拒绝。
+- unlock script 只允许 opcode `0-50` 和 `SYS_NULL`；`SYS_NULL` 合法，其他系统指令如 `SYS_TIME` 非法。
 
 **Step 2: 实现并提交**
 
@@ -132,9 +139,11 @@ git commit -m "feat: decode script bytecode"
 - 支持 `Nil`、`Bool`、`Byte`、`Int`、`String`、`Bytes` 等先导类型。
 - 栈 LIFO。
 - 空栈 pop 拒绝。
-- `MaxStackHeight = 256` 超限拒绝。
-- 单个 stack item 超过 `MaxStackItem = 1024` 拒绝。
+- `MaxStackHeight` 边界：255 个栈元素合法，256 个拒绝。
+- `MaxStackItem` 边界：1023 bytes 合法，1024 bytes 拒绝。
 - 实参区 FIFO。
+- Float NaN 入栈前规范化为 quiet NaN `0x7FF8000000000000`。
+- Float `+Inf` 和 `-Inf` 入栈后保留。
 
 **Step 2: 实现**
 
@@ -168,6 +177,12 @@ git commit -m "feat: add script runtime values"
 - 公共验证遇到无数据 `INPUT` 视为隐式 `END`。
 - `SYS_TIME`、`SHELL`、`EXT_PRIV` 在公共路径拒绝。
 - 成本预算耗尽拒绝。
+- 空脚本通过。
+- 无结果指令脚本通过。
+- 仅 `CHECK(false)` 拒绝。
+- `CHECK(true)` 后 `CHECK(false)` 最终拒绝。
+- `CHECK(false)` 后 `CHECK(true)` 最终通过。
+- 公共验证路径中 Float 直接作为 `CHECK/PASS` 参数拒绝。
 
 **Step 2: 实现并提交**
 
@@ -197,6 +212,7 @@ git commit -m "feat: add script execution state"
 - `NOP`、`PUSH`、`POP`、`TOP`、`PEEK` 基本行为。
 - `INPUT`、`OUTPUT` 缓冲行为。
 - `PASS`、`CHECK`、`EXIT`、`RETURN`、`END` 状态转换。
+- `CHECK` 按 `passState = bool(x)` 覆盖，不做防覆盖保护。
 - 所有失败路径包括栈下溢、参数不足、公共模式限制。
 
 **Step 2: 实现并提交**
@@ -226,8 +242,10 @@ git commit -m "feat: add core script instructions"
 - 环境字段注册表包含字段名、类型、确定性、可用域、成本、错误规则。
 - `SIGNED` 通过注入 verifier 验证，不直接依赖交易包实现。
 - `SYS_CHKPASS` 通过注入接口查询，不直接依赖状态包。
+- `SYS_CHKPASS` 签名只能来自环境中的 Witness 数据；普通数据栈、实参区或 UnlockScript 字节流中的签名字节必须不被读取为签名来源。
 - Hash 函数指令复用 `pkg/crypto`。
-- `SYS_NULL` 可用于 unlock script。
+- `SYS_NULL` 可用于 unlock script，且不执行计算、不访问状态、不影响栈。
+- 其他系统指令如 `SYS_TIME` 用于 unlock script 必须拒绝。
 
 **Step 2: 实现**
 
@@ -271,6 +289,8 @@ git commit -m "feat: add script environment interfaces"
 - 隐式跨类比较默认拒绝。
 - `EVERY`、`SOME` 对空集合语义明确测试。
 - 转换必须按源类型到目标类型规则表执行。
+- Float NaN 比较：`EQUAL` 为 false，`NEQUAL` 为 true，大小比较拒绝，`ISNAN` 对 Float NaN 返回 true。
+- Float 转换：NaN 规范化，Infinity 保留；NaN/Infinity 转离散数值类型拒绝。
 
 **Step 2: 实现并提交**
 

@@ -14,6 +14,12 @@
 - `docs/proposal/11.Endpoint-Conventions-And-Fork-Choice.md`
 - 依赖 `docs/proposal/06.Transaction-Model.md`
 - 依赖 `docs/proposal/08.UTXO-UTCO-State.md`
+- 依赖 ADR-0001：PoH 内层 Hash 使用 `BLAKE3-256`。
+- 依赖 ADR-0002：X 参数使用 Unix epoch 毫秒、BigInt 无截断乘法和大端最小字节编码。
+- 依赖 ADR-0011：相同 MintHash 候选入择优池时只保留先到者。
+- 依赖 ADR-0025：`mintTxID` 资格窗口按交易所在区块高度判定。
+- 依赖 ADR-0026：首领黑名单冻结为本地共约。
+- 依赖 ADR-0027：分叉平局比较分叉点后第一个区块 BlockID。
 
 ## 非目标
 
@@ -52,12 +58,15 @@
 - `MintHash` 输出 64B。
 - 排序按 unsigned lexicographic byte order。
 - 不能按 hex 字符串排序。
-- 相同 hash 的 tie-breaker 未固定时返回 `ErrTieBreakerUnspecified`。
-- `timeStamp` 来自 `GenesisTime + height * BlockInterval`，不读取本机时间。
+- `hashData = BLAKE3-256(mintTxID || referenceBlockMintHash || X)`。
+- `MintHash = BLAKE3-512-XOF(Sign(hashData), 64)`。
+- `timeStamp` 来自 `GenesisTimestampMs + height * 360000`，单位为 Unix epoch 毫秒，不读取本机时间。
+- `X_BigInt = timeStamp * Stakes * Mix` 使用 BigInt 无截断乘法。
+- `X = BigIntToMinimalBigEndianBytes(X_BigInt)`；测试向量覆盖 `Stakes = 0` 时输出 `0x00`，以及至少一个乘积超过 `uint64` 的非零值，验证无前导零的大端最小字节编码。
 
-**Step 2: 处理未决项**
+**Step 2: 实现 ADR 已决规则**
 
-PoH 内层 `Hash(...)` 算法、domain tag、`X` 整数宽度仍未固定时，先实现 `MintHashInput.CanonicalBytes()` 和 `RankMintHashes()`，`ComputeMintHash()` 对未决参数返回明确错误，或要求调用方注入 `InnerHasher` 和 `XEncoder`。
+实现 `MintHashInput.CanonicalBytes()`、`RankMintHashes()` 和 `ComputeMintHash()`，按 ADR-0001/0002 固定内层 Hash 与 X 编码；不得再为这些已决场景返回 `ErrSpecIncomplete` 或同类占位错误。
 
 **Step 3: 验证并提交**
 
@@ -78,11 +87,12 @@ git commit -m "feat: add mint hash ordering"
 测试：
 
 - 高度窗口 `28 <= currentHeight - txHeight <= 80000`。
+- `txHeight` 必须来自 `blockHeight(mintTxID)`；交易自身 `Timestamp` 变化不得影响资格判定。
 - 首领输入必须是 Coin 输入。
 - 首领输入必须引用完整 48B `TxID`。
 - 来源输出接收者地址哈希必须匹配铸造者公钥材料。
 - 签名验证必须通过 `pkg/crypto` 抽象。
-- 币权销毁门槛未固定时返回可区分的未决错误或配置化参数。
+- 币权销毁门槛可升级性属于未被 ADR-0001 至 ADR-0031 覆盖的剩余开放问题，返回可区分的开放规格错误或配置化参数。
 
 **Step 2: 实现接口化 verifier**
 
@@ -120,6 +130,7 @@ git commit -m "feat: verify mint proof boundaries"
 - 按 `MintHash` 升序。
 - 新候选更优时进入池并挤出最差。
 - 重复候选去重。
+- 相同 `MintHash` 的不同候选只保留先到者，后到者拒绝入池。
 - 前 5 名不具备同步发起权。
 - ranks 6..20 具备同步发起权。
 
@@ -220,7 +231,7 @@ git commit -m "feat: add fast relay states"
 - 同一铸造者签署多个区块时，交易费收益较低者胜出。
 - 候选区块币权销毁量达到主区块 3 倍时胜出。
 - 交易费收益或币权销毁量定义未注入时返回未决错误。
-- 3 倍边界是否包含等于未固定时测试标注未决。
+- 3 倍边界是否包含等于属于未被 ADR-0001 至 ADR-0031 覆盖的剩余开放问题，测试标注开放规格项。
 
 **Step 2: 实现**
 
@@ -251,7 +262,7 @@ git commit -m "feat: add block competition policy"
 - 29 区块竞争窗口。
 - 某链先达 15 wins 提前胜出。
 - 逐块比较 `MintHash`。
-- `MintHash` 相等处理未固定时返回未决错误。
+- 分叉竞争平局时比较分叉点之后第一个区块的 `BlockID`，字典序更小者胜出；测试覆盖两条分叉累积 PoH 权重相等但首个区块 `BlockID` 不同的场景。
 - 长度 20 临界裁决消息绑定分叉点、本链末端、支链末端、当前高度、目标择优池引用、domain tag、防重放字段。
 - 前 5 名裁决签名按排名选择最靠前有效签名。
 - 前 5 名均无有效签名时默认拒绝。
@@ -281,7 +292,9 @@ golangci-lint run
 通过标准：
 
 - `MintHash` 排序跨平台稳定。
+- X 编码测试覆盖零值、无前导零和超过固定宽度整数的 BigInt 乘积。
+- mintTxID 资格验证只依赖交易所在区块高度，不依赖交易自身时间戳。
 - 端点共约和协议规则在类型/注释/测试中明确区分。
 - 快速转播临时状态不等于最终验证。
 - 分叉选择不会自动处理 Proposal 明确排除的长期分叉。
-- 未决 PoH 细节不会被伪装为最终规则。
+- 已由 ADR 关闭的 PoH 规则不得继续伪装为未决；剩余 PoH 开放问题不会被伪装为最终规则。
