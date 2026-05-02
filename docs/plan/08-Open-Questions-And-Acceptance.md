@@ -23,7 +23,7 @@
 | OQ-009 | Tx | 已关闭（ADR-0010） | Coinbase `HashInputs` 特殊规则 | Coinbase TxID | 按 ADR-0010 实现 Coinbase `HashInputs` |
 | OQ-010 | Tx | 未决 | 交易大小是否包含解锁脚本和外层长度 | `MaxTxSize` 验证 | 先只提供配置和结构检查 |
 | OQ-011 | Tx | 未决 | 多签排序、重复公钥/签名处理 | 签名验证 | 先实现接口，不固定多签协议 |
-| OQ-012 | State | 部分关闭（ADR-0008） | TxID 字节索引已由 ADR-0008 关闭；四层宽成员树节点组合、空根、年度分区编码仍未被 ADR 覆盖 | UTXO/UTCO root | 字节索引按 ADR-0008 使用 0-based；其余部分先实现叶子和分组，不宣称最终 root |
+| OQ-012 | State | 部分关闭（ADR-0008） | TxID 字节索引已由 ADR-0008 关闭；四层宽成员树节点组合、年度分区编码仍未被 ADR 覆盖 | UTXO/UTCO root | 字节索引按 ADR-0008 使用 0-based；其余部分先实现叶子和分组，不宣称最终 root |
 | OQ-013 | Script | 已关闭（ADR-0006/ADR-0007） | VM 初始 pass 状态和 `CHECK` 覆盖规则 | 脚本结果验证 | 初始 pass 状态按 ADR-0006；`CHECK` 覆盖语义按 ADR-0007 |
 | OQ-014 | Script | 未决 | 成本公式 | 公共验证 DoS 防护 | 先实现预算框架和保守拒绝 |
 | OQ-015 | Address | 已关闭（ADR-0020） | 文本地址编码、前缀、checksum | CLI/钱包 | 按 ADR-0020 实现文本地址编码 |
