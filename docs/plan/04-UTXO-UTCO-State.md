@@ -14,6 +14,9 @@
 - 依赖 `docs/proposal/06.Transaction-Model.md`
 - 依赖 `docs/proposal/07.Coin-Credit-Proof-Units.md`
 - 依赖 `docs/proposal/04.Hash-Trees.md`
+- 依赖 ADR-0008：状态指纹树使用 `TxID[8]`、`TxID[13]`、`TxID[18]` 的 0-based 字节索引路由。
+- 依赖 ADR-0015：禁止同一区块内链式消费，输入只能引用已确认历史区块输出。
+- 依赖 ADR-0022：区块验证使用前置状态指纹，区块执行后生成下一高度的前置状态指纹。
 
 ## 包边界
 
@@ -136,7 +139,7 @@ git commit -m "feat: resolve state references"
 - 输出 Coin 插入 UTXO。
 - 销毁 flag 的 Coin 不进入 UTXO。
 - Proof/Credit 输入传入 UTXO apply 时拒绝。
-- 同一区块内前序新输出不能被后序交易消费，除非 Proposal 未来显式允许。
+- 同一区块 A 输出被 B 输入引用时拒绝，无论 A 是否在 B 之前；输入只能引用已确认历史区块中的 UTXO。
 
 **Step 2: 实现**
 
@@ -178,6 +181,7 @@ git commit -m "feat: apply utxo state transitions"
 - 可修改性只能降级。
 - 到期 Credit 在区块结束清理。
 - 转移次数归零后不进入 UTCO。
+- 同一区块 A 输出被 B 输入引用时拒绝，无论 A 是否在 B 之前；输入只能引用已确认历史区块中的 UTCO。
 
 **Step 2: 实现**
 
@@ -230,14 +234,15 @@ git commit -m "feat: add state fingerprint leaves"
 测试：
 
 - 顶层按年度分级。
-- 后三级使用 `TxID` 字节 `[8,13,18]` 分层。
+- 后三级使用 `TxID[8]`、`TxID[13]`、`TxID[18]` 分层，且均为 0-based 字节索引。
+- 使用具体 TxID 测试向量验证第 9、14、19 个字节分别进入三层路由，避免 1-based 误实现。
 - 同一数据进入 UTXO root 与 UTCO root 时有语义隔离。
-- 空状态 root 如 Proposal 未固定则返回明确未决错误。
+- 空状态 root 为 48 bytes 全零值。
 - 单项、多项 root 稳定。
 
 **Step 2: 实现**
 
-如果四层宽成员树节点组合细节未固定，只实现 bucket 分组和叶子列表，root 函数返回 `ErrSpecIncomplete`。不要发明最终 root。
+如果四层宽成员树节点组合细节未固定，只实现 bucket 分组和叶子列表，root 函数除空状态全零根外返回 `ErrSpecIncomplete`。不要发明非空状态最终 root。
 
 **Step 3: 验证并提交**
 

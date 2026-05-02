@@ -14,6 +14,7 @@
 - 依赖 `docs/proposal/01.Types-And-Encoding.md`
 - 依赖 `docs/proposal/02.Cryptography-And-Hashing.md`
 - 依赖 `docs/proposal/03.Identifiers-And-Constants.md`
+- 依赖 ADR-0022：`CheckRoot[H]` 使用高度 `H-1` 执行后的前置状态指纹；`h == 0` 使用空状态指纹。
 
 ## 非目标
 
@@ -212,10 +213,12 @@ git commit -m "feat: add year block helpers"
 - 输入 `TransactionTreeRoot || UTXORoot || UTCORoot` 得到 48B `CheckRoot`。
 - 改变任一输入会改变结果。
 - UTXO 与 UTCO 输入顺序调换会改变结果。
+- `h == 0` 时调用方传入空状态指纹，组合结果稳定可复现。
+- 普通区块高度 `H > 0` 的 CheckRoot 测试必须从状态指纹提供者读取上一高度 `H-1` 的 UTXO/UTCO 指纹，而不是当前区块执行后的指纹。
 
 **Step 2: 实现**
 
-只组合已给定的根，不在核心层计算交易树或状态树。
+只组合已给定的根，不在核心层计算交易树或状态树。若提供高度感知辅助函数，应按 ADR-0022 在 `h == 0` 时使用空状态指纹，在普通区块读取上一高度状态指纹。
 
 **Step 3: 验证并提交**
 

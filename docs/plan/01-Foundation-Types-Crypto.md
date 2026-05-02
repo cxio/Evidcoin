@@ -2,7 +2,7 @@
 
 **Goal:** 实现 Evidcoin 的基础类型、规范化编码、Hash/ID 类型、密码学抽象和基础哈希树工具。
 
-**Architecture:** `pkg/types/` 只提供无内部依赖的类型、常量和编码能力，`pkg/crypto/` 在其上提供 Hash、地址哈希和签名抽象。哈希树工具应优先放在基础层可复用包中，但未决规则必须通过显式策略参数或拒绝路径处理。
+**Architecture:** `pkg/types/` 只提供无内部依赖的类型、常量和编码能力，`pkg/crypto/` 在其上提供 Hash、地址哈希和签名抽象。哈希树工具应优先放在基础层可复用包中；ADR-0013 已固定哈希树边界策略为协议默认，证明路径编码等仍待决规则通过显式策略参数或拒绝路径处理。
 
 **Tech Stack:** Go 1.26.2、`golang.org/x/crypto/sha3`、`golang.org/x/crypto/blake2b`、`lukechampine.com/blake3`、表驱动测试。
 
@@ -348,12 +348,13 @@ git commit -m "feat: add amount unit helpers"
 - 同一叶子主体配不同 3-byte sequence prefix 得到不同 leaf hash。
 - 同一叶子主体配不同 2-byte sequence prefix 得到不同 leaf hash。
 - 证明路径方向错误时验证失败。
-- 空树策略未指定时返回明确错误。
-- 奇数叶策略未指定时返回明确错误。
+- 空树返回对应根 Hash 长度的全零值。
+- 单叶树根等于叶子 Hash。
+- 奇数叶复制最后一个叶子后配对计算。
 
 **Step 2: 最小实现**
 
-实现 `OddLeafPolicy`、`EmptyTreePolicy`，初始只支持测试明确选择的策略。不要把空根或复制末叶作为默认协议事实。
+实现 ADR-0013 固定的默认协议行为：空树根为对应 Hash 长度全零值，单叶树根等于叶子 Hash，奇数叶复制末叶后配对计算。如保留 `OddLeafPolicy`、`EmptyTreePolicy` 仅用于非协议测试辅助，默认值必须固定为 ADR-0013 行为，不得再用“缺少策略配置返回错误”作为协议默认。
 
 **Step 3: 验证并提交**
 
@@ -383,4 +384,4 @@ golangci-lint run
 - `pkg/crypto` 不依赖 `internal/*`。
 - 所有 Hash 输出长度与 Proposal 一致。
 - 固定长度 ID 不能语义混用。
-- 未决 Hash 树策略没有被默认为协议事实。
+- ADR-0013 固定的哈希树边界策略已实现；其它未决 Hash 树策略没有被默认为协议事实。
