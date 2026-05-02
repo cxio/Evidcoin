@@ -100,6 +100,10 @@
 
 本项目较大，因此追加一层架构决策记录 ADR（Architecture Decision Records），存放在 `docs/adr` 目录下。
 
+ADR 用于关闭 Proposal 或 Plan 中尚未固定的协议细节。若 ADR 状态为 `Accepted`，其决策优先于 Proposal/Plan 中较早的未决、临时策略或待确认表述；修订 Proposal/Plan 时必须同步移除或标记这些旧表述，避免后续实现误用过期规则。
+
+维护规则：修订任意 `proposal/*.md` 或 `plan/*.md` 时，应检查 `adr/*.md` 是否已经关闭对应的 Open Question（OQ）。若已关闭，必须在相关 Proposal/Plan 中补充 ADR 追溯并更新 `plan/08-Open-Questions-And-Acceptance.md` 的状态；若仅部分关闭，应明确保留未被 ADR 覆盖的剩余问题。
+
 
 ## 实施方案（Plan）
 

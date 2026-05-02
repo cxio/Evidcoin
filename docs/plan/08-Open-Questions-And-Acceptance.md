@@ -10,35 +10,35 @@
 
 ## 未决项总表
 
-| 编号 | 领域 | 未决项 | 阻塞范围 | 建议处理 |
-|------|------|--------|----------|----------|
-| OQ-001 | 编码 | canonical unsigned varint 具体算法 | 所有可变长度编码最终向量 | 实施前询问用户或新增 ADR |
-| OQ-002 | 编码 | signed integer 是否进入协议编码 | 脚本外的负数语义 | 未确认前只在 VM 值内部使用 |
-| OQ-003 | Hash | domain tag 是否进入协议 Hash 输入 | 跨实现 Hash 向量 | 代码提供 domain API，但协议 Hash 不擅自加 tag |
-| OQ-004 | Hash Tree | 空树根 | 交易树、状态树、附件树 | 未确认前空树返回 `ErrSpecIncomplete` |
-| OQ-005 | Hash Tree | 单叶树根规则 | 所有树 | 通过策略参数显式选择 |
-| OQ-006 | Hash Tree | 奇数叶处理策略 | 二元树 | 通过策略参数显式选择 |
-| OQ-007 | Block | `YearBlock` 在创世、边界、非边界高度取值 | 区块头编码和验证 | 先实现查询接口并标注规则来源 |
-| OQ-008 | Block | `CheckRoot` 是否包含 domain tag、版本、高度 | 区块最终验证向量 | 只实现当前 Proposal 的三根组合 |
-| OQ-009 | Tx | Coinbase `HashInputs` 特殊规则 | Coinbase TxID | Coinbase 编码延后最终向量 |
-| OQ-010 | Tx | 交易大小是否包含解锁脚本和外层长度 | `MaxTxSize` 验证 | 先只提供配置和结构检查 |
-| OQ-011 | Tx | 多签排序、重复公钥/签名处理 | 签名验证 | 先实现接口，不固定多签协议 |
-| OQ-012 | State | 四层宽成员树节点组合、空根、年度分区编码 | UTXO/UTCO root | 先实现叶子和分组，不宣称最终 root |
-| OQ-013 | Script | VM 初始 pass 状态和 `CHECK` 覆盖规则 | 脚本结果验证 | 先按测试写明临时语义 |
-| OQ-014 | Script | 成本公式 | 公共验证 DoS 防护 | 先实现预算框架和保守拒绝 |
-| OQ-015 | Address | 文本地址编码、前缀、checksum | CLI/钱包 | 基础层只固定 32B `AddressHash` |
-| OQ-016 | PoH | 内层 `Hash(...)` 算法和 domain tag | `MintHash` 最终向量 | ADR-0001 已关闭，内层 Hash 为 `BLAKE3-256` |
-| OQ-017 | PoH | `timeStamp * Stakes * Mix` 宽度、溢出和编码 | `MintHash` 最终向量 | ADR-0002 已关闭，使用 BigInt 和大端最小字节编码 |
-| OQ-018 | PoH | `Stakes` 精确定义和单位 | 区块头和 PoH | 独立类型，不参与经济语义测试 |
-| OQ-019 | PoH | `MintHash` 相等 tie-breaker | pool/fork 排序 | ADR-0011/ADR-0027 已关闭：入池先到者保留，分叉平局按 BlockID 字典序 |
-| OQ-020 | Fork | 3 倍币权销毁比较是否包含等于 | 区块竞争 | 策略参数化 |
-| OQ-021 | Incentive | 发行递减取整规则 | 奖励测试向量 | 正式期向量延后 |
-| OQ-022 | Incentive | 交易费奇数最小单位余数归属 | 费用分配 | 策略参数化 |
-| OQ-023 | Incentive | 奖励分配余数归属 | Coinbase 输出 | 策略参数化 |
-| OQ-024 | Incentive | 兑奖槽 bit 顺序和分叉重组重算 | 公共服务兑奖 | 仅实现 18B 骨架 |
-| OQ-025 | Services | 服务奖励地址是否签名绑定服务身份 | 服务奖励安全性 | 接口预留证明字段 |
-| OQ-026 | Validation | 首领输入黑名单是否协议规则 | 校验组行为 | 作为 convention 配置 |
-| OQ-027 | Validation | 首笔输入币权最大是否协议规则 | 交易合法性 | 作为 convention 检查 |
+| 编号 | 领域 | 状态 | 未决项 | 阻塞范围 | 建议处理 |
+|------|------|------|--------|----------|----------|
+| OQ-001 | 编码 | 已关闭（ADR-0003） | canonical unsigned varint 具体算法 | 所有可变长度编码最终向量 | 按 ADR-0003 实现并生成最终向量 |
+| OQ-002 | 编码 | 未决 | signed integer 是否进入协议编码 | 脚本外的负数语义 | 未确认前只在 VM 值内部使用 |
+| OQ-003 | Hash | 已关闭（ADR-0004） | domain tag 是否进入协议 Hash 输入 | 跨实现 Hash 向量 | 按 ADR-0004 的 domain tag 格式实现 |
+| OQ-004 | Hash Tree | 已关闭（ADR-0013） | 空树根 | 交易树、状态树、附件树 | 空树根按 ADR-0013 固定为对应长度全零 Hash |
+| OQ-005 | Hash Tree | 已关闭（ADR-0013） | 单叶树根规则 | 所有树 | 单叶树根按 ADR-0013 固定为叶子 Hash 本身 |
+| OQ-006 | Hash Tree | 已关闭（ADR-0013） | 奇数叶处理策略 | 二元树 | 奇数叶按 ADR-0013 复制最后一个叶子 |
+| OQ-007 | Block | 未决 | `YearBlock` 在创世、边界、非边界高度取值 | 区块头编码和验证 | 先实现查询接口并标注规则来源 |
+| OQ-008 | Block | 部分关闭（ADR-0022） | `CheckRoot` 状态时间点已由 ADR-0022 关闭；是否包含 domain tag、版本、高度仍未被 ADR 覆盖 | 区块最终验证向量 | 状态时间点按 ADR-0022 使用前置状态承诺；其余字段只实现当前 Proposal 的三根组合 |
+| OQ-009 | Tx | 已关闭（ADR-0010） | Coinbase `HashInputs` 特殊规则 | Coinbase TxID | 按 ADR-0010 实现 Coinbase `HashInputs` |
+| OQ-010 | Tx | 未决 | 交易大小是否包含解锁脚本和外层长度 | `MaxTxSize` 验证 | 先只提供配置和结构检查 |
+| OQ-011 | Tx | 未决 | 多签排序、重复公钥/签名处理 | 签名验证 | 先实现接口，不固定多签协议 |
+| OQ-012 | State | 部分关闭（ADR-0008） | TxID 字节索引已由 ADR-0008 关闭；四层宽成员树节点组合、空根、年度分区编码仍未被 ADR 覆盖 | UTXO/UTCO root | 字节索引按 ADR-0008 使用 0-based；其余部分先实现叶子和分组，不宣称最终 root |
+| OQ-013 | Script | 已关闭（ADR-0006/ADR-0007） | VM 初始 pass 状态和 `CHECK` 覆盖规则 | 脚本结果验证 | 初始 pass 状态按 ADR-0006；`CHECK` 覆盖语义按 ADR-0007 |
+| OQ-014 | Script | 未决 | 成本公式 | 公共验证 DoS 防护 | 先实现预算框架和保守拒绝 |
+| OQ-015 | Address | 已关闭（ADR-0020） | 文本地址编码、前缀、checksum | CLI/钱包 | 按 ADR-0020 实现文本地址编码 |
+| OQ-016 | PoH | 已关闭（ADR-0001） | 内层 `Hash(...)` 算法和 domain tag | `MintHash` 最终向量 | 内层 Hash 按 ADR-0001 使用 `BLAKE3-256` |
+| OQ-017 | PoH | 已关闭（ADR-0002） | `timeStamp * Stakes * Mix` 宽度、溢出和编码 | `MintHash` 最终向量 | 按 ADR-0002 使用 BigInt 和大端最小字节编码 |
+| OQ-018 | PoH | 未决 | `Stakes` 精确定义和单位仍未被 ADR 覆盖 | 区块头和 PoH | 独立类型，不参与经济语义测试；X 编码已由 ADR-0002 关闭，不再作为未决项 |
+| OQ-019 | PoH | 已关闭（ADR-0011/ADR-0027） | `MintHash` 相等 tie-breaker | pool/fork 排序 | 入池先到者保留按 ADR-0011；分叉平局按 ADR-0027 使用 BlockID 字典序 |
+| OQ-020 | Fork | 未决 | 3 倍币权销毁比较是否包含等于 | 区块竞争 | 策略参数化 |
+| OQ-021 | Incentive | 部分关闭（ADR-0009） | 奖励分配余数已由 ADR-0009 关闭；发行递减取整规则仍未被 ADR 覆盖 | 奖励测试向量 | 奖励分配按 ADR-0009；发行递减取整规则正式期向量延后 |
+| OQ-022 | Incentive | 已关闭（ADR-0009） | 交易费奇数最小单位余数归属 | 费用分配 | 交易费余数按 ADR-0009 归销毁 |
+| OQ-023 | Incentive | 已关闭（ADR-0009） | 奖励分配余数归属 | Coinbase 输出 | 奖励分配余数按 ADR-0009 由 `stun2p` 吸收 |
+| OQ-024 | Incentive | 未决 | 兑奖槽 bit 顺序和分叉重组重算 | 公共服务兑奖 | 仅实现 18B 骨架 |
+| OQ-025 | Services | 未决 | 服务奖励地址是否签名绑定服务身份 | 服务奖励安全性 | 接口预留证明字段 |
+| OQ-026 | Validation | 已关闭（ADR-0026） | 首领输入黑名单是否协议规则 | 校验组行为 | 按 ADR-0026 作为 convention 配置 |
+| OQ-027 | Validation | 未决 | 首笔输入币权最大是否协议规则 | 交易合法性 | 作为 convention 检查 |
 
 ## 编码时的未决项规则
 
