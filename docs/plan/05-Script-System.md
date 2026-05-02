@@ -1,7 +1,5 @@
 # Script System Implementation Plan
 
-> **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
-
 **Goal:** 实现 Evidcoin 栈式脚本 VM 的 bytecode、运行时空间、资源限制、公共/私有模式、安全状态机和分批指令注册表。
 
 **Architecture:** `internal/script/` 是 Layer 3，依赖基础类型和上层注入的交易/状态环境接口，但交易、状态、共识包不得依赖脚本包的具体实现。先实现 VM 核心和元数据注册，再按指令组逐批实现；危险或未决指令默认解析但拒绝执行。

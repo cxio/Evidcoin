@@ -1,7 +1,5 @@
 # Blockchain Core Implementation Plan
 
-> **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
-
 **Goal:** 实现只负责区块头链、链身份、年块边界和最小入块验证的区块链核心层。
 
 **Architecture:** `internal/blockchain/` 依赖 `pkg/types` 和 `pkg/crypto`，不执行交易、脚本、状态转移、PoH 或网络逻辑。它只验证区块头自身编码、`BlockID`、高度连续性、`PrevBlock` 衔接和显式链身份。

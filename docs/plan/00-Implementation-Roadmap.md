@@ -1,7 +1,5 @@
 # Evidcoin Implementation Roadmap Implementation Plan
 
-> **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
-
 **Goal:** 将 `docs/proposal/` 的技术提案转化为后续 Go 编码可直接执行的阶段化实施路线。
 
 **Architecture:** 按项目既定 Layer 0 到 Layer 5 单向依赖推进，先固定基础类型、编码、Hash 与签名抽象，再逐步实现区块、交易、状态、脚本、共识和外部接口边界。所有共识级字节输入必须追溯到 `docs/proposal/` 的规范化编码，所有未决协议细节必须显式隔离，不能在代码中悄悄固化。

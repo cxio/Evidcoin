@@ -1,7 +1,5 @@
 # UTXO UTCO State Implementation Plan
 
-> **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
-
 **Goal:** 实现 Coin 的 UTXO 状态、Credit 的 UTCO 状态、局部引用解析、状态转移、状态指纹和基础回滚接口。
 
 **Architecture:** `internal/utxo/` 和 `internal/utco/` 分别维护 Coin 与 Credit 状态，语义隔离但共享相同状态指纹算法。状态层通过接口调用脚本验证，不直接依赖脚本 VM 具体执行器，以避免循环依赖。

@@ -1,7 +1,5 @@
 # Open Questions And Acceptance Implementation Plan
 
-> **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
-
 **Goal:** 汇总阻塞最终协议实现的未决项，并定义全项目验收、测试覆盖、集成测试和文档同步标准。
 
 **Architecture:** 未决项必须在编码时显式隔离，直到 Proposal 或 ADR 固定。验收分为阶段验收、跨层依赖验收、协议向量验收和集成验收。

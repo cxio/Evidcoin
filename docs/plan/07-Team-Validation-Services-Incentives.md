@@ -1,7 +1,5 @@
 # Team Validation Services Incentives Implementation Plan
 
-> **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
-
 **Goal:** 定义校验组协作接口、公共服务可验证数据接口、Coinbase 奖励计算、公共服务兑奖和成熟期规则。
 
 **Architecture:** 校验组和公共服务不是新的共识信任源，只提供接口、任务状态和可验证数据边界。激励逻辑依赖交易、状态和共识层已验证的数据，Coinbase 奖励输出必须进入状态层成熟期控制。

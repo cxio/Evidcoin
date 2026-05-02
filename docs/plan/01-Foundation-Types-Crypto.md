@@ -1,7 +1,5 @@
 # Foundation Types Crypto Implementation Plan
 
-> **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
-
 **Goal:** 实现 Evidcoin 的基础类型、规范化编码、Hash/ID 类型、密码学抽象和基础哈希树工具。
 
 **Architecture:** `pkg/types/` 只提供无内部依赖的类型、常量和编码能力，`pkg/crypto/` 在其上提供 Hash、地址哈希和签名抽象。哈希树工具应优先放在基础层可复用包中，但未决规则必须通过显式策略参数或拒绝路径处理。

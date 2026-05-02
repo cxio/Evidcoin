@@ -98,7 +98,7 @@
 
 ### 架构决策记录（ADR）
 
-本项目较大，考虑追加一层架构决策记录 ADR（Architecture Decision Records），存放在 `docs/adr` 目录下。
+本项目较大，因此追加一层架构决策记录 ADR（Architecture Decision Records），存放在 `docs/adr` 目录下。
 
 
 ## 实施方案（Plan）

@@ -1,7 +1,5 @@
 # PoH Consensus And Fork Choice Implementation Plan
 
-> **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
-
 **Goal:** 实现历史证明共识的 MintHash、铸凭资格验证、择优池、同步池、确定性区块时间、快速转播状态和分叉选择规则。
 
 **Architecture:** `internal/consensus/` 只处理共识验证和本地协作策略边界，通过接口读取区块头、交易片段、状态证明和签名验证结果。公共服务返回的数据必须先被验证，不能作为可信输入。
