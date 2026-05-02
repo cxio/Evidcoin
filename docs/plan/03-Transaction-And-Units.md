@@ -148,7 +148,7 @@ git commit -m "feat: add transaction output envelope"
 
 - Coin payload 编码包含 `Receiver`、`Amount`、`Memo optional Bytes`、`LockScript`。
 - `Amount` 类型和测试向量明确以 `chx` 为单位，使用 `uint64` 表示；不得用小数 Coin 参与协议编码。
-- `Amount == 0` 是否允许必须按 Proposal 标注；未决时测试拒绝 0 并加 `TODO(spec)`。
+- `Amount == 0` 是否允许必须按 Proposal 标注；开放规格项阶段测试拒绝 0，并说明该规则未被 ADR-0001 至 ADR-0031 覆盖。
 - `LockScript` 超过 `MaxLockScript` 拒绝。
 - Coin 不接受 AttachmentID。
 
@@ -233,7 +233,7 @@ git commit -m "feat: add non-coin transaction units"
 
 **Step 2: 实现**
 
-使用 `pkg/hashtree`，但空树、单叶、奇数叶按 Proposal 未决项显式选择策略。
+使用 `pkg/hashtree`，空树、单叶、奇数叶按 ADR-0013 的已决策略实现。
 
 **Step 3: 验证并提交**
 
@@ -291,7 +291,7 @@ git commit -m "feat: add transaction signature messages"
 - Coinbase 使用独立 parser，不套用普通输出 envelope 的低 4 位类型字段。
 - Coinbase 输出只能是 Coin；出现 Credit、Proof、Mediator 或 Custom 输出必须拒绝。
 - Coinbase `HashInputs` 测试覆盖高度 `0`、`1`、`math.MaxUint64`。
-- Coinbase 已固定字段必须规范编码；奖励拆分未固定部分返回明确未实现错误或只编码已固定字段。
+- Coinbase 已决字段必须规范编码；奖励分配余数按 ADR-0009 由 `stun2p` 吸收，金额单位按 ADR-0031 使用 `chx`。发行递减取整等剩余开放问题返回明确未实现错误或只编码已决字段。
 
 **Step 2: 实现**
 

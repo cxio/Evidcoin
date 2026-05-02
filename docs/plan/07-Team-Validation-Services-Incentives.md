@@ -211,7 +211,7 @@ git commit -m "feat: define public service interfaces"
 - 第 3 年 `3,000,000,000 chx/block`。
 - 正式期从 `4,000,000,000 chx/block` 开始，每 2 年乘 80%。
 - 长期低通胀 `300,000,000 chx/block`。
-- 取整规则未固定时，正式递减测试只覆盖边界和返回未决错误。
+- 发行递减取整规则属于未被 ADR-0001 至 ADR-0031 覆盖的剩余开放问题，正式递减测试只覆盖边界和返回开放规格错误。
 - 交易费 50% 回收、50% 销毁。
 - 奇数交易费余数归 `destroyed`，例如 `TxFee = 101 chx` 时 `recovered = 50 chx`、`destroyed = 51 chx`。
 - 交易费分配禁止使用浮点中间计算。
@@ -275,7 +275,7 @@ git commit -m "feat: distribute block rewards"
 - 即使提前 2 次确认，也需等待 `CoinbaseMaturity = 29 blocks`。
 - 第 49 个区块回收未兑奖部分。
 - 兑奖槽总计 144 bits = 18 bytes。
-- bit 顺序未固定时，slot 编解码返回未决错误或只支持显式策略。
+- 兑奖 slot bit 顺序属于未被 ADR-0001 至 ADR-0031 覆盖的剩余开放问题，slot 编解码返回开放规格错误或只支持显式策略。
 
 **Step 2: 实现并提交**
 

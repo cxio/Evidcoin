@@ -244,7 +244,7 @@ git commit -m "feat: add state fingerprint leaves"
 
 **Step 2: 实现**
 
-如果四层宽成员树节点组合细节未固定，只实现 bucket 分组和叶子列表，root 函数除空状态全零根外返回 `ErrSpecIncomplete`。不要发明非空状态最终 root。
+四层宽成员树节点组合细节属于未被 ADR-0001 至 ADR-0031 覆盖的剩余开放问题；先只实现 bucket 分组和叶子列表，root 函数除空状态全零根外返回 `ErrSpecIncomplete`。不要发明非空状态最终 root。
 
 **Step 3: 验证并提交**
 

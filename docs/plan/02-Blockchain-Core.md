@@ -51,7 +51,7 @@
 5. `Stakes`
 6. `YearBlock`
 
-`Stakes` 的具体单位和宽度如果在 Proposal 中仍未固定，先定义为显式类型并用 `TODO(spec)` 标记，测试只覆盖编码稳定性，不覆盖经济语义。
+`Stakes` 的具体单位和宽度属于未被 ADR-0001 至 ADR-0031 覆盖的剩余开放问题。实现时先定义为显式类型并标注为开放规格项，测试只覆盖编码稳定性，不覆盖经济语义。
 
 ## Task 1: 区块头编码与 BlockID
 
@@ -190,7 +190,7 @@ git commit -m "feat: add minimal header chain validation"
 
 **Step 2: 实现**
 
-实现查询和验证辅助。`YearBlock` 在创世和非边界高度的确切含义如仍未定，代码用文档注释说明采用的临时规则，并在 `08-Open-Questions-And-Acceptance.md` 关联未决项。
+实现查询和验证辅助。`YearBlock` 在创世和非边界高度的确切含义属于未被 ADR-0001 至 ADR-0031 覆盖的剩余开放问题，代码用文档注释说明采用的临时规则，并在 `08-Open-Questions-And-Acceptance.md` 关联开放项。
 
 **Step 3: 验证并提交**
 
