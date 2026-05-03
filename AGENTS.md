@@ -99,10 +99,10 @@ Layer 0 基础层:    pkg/types/, pkg/crypto/  ← 无内部依赖
 ```go
 BlockInterval   = 6 * time.Minute
 BlocksPerYear   = 87661
-MaxStackHeight  = 256
-MaxStackItem    = 1024            // 栈项最大字节数
-MaxLockScript   = 1024
-MaxUnlockScript = 4096
+MaxStackHeight  = 255
+MaxStackItem    = 1023
+MaxLockScript   = 1023
+MaxUnlockScript = 4095
 MaxTxSize       = 65535
 ```
 
