@@ -23,6 +23,7 @@
 | OQ-009 | Tx | 已关闭（ADR-0010） | Coinbase `HashInputs` 特殊规则 | Coinbase TxID | 按 ADR-0010 实现 Coinbase `HashInputs` |
 | OQ-010 | Tx | 已关闭（ADR-0024） | 交易大小统计范围 | `MaxTxSize` 验证 | 按不含 Witness 的规范交易编码检查；包含 UnlockScript，排除网络传输 framing 和外部存储元数据 |
 | OQ-011 | Tx | 未决 | 多签排序、重复公钥/签名处理 | 签名验证 | 先实现接口，不固定多签协议 |
+| OQ-011A | Tx | 未决 | UnlockScript 内签名字节经 `FN_CHECKSIG` / `FN_MCHECKSIG` 验证时的签名消息自排除或占位规则 | 定制验证签名消息 | 先实现接口和错误标注，不生成最终签名测试向量 |
 | OQ-012 | State | 部分关闭（ADR-0008） | TxID 字节索引已由 ADR-0008 关闭；四层宽成员树节点组合、年度分区编码属于未被 ADR-0001 至 ADR-0031 覆盖的剩余开放问题 | UTXO/UTCO root | 字节索引按 ADR-0008 使用 0-based；其余部分先实现叶子和分组，不宣称最终 root |
 | OQ-013 | Script | 已关闭（ADR-0006/ADR-0007） | VM 初始 pass 状态和 `CHECK` 覆盖规则 | 脚本结果验证 | 初始 pass 状态按 ADR-0006；`CHECK` 覆盖语义按 ADR-0007 |
 | OQ-014 | Script | 未决 | 成本公式 | 公共验证 DoS 防护 | 先实现预算框架和保守拒绝 |

@@ -17,7 +17,7 @@
 - 依赖 `docs/proposal/04.Hash-Trees.md`
 - 依赖 ADR-0010：Coinbase `HashInputs` 使用 `BLAKE3-256(DomainTag(CoinbaseInputs) || bigEndianUint64(blockHeight))`。
 - 依赖 ADR-0023：Coinbase 独立处理，只允许 Coin 输出。
-- 依赖 ADR-0024：签名 Witness 与 UnlockScript 分离；UnlockScript 参与输入 Hash 和 `TxID`，Witness 不参与 `TxID`。
+- 依赖 ADR-0024：`SYS_CHKPASS` 标准验证签名由 Witness 注入；定制验证签名可由 UnlockScript 普通数据提供；UnlockScript 参与输入 Hash 和 `TxID`，Witness 不参与 `TxID`。
 - 依赖 ADR-0021：Credit `Config[9:0]` 约束 `len(description)` 最大值。
 - 依赖 ADR-0031：Coin `Amount` 以 `chx` 为单位。
 - 依赖 ADR-0029：百日扩张为客户端运行策略，核心交易验证不检查输入输出数量比例。
@@ -96,7 +96,8 @@ git commit -m "feat: add transaction header hashing"
 
 - `LeadInput` 必须包含完整 48B `TxID`。
 - `LeadInput` 必须标记为 Coin 输入。
-- `LeadInput` 和 `RestInput` 均包含 `UnlockScript`，且 `UnlockScript` 不包含 Witness 签名字节。
+- `LeadInput` 和 `RestInput` 均包含 `UnlockScript`。
+- 定制验证签名字节可位于 `UnlockScript`，并作为普通输入字节参与规范编码。
 - `RestInput` 使用 `TxIDPart` 前 20B、`Year`、`OutIndex`。
 - Proof 输入类型被结构验证拒绝。
 - `HashInputs = BLAKE3-256(LeadHash || RestHash)`。
@@ -269,7 +270,9 @@ git commit -m "feat: add transaction output hashing"
 - 修改 Witness 签名字节不得改变 `MaxTxSize` 检查结果；修改 UnlockScript 长度必须影响 `MaxTxSize` 检查结果。
 - 修改 Witness 签名字节不得改变 `TxID`，但应改变完整交易编码或签名附件摘要。
 - 修改 UnlockScript 必须改变 `TxID`；签名消息中的输入范围覆盖 UnlockScript 但不覆盖 Witness。
-- UnlockScript 中不嵌入 ML-DSA 签名字节；签名由 Witness 传递给脚本环境。
+- Witness 可为空且交易结构仍合法；是否因缺失 Witness 失败由脚本执行 `SYS_CHKPASS` 时判定。
+- `SYS_CHKPASS` 标准验证签名由 Witness 传递给脚本环境；定制验证签名可位于 UnlockScript 并经 `FN_CHECKSIG` / `FN_MCHECKSIG` 验证。
+- UnlockScript 内签名字节经 `FN_CHECKSIG` / `FN_MCHECKSIG` 验证时，签名消息自排除或占位规则仍为 OQ-011A；规则固定前不得生成最终签名测试向量。
 
 **Step 2: 实现并提交**
 
@@ -332,6 +335,7 @@ golangci-lint run
 - 普通交易必须至少有 Coin lead input。
 - 输入规范编码必须包含 UnlockScript，且修改 UnlockScript 会改变 `TxID`；修改 Witness 不得改变 `TxID`。
 - `MaxTxSize` 按不含 Witness 的规范交易编码检查，包含 UnlockScript；超过 65535 bytes 拒绝。
+- Witness 为空的交易结构合法；仅在脚本实际执行 `SYS_CHKPASS` 且缺失对应 Witness 时失败。
 - Proof、Mediator、Custom 默认不能作为公共输入源。
 - 输出 envelope、payload 和签名消息均有表驱动测试。
 - 交易包不 import `internal/utxo`、`internal/utco`、`internal/script`、`internal/consensus`。
