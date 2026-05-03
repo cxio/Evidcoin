@@ -36,7 +36,7 @@ Accepted
 
 ### Purpose 字符串对照表
 
-| 哈希用途 | Purpose 字符串 |
+| 哈希/签名用途 | Purpose 字符串 |
 |----------|---------------|
 | 区块头（BlockID） | `BlockHeader` |
 | 交易头（TxID） | `TxHeader` |
@@ -53,6 +53,7 @@ Accepted
 | 签名消息（链识别混入） | `SignMessage` |
 | 同步池签名消息 | `SyncPool` |
 | 分叉裁决签名消息 | `ForkDecision` |
+| 区块铸造签名消息 | `BlockMintSign` |
 
 ### 示例
 
