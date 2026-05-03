@@ -19,7 +19,7 @@
 - 依赖 ADR-0007：`CHECK` 可双向覆盖 pass 状态，最终态决定结果。
 - 依赖 ADR-0014：脚本资源上限按 `< N` 语义修正为 255/1023/1023/4095。
 - 依赖 ADR-0019：`SYS_NULL` 是 unlock script 唯一超范围例外。
-- 依赖 ADR-0024：签名 Witness 与 UnlockScript 分离，`SYS_CHKPASS` 只从系统环境读取签名。
+- 依赖 ADR-0024：签名 Witness 与 UnlockScript 分离，UnlockScript 由交易输入 Hash 承诺，`SYS_CHKPASS` 只从系统环境读取签名。
 
 ## 非目标
 
@@ -243,6 +243,7 @@ git commit -m "feat: add core script instructions"
 - `SIGNED` 通过注入 verifier 验证，不直接依赖交易包实现。
 - `SYS_CHKPASS` 通过注入接口查询，不直接依赖状态包。
 - `SYS_CHKPASS` 签名只能来自环境中的 Witness 数据；普通数据栈、实参区或 UnlockScript 字节流中的签名字节必须不被读取为签名来源。
+- 脚本 VM 不重新计算 `TxID`；UnlockScript 是否参与输入 Hash 由 `internal/tx` 的规范编码保证。
 - Hash 函数指令复用 `pkg/crypto`。
 - `SYS_NULL` 可用于 unlock script，且不执行计算、不访问状态、不影响栈。
 - 其他系统指令如 `SYS_TIME` 用于 unlock script 必须拒绝。

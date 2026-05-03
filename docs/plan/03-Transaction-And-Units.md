@@ -17,7 +17,7 @@
 - 依赖 `docs/proposal/04.Hash-Trees.md`
 - 依赖 ADR-0010：Coinbase `HashInputs` 使用 `BLAKE3-256(DomainTag(CoinbaseInputs) || bigEndianUint64(blockHeight))`。
 - 依赖 ADR-0023：Coinbase 独立处理，只允许 Coin 输出。
-- 依赖 ADR-0024：签名 Witness 与 UnlockScript 分离，Witness 不参与 `TxID`。
+- 依赖 ADR-0024：签名 Witness 与 UnlockScript 分离；UnlockScript 参与输入 Hash 和 `TxID`，Witness 不参与 `TxID`。
 - 依赖 ADR-0021：Credit `Config[9:0]` 约束 `len(description)` 最大值。
 - 依赖 ADR-0031：Coin `Amount` 以 `chx` 为单位。
 - 依赖 ADR-0029：百日扩张为客户端运行策略，核心交易验证不检查输入输出数量比例。
@@ -36,8 +36,9 @@
 | 文件 | 内容 |
 |------|------|
 | `internal/tx/header.go` | `TxHeader`、规范化编码、`TxID` |
-| `internal/tx/input.go` | `LeadInput`、`RestInput`、局部引用结构 |
+| `internal/tx/input.go` | `LeadInput`、`RestInput`、局部引用结构、UnlockScript 输入字段 |
 | `internal/tx/input_hash.go` | `LeadHash`、`RestHash`、`HashInputs` |
+| `internal/tx/size.go` | 不含 Witness 的 `MaxTxSize` 检查 |
 | `internal/tx/output.go` | 输出 envelope、类型与标记 |
 | `internal/tx/coin.go` | Coin payload |
 | `internal/tx/credit.go` | Credit payload 与配置 |
@@ -95,14 +96,16 @@ git commit -m "feat: add transaction header hashing"
 
 - `LeadInput` 必须包含完整 48B `TxID`。
 - `LeadInput` 必须标记为 Coin 输入。
+- `LeadInput` 和 `RestInput` 均包含 `UnlockScript`，且 `UnlockScript` 不包含 Witness 签名字节。
 - `RestInput` 使用 `TxIDPart` 前 20B、`Year`、`OutIndex`。
 - Proof 输入类型被结构验证拒绝。
 - `HashInputs = BLAKE3-256(LeadHash || RestHash)`。
+- 修改任一输入的 `UnlockScript` 会改变 `LeadHash` 或 `RestHash`，继而改变 `HashInputs` 和 `TxID`。
 - Rest inputs 顺序变化导致 `HashInputs` 变化。
 
 **Step 2: 实现**
 
-定义输入类型常量，显式建模 `TransferIndex` 只适用于 Credit。
+定义输入类型常量，显式建模 `TransferIndex` 只适用于 Credit。输入规范编码必须包含 `UnlockScript`，并应用 `MaxUnlockScript` 长度检查；Witness 字段不得进入输入规范编码。
 
 **Step 3: 验证并提交**
 
@@ -248,8 +251,10 @@ git commit -m "feat: add transaction output hashing"
 **Files:**
 - Create: `internal/tx/signature_message.go`
 - Create: `internal/tx/witness.go`
+- Create: `internal/tx/size.go`
 - Create: `internal/tx/signature_message_test.go`
 - Create: `internal/tx/witness_test.go`
+- Create: `internal/tx/size_test.go`
 
 **Step 1: 写失败测试**
 
@@ -260,14 +265,17 @@ git commit -m "feat: add transaction output hashing"
 - 签名消息包含链识别信息。
 - 修改链身份、输入范围或输出范围会改变签名消息。
 - 交易包含 Witness 字段和完整交易编码，但 `TxID` 编码必须排除 Witness。
+- `MaxTxSize` 检查基于不含 Witness 的规范交易编码，包含 Header、Inputs、Outputs；Inputs 中的 UnlockScript 必须计入大小。
+- 修改 Witness 签名字节不得改变 `MaxTxSize` 检查结果；修改 UnlockScript 长度必须影响 `MaxTxSize` 检查结果。
 - 修改 Witness 签名字节不得改变 `TxID`，但应改变完整交易编码或签名附件摘要。
+- 修改 UnlockScript 必须改变 `TxID`；签名消息中的输入范围覆盖 UnlockScript 但不覆盖 Witness。
 - UnlockScript 中不嵌入 ML-DSA 签名字节；签名由 Witness 传递给脚本环境。
 
 **Step 2: 实现并提交**
 
 ```bash
-go test ./internal/tx -run 'Test(SignatureMessage|Witness)' -v
-git add internal/tx/signature_message.go internal/tx/witness.go internal/tx/signature_message_test.go internal/tx/witness_test.go
+go test ./internal/tx -run 'Test(SignatureMessage|Witness|TxSize)' -v
+git add internal/tx/signature_message.go internal/tx/witness.go internal/tx/size.go internal/tx/signature_message_test.go internal/tx/witness_test.go internal/tx/size_test.go
 git commit -m "feat: add transaction signature messages"
 ```
 
@@ -322,6 +330,8 @@ golangci-lint run
 通过标准：
 
 - 普通交易必须至少有 Coin lead input。
+- 输入规范编码必须包含 UnlockScript，且修改 UnlockScript 会改变 `TxID`；修改 Witness 不得改变 `TxID`。
+- `MaxTxSize` 按不含 Witness 的规范交易编码检查，包含 UnlockScript；超过 65535 bytes 拒绝。
 - Proof、Mediator、Custom 默认不能作为公共输入源。
 - 输出 envelope、payload 和签名消息均有表驱动测试。
 - 交易包不 import `internal/utxo`、`internal/utco`、`internal/script`、`internal/consensus`。

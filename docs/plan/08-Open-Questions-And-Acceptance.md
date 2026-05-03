@@ -21,7 +21,7 @@
 | OQ-007 | Block | 未决 | `YearBlock` 在创世、边界、非边界高度取值 | 区块头编码和验证 | 先实现查询接口并标注规则来源 |
 | OQ-008 | Block | 部分关闭（ADR-0022） | `CheckRoot` 状态时间点已由 ADR-0022 关闭；是否包含 domain tag、版本、高度属于未被 ADR-0001 至 ADR-0031 覆盖的剩余开放问题 | 区块最终验证向量 | 状态时间点按 ADR-0022 使用前置状态承诺；其余字段只实现当前 Proposal 的三根组合 |
 | OQ-009 | Tx | 已关闭（ADR-0010） | Coinbase `HashInputs` 特殊规则 | Coinbase TxID | 按 ADR-0010 实现 Coinbase `HashInputs` |
-| OQ-010 | Tx | 未决 | 交易大小是否包含解锁脚本和外层长度 | `MaxTxSize` 验证 | 先只提供配置和结构检查 |
+| OQ-010 | Tx | 已关闭（ADR-0024） | 交易大小统计范围 | `MaxTxSize` 验证 | 按不含 Witness 的规范交易编码检查；包含 UnlockScript，排除网络传输 framing 和外部存储元数据 |
 | OQ-011 | Tx | 未决 | 多签排序、重复公钥/签名处理 | 签名验证 | 先实现接口，不固定多签协议 |
 | OQ-012 | State | 部分关闭（ADR-0008） | TxID 字节索引已由 ADR-0008 关闭；四层宽成员树节点组合、年度分区编码属于未被 ADR-0001 至 ADR-0031 覆盖的剩余开放问题 | UTXO/UTCO root | 字节索引按 ADR-0008 使用 0-based；其余部分先实现叶子和分组，不宣称最终 root |
 | OQ-013 | Script | 已关闭（ADR-0006/ADR-0007） | VM 初始 pass 状态和 `CHECK` 覆盖规则 | 脚本结果验证 | 初始 pass 状态按 ADR-0006；`CHECK` 覆盖语义按 ADR-0007 |
