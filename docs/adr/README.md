@@ -93,3 +93,19 @@ ADR-NNNN-<简短描述>.md
 |------|------|------|------|
 | [ADR-0030](ADR-0030-genesis-year-boundary.md) | 创世高度 #0 为年度边界 | Accepted | L-4 |
 | [ADR-0031](ADR-0031-coin-chx-ratio.md) | Coin 与 chx 换算比例 | Accepted | L-5 |
+
+### 第三批决策（user-answer0504 补充）
+
+#### 状态树与共识（High）
+
+| 编号 | 标题 | 状态 | 来源 |
+|------|------|------|------|
+| [ADR-0032](ADR-0032-utxo-state-tree-node-composition.md) | UTXO/UTCO 四层状态指纹树节点组合算法 | Accepted | H-1 / OQ-012 |
+| [ADR-0033](ADR-0033-stakes-definition.md) | Stakes 字段精确定义与溢出处理 | Accepted | H-2 / OQ-018 |
+| [ADR-0034](ADR-0034-field-widths.md) | 区块头与交易头字段宽度 | Accepted | H-3 |
+
+#### 协议限额（Medium）
+
+| 编号 | 标题 | 状态 | 来源 |
+|------|------|------|------|
+| [ADR-0035](ADR-0035-block-size-limit.md) | 区块大小上限与增长函数 | Accepted | M-6 |

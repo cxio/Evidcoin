@@ -24,13 +24,13 @@
 | OQ-010 | Tx | 已关闭（ADR-0024） | 交易大小统计范围 | `MaxTxSize` 验证 | 按不含 Witness 的规范交易编码检查；包含 UnlockScript，排除网络传输 framing 和外部存储元数据 |
 | OQ-011 | Tx | 未决 | 多签排序、重复公钥/签名处理 | 签名验证 | 先实现接口，不固定多签协议 |
 | OQ-011A | Tx | 未决 | UnlockScript 内签名字节经 `FN_CHECKSIG` / `FN_MCHECKSIG` 验证时的签名消息自排除或占位规则 | 定制验证签名消息 | 先实现接口和错误标注，不生成最终签名测试向量 |
-| OQ-012 | State | 部分关闭（ADR-0008） | TxID 字节索引已由 ADR-0008 关闭；四层宽成员树节点组合、年度分区编码属于未被 ADR-0001 至 ADR-0031 覆盖的剩余开放问题 | UTXO/UTCO root | 字节索引按 ADR-0008 使用 0-based；其余部分先实现叶子和分组，不宣称最终 root |
+| OQ-012 | State | 已关闭（ADR-0008 + ADR-0032） | TxID 字节索引由 ADR-0008 关闭；四层宽成员树节点组合、年度分区编码由 ADR-0032 关闭 | UTXO/UTCO root | 按 ADR-0008（0-based 索引）和 ADR-0032（年度按交易时间戳、固定 256 槽、全零空节点、BLAKE3-256 串接）实现完整状态根 |
 | OQ-013 | Script | 已关闭（ADR-0006/ADR-0007） | VM 初始 pass 状态和 `CHECK` 覆盖规则 | 脚本结果验证 | 初始 pass 状态按 ADR-0006；`CHECK` 覆盖语义按 ADR-0007 |
 | OQ-014 | Script | 未决 | 成本公式 | 公共验证 DoS 防护 | 先实现预算框架和保守拒绝 |
 | OQ-015 | Address | 已关闭（ADR-0020） | 文本地址编码、前缀、checksum | CLI/钱包 | 按 ADR-0020 实现文本地址编码 |
 | OQ-016 | PoH | 已关闭（ADR-0001） | 内层 `Hash(...)` 算法和 domain tag | `MintHash` 最终向量 | 内层 Hash 按 ADR-0001 使用 `BLAKE3-256` |
 | OQ-017 | PoH | 已关闭（ADR-0002） | `timeStamp * Stakes * Mix` 宽度、溢出和编码 | `MintHash` 最终向量 | 按 ADR-0002 使用 BigInt 和大端最小字节编码 |
-| OQ-018 | PoH | 未决 | `Stakes` 精确定义和单位属于未被 ADR-0001 至 ADR-0031 覆盖的剩余开放问题 | 区块头和 PoH | 独立类型，不参与经济语义测试；X 编码已由 ADR-0002 关闭，不再作为未决项 |
+| OQ-018 | PoH | 已关闭（ADR-0033） | Stakes 精确定义和单位 | 区块头和 PoH | 按 ADR-0033：区块内所有非 Coinbase 交易的输入 UTXO 币权（chx·小时）之和，uint64 截断，溢出丢弃 |
 | OQ-019 | PoH | 已关闭（ADR-0011/ADR-0027） | `MintHash` 相等 tie-breaker | pool/fork 排序 | 入池先到者保留按 ADR-0011；分叉平局按 ADR-0027 使用 BlockID 字典序 |
 | OQ-020 | Fork | 未决 | 3 倍币权销毁比较是否包含等于 | 区块竞争 | 策略参数化 |
 | OQ-021 | Incentive | 部分关闭（ADR-0009） | 奖励分配余数已由 ADR-0009 关闭；发行递减取整规则属于未被 ADR-0001 至 ADR-0031 覆盖的剩余开放问题 | 奖励测试向量 | 奖励分配按 ADR-0009；发行递减取整规则正式期向量延后 |
