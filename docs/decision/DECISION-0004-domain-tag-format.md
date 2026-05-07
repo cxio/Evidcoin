@@ -68,7 +68,3 @@ Hash(domainTag || payload)
 
 - 补充 conception 中哈希算法分配之外的域隔离格式。
 - 不改变任何 conception 已固定的哈希算法。
-
-## Source（来源）
-
-- 迁移重写自旧 `ADR-0004`。

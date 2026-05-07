@@ -39,8 +39,4 @@ address = "Cx" || Base58(AddressHash || checksum)
 ## Conception Relationship（与构想关系）
 
 - 补充 conception 已给出的地址编码流程中的具体前缀和编码算法。
-- 本决策按 conception 使用“末尾 4 字节校验码”，不沿用旧 ADR 的双 SHA3 前 4 字节规则。
-
-## Source（来源）
-
-- 迁移重写自旧 `ADR-0020`。
+- 本决策按 conception 使用“末尾 4 字节校验码”。

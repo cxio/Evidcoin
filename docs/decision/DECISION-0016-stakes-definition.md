@@ -47,7 +47,3 @@ Stakes[H] = sum(CoinAge(input_utxo)) mod 2^64
 
 - 精确化 conception 中“币权销毁总值（聪时）”的计算。
 - 不改变 Stakes 参与 PoH 和区块竞争的 conception 用途。
-
-## Source（来源）
-
-- 迁移重写自旧 `ADR-0033`。

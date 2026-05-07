@@ -48,7 +48,3 @@ Accepted
 
 - 补充 conception 中“变长整数”的具体字节编码。
 - 不新增 conception 未定义的字段。
-
-## Source（来源）
-
-- 迁移重写自旧 `ADR-0003`。

@@ -44,7 +44,3 @@ destroyed = TxFee - recovered
 
 - 细化 `docs/conception/4.激励机制.md` 已给出的比例和余数原则。
 - 不改变奖励比例和 50% 交易费销毁规则。
-
-## Source（来源）
-
-- 迁移重写自旧 `ADR-0009`。

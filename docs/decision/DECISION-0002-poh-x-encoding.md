@@ -44,7 +44,3 @@ X    = minimal_big_endian_bytes(XBig)
 
 - 补充 `Bytes(...)` 的规范化语义。
 - 不改变 PoH 对 `timeStamp`、`Stakes`、`Mix` 的 conception 定义。
-
-## Source（来源）
-
-- 迁移重写自旧 `ADR-0002`。

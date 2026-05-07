@@ -32,7 +32,3 @@ Accepted
 
 - 补充 `chx` 与人类展示单位 `Coin` 的比例。
 - 不改变 conception 中 `chx` 是最小单位的设定。
-
-## Source（来源）
-
-- 迁移重写自旧 `ADR-0031`。

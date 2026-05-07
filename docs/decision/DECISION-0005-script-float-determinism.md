@@ -40,7 +40,3 @@ Accepted
 
 - 补充 `Float` 的确定性运行语义。
 - 不改变脚本系统支持 `Float` 的 conception 设定。
-
-## Source（来源）
-
-- 迁移重写自旧 `ADR-0005`。

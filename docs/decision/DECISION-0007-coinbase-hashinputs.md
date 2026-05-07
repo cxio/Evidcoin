@@ -37,7 +37,3 @@ HashInputs = BLAKE3-256(DomainTag("CoinbaseInputs") || uint64_be(blockHeight))
 
 - 补充 Coinbase 无输入源时的交易头字段计算。
 - 不改变 Coinbase 特殊交易和首位收录约定。
-
-## Source（来源）
-
-- 迁移重写自旧 `ADR-0010`。

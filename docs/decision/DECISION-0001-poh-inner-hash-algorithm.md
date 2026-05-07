@@ -34,7 +34,3 @@ mintHash = BLAKE3-256(Sign(hashData))
 
 - 补充 `docs/conception/1.共识-历史证明（PoH）.md` 中未命名的内层 `Hash(...)`。
 - 不改变 conception 已明确的最终铸凭哈希 `BLAKE3-256`。
-
-## Source（来源）
-
-- 迁移重写自旧 `ADR-0001`。

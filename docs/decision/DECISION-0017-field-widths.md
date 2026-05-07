@@ -64,7 +64,3 @@ Version || HashInputs || HashOutputs || Timestamp
 
 - 固定 conception 示意结构的字节级编码。
 - 不改变区块头和交易头包含的字段集合。
-
-## Source（来源）
-
-- 迁移重写自旧 `ADR-0034`。

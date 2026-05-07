@@ -33,7 +33,3 @@ Accepted
 
 - 明确 conception 中首领黑名单机制的协议层级。
 - 不改变黑名单用途和可能 24 小时冻结的 conception 描述。
-
-## Source（来源）
-
-- 迁移重写自旧 `ADR-0026`。

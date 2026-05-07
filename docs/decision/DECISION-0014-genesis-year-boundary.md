@@ -39,7 +39,3 @@ Year(blockHeight) = floor(blockHeight / 87661)
 
 - 补充 conception 年度概念的编号公式。
 - 不改变 `BlocksPerYear = 87661` 和年块机制。
-
-## Source（来源）
-
-- 迁移重写自旧 `ADR-0030`。
