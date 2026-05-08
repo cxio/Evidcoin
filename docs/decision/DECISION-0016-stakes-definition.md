@@ -24,6 +24,9 @@ CoinAge = amount_chx * floor((BlockTime(H) - CreatedTime(utxo)) / 1 hour)
 Stakes[H] = sum(CoinAge(input_utxo)) mod 2^64
 ```
 
+> **注：**
+> 累计的币权销毁总值指目标区块内所有交易的币权销毁总和。
+
 规则：
 
 - `amount_chx` 使用最小单位 `chx`。

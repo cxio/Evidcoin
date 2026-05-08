@@ -46,6 +46,9 @@ DECISION-NNNN-<short-description>.md
 | [DECISION-0015](DECISION-0015-coin-chx-ratio.md) | Coin 与 chx 换算 | Accepted |
 | [DECISION-0016](DECISION-0016-stakes-definition.md) | Stakes 精确定义 | Accepted |
 | [DECISION-0017](DECISION-0017-field-widths.md) | 区块头与交易头字段宽度 | Accepted |
+| [DECISION-0018](DECISION-0018-announcement-root-rotation.md) | 全网通告授权根的链上演化 | Accepted |
+| [DECISION-0019](DECISION-0019-poh-timestamp-derivation.md) | PoH 时间戳的推导与隔离 | Accepted |
+| [DECISION-0020](DECISION-0020-short-reference-collision-rule.md) | 短引用歧义的协议级处理 | Accepted |
 
 ## 不再单列的决策
 

@@ -13,14 +13,14 @@ Accepted
 地址文本格式为：
 
 ```text
-address = "Cx" || Base58(AddressHash || checksum)
+address = "Cx" || Base58(PubkeyHash || checksum)
 ```
 
 字段规则：
 
 - 识别前缀为 ASCII 字符串 `Cx`。
-- `AddressHash` 为 32 字节公钥哈希。
-- `checksum = SHA3-256("Cx" || AddressHash)` 的末尾 4 字节。
+- `PubkeyHash` 为 32 字节公钥哈希。
+- `checksum = SHA3-256("Cx" || PubkeyHash)` 的末尾 4 字节。
 - Base58 使用 Bitcoin 字母表 `123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz`。
 
 校验时先拆分 `Cx` 前缀，再 Base58 解码，提取 32 字节公钥哈希和 4 字节校验码，重新计算并比较校验码。
