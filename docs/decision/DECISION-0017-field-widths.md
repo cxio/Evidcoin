@@ -27,7 +27,7 @@ Accepted
 Version || Height || PrevBlock || CheckRoot || Stakes || YearBlock
 ```
 
-区块头总长度为 160 字节。非年块边界的 `YearBlock` 填充 48 字节全零。创世块的 `YearBlock` 也填充全零。
+区块头总长度为 112 或 160 字节，非年块边界的 `YearBlock` 省略，节省 48 字节。
 
 交易头规范化编码：
 
