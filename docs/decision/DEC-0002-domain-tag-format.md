@@ -1,4 +1,4 @@
-# DEC-0004: 哈希域分隔标签格式
+# DEC-0002: 哈希域分隔标签格式
 
 ## Status（状态）
 
@@ -6,7 +6,7 @@ Accepted
 
 ## Context（背景）
 
-`docs/conception/blockchain.md` 已为不同用途分配哈希算法，但未规定域分隔标签。缺少统一域分隔会让不同语义的哈希输入依赖调用者自行区分，增加 hash confusion 风险。
+`conception/blockchain.md` 已为不同用途分配哈希算法，但未规定域分隔标签。缺少统一域分隔会让不同语义的哈希输入依赖调用者自行区分，增加 hash confusion 风险。
 
 ## Decision（决策）
 
@@ -23,7 +23,7 @@ Domain Tag 采用如下字节格式：
 | `"Evidcoin:"` | ASCII 固定前缀。 |
 | `Purpose` | ASCII 用途名。 |
 | `":v"` | ASCII 版本分隔符。 |
-| `Version` | 按 `DEC-0003` 编码的无符号 varint，当前为 `01`。 |
+| `Version` | 按 `DEC-0001` 编码的无符号 varint，当前为 `01`。 |
 | `00` | NUL 终止符。 |
 
 当前用途名：
@@ -39,8 +39,7 @@ Domain Tag 采用如下字节格式：
 | 状态数据 | `StateData` |
 | 附件指纹 | `Attachment` |
 | 地址哈希 | `AddressHash` |
-| 铸凭哈希内层 | `MintInner` |
-| 铸凭哈希外层 | `MintHash` |
+| PoH 铸凭哈希 | `PoHCredential` |
 | Coinbase 输入哈希 | `CoinbaseInputs` |
 | 签名消息 | `SignMessage` |
 | 同步池签名 | `SyncPool` |
@@ -58,6 +57,7 @@ Hash(domainTag || payload)
 - 可读 ASCII 前缀便于调试。
 - 版本字段允许未来按用途演进。
 - NUL 终止符避免用途名前缀混淆。
+- PoH 铸凭哈希采用唯一 purpose，与 conception 固定的单层计算结构一致。
 
 ## Consequences（影响）
 

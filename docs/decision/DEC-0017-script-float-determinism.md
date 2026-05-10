@@ -1,4 +1,4 @@
-# DEC-0005: 脚本 VM Float 确定性
+# DEC-0017: 脚本 VM Float 确定性
 
 ## Status（状态）
 
@@ -6,7 +6,7 @@ Accepted
 
 ## Context（背景）
 
-`docs/conception/6.脚本系统.md` 将 `Float` 列为脚本数据类型，但未固定精度、舍入和 NaN 行为。浮点结果若参与公共验证，跨平台差异可能造成不同节点得出不同验证结果。
+`conception/6.脚本系统.md` 将 `Float` 列为脚本数据类型，但未固定精度、舍入和 NaN 行为。浮点结果若参与公共验证，跨平台差异可能造成不同节点得出不同验证结果。
 
 ## Decision（决策）
 

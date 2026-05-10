@@ -1,4 +1,4 @@
-# DEC-0017: 区块头与交易头字段宽度
+# DEC-0003: 区块头与交易头字段宽度
 
 ## Status（状态）
 
@@ -6,7 +6,7 @@ Accepted
 
 ## Context（背景）
 
-`docs/conception/blockchain.md` 和 `docs/conception/附.交易.md` 已给出区块头与交易头字段，但多数字段以 `int` 等示意类型表达。为了生成稳定的 BlockID 和 TxID，需要固定字段宽度、顺序和字节序。
+`conception/blockchain.md` 和 `conception/附.交易.md` 已给出区块头与交易头字段，但多数字段以 `int` 等示意类型表达。为了生成稳定的 BlockID 和 TxID，需要固定字段宽度、顺序和字节序。
 
 ## Decision（决策）
 
@@ -46,7 +46,7 @@ Version || HashInputs || HashOutputs || Timestamp
 
 交易头总长度为 74 字节。
 
-其它未专项固定的整数字段默认使用 `DEC-0003` 的无符号 varint，除非其语义要求有符号整数。
+其它未专项固定的整数字段默认使用 `DEC-0001` 的无符号 varint，除非其语义要求有符号整数。
 
 ## Rationale（理由）
 

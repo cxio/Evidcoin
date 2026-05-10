@@ -1,4 +1,4 @@
-# DEC-0006: 奖励与交易费余数归属
+# DEC-0011: 奖励与交易费余数归属
 
 ## Status（状态）
 
@@ -6,7 +6,7 @@ Accepted
 
 ## Context（背景）
 
-`docs/conception/4.激励机制.md` 已明确奖励比例和交易费 50% 销毁规则，并说明奖励不能整除时余数留给最终分配者。但整数金额以最小单位计算，仍需固定计算顺序和交易费奇数余数归属。
+`conception/4.激励机制.md` 已明确奖励比例和交易费 50% 销毁规则，并说明奖励不能整除时余数留给最终分配者。但整数金额以最小单位计算，仍需固定计算顺序和交易费奇数余数归属。
 
 ## Decision（决策）
 
@@ -14,11 +14,13 @@ Accepted
 
 ```text
 validation = RewardTotal * 40 / 100
-minter     = RewardTotal * 10 / 100
+credentialProvider = RewardTotal * 10 / 100
 depots     = RewardTotal * 20 / 100
 blockqs    = RewardTotal * 20 / 100
-stun2p     = RewardTotal - validation - minter - depots - blockqs
+stun2p     = RewardTotal - validation - credentialProvider - depots - blockqs
 ```
+
+其中 `validation` 对应校验组 40% 奖励，`credentialProvider` 对应铸凭者或铸凭交易提供者 10% 奖励。
 
 交易费销毁与回收按以下规则计算：
 
@@ -42,5 +44,5 @@ destroyed = TxFee - recovered
 
 ## Conception Relationship（与构想关系）
 
-- 细化 `docs/conception/4.激励机制.md` 已给出的比例和余数原则。
+- 细化 `conception/4.激励机制.md` 已给出的比例和余数原则。
 - 不改变奖励比例和 50% 交易费销毁规则。

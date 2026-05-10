@@ -1,4 +1,4 @@
-# DEC-0007: Coinbase HashInputs 计算
+# DEC-0012: Coinbase HashInputs 计算
 
 ## Status（状态）
 
@@ -6,7 +6,7 @@ Accepted
 
 ## Context（背景）
 
-`docs/conception/附.交易.md` 已明确 Coinbase 是没有输入源的特殊交易，并要求 Coinbase 位于区块交易序列首位。交易头仍包含 `HashInputs`，因此 Coinbase 需要确定性的输入哈希占位规则。
+`conception/附.交易.md` 已明确 Coinbase 是没有输入源的特殊交易，并要求 Coinbase 位于区块交易序列首位。交易头仍包含 `HashInputs`，因此 Coinbase 需要确定性的输入哈希占位规则。
 
 ## Decision（决策）
 
@@ -18,7 +18,7 @@ HashInputs = BLAKE3-256(DomainTag("CoinbaseInputs") || uint64_be(blockHeight))
 
 其中：
 
-- `DomainTag("CoinbaseInputs")` 按 `DEC-0004` 生成。
+- `DomainTag("CoinbaseInputs")` 按 `DEC-0002` 生成。
 - `blockHeight` 使用 8 字节 big-endian `uint64`。
 - 输出为 32 字节。
 

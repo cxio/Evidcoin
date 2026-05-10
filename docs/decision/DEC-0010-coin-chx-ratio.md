@@ -1,4 +1,4 @@
-# DEC-0015: Coin 与 chx 换算
+# DEC-0010: Coin 与 chx 换算
 
 ## Status（状态）
 
@@ -6,7 +6,7 @@ Accepted
 
 ## Context（背景）
 
-`docs/conception/5.信用结构.md` 使用 `chx` 作为最小币金单位，并说明其类似 Satoshi。构想未直接固定 `Coin` 与 `chx` 的换算比例。
+`conception/5.信用结构.md` 使用 `chx` 作为最小币金单位，并说明其类似 Satoshi。构想未直接固定 `Coin` 与 `chx` 的换算比例。
 
 ## Decision（决策）
 

@@ -1,4 +1,4 @@
-# DEC-0010: ML-DSA-65 集成路径
+# DEC-0008: ML-DSA-65 集成路径
 
 ## Status（状态）
 
@@ -6,7 +6,7 @@ Accepted
 
 ## Context（背景）
 
-Evidcoin 使用 ML-DSA-65 作为主要签名算法。`docs/conception` 固定了算法方向，但没有固定 Go 实现库。Go 标准库和第三方库状态会随实现时点变化，因此需要明确选择策略而不是过早绑定某个库。
+Evidcoin 使用 ML-DSA-65 作为主要签名算法。`conception/` 固定了算法方向，但没有固定 Go 实现库。Go 标准库和第三方库状态会随实现时点变化，因此需要明确选择策略而不是过早绑定某个库。
 
 ## Decision（决策）
 

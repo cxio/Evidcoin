@@ -1,4 +1,4 @@
-# DEC-0014: 创世高度年度边界
+# DEC-0015: 创世高度年度边界
 
 ## Status（状态）
 
@@ -6,7 +6,7 @@ Accepted
 
 ## Context（背景）
 
-`docs/conception` 使用年度组织区块、交易引用和状态指纹。`docs/conception/blockchain.md` 已明确每年约 `87661` 个区块和年块机制，但没有直接给出年度编号公式。
+`conception/` 使用年度组织区块、交易引用和状态指纹。`conception/blockchain.md` 已明确每年约 `87661` 个区块和年块机制，但没有直接给出年度编号公式。
 
 ## Decision（决策）
 
