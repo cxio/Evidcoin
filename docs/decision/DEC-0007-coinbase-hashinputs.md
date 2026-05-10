@@ -1,4 +1,4 @@
-# DECISION-0007: Coinbase HashInputs 计算
+# DEC-0007: Coinbase HashInputs 计算
 
 ## Status（状态）
 
@@ -18,7 +18,7 @@ HashInputs = BLAKE3-256(DomainTag("CoinbaseInputs") || uint64_be(blockHeight))
 
 其中：
 
-- `DomainTag("CoinbaseInputs")` 按 `DECISION-0004` 生成。
+- `DomainTag("CoinbaseInputs")` 按 `DEC-0004` 生成。
 - `blockHeight` 使用 8 字节 big-endian `uint64`。
 - 输出为 32 字节。
 

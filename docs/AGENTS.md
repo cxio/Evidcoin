@@ -43,4 +43,4 @@ Evidcoin 文档的正式结构收敛为两层：
 - 新增 Decision 前必须先检查 `conception/` 是否已经明确该规则。
 - 若 conception 已明确，直接引用 conception，不新增 Decision。
 - 若后续 conception 修订吸收了某个 Decision，应删除或标记该 Decision 已被吸收。
-- Decision 文件命名为 `DECISION-NNNN-<short-description>.md`。
+- Decision 文件命名为 `DEC-NNNN-<short-description>.md`。

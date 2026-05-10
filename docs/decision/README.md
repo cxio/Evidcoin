@@ -19,7 +19,7 @@
 ## 命名规范
 
 ```text
-DECISION-NNNN-<short-description>.md
+DEC-NNNN-<short-description>.md
 ```
 
 - `NNNN`：四位数字编号，从 `0001` 开始。
@@ -29,26 +29,26 @@ DECISION-NNNN-<short-description>.md
 
 | 编号 | 标题 | 状态 |
 |------|------|------|
-| [DECISION-0001](DECISION-0001-poh-inner-hash-algorithm.md) | PoH 铸凭哈希内层算法 | Accepted |
-| [DECISION-0002](DECISION-0002-poh-x-encoding.md) | PoH 铸凭哈希 X 参数编码 | Accepted |
-| [DECISION-0003](DECISION-0003-varint-encoding.md) | 规范化无符号 varint 编码 | Accepted |
-| [DECISION-0004](DECISION-0004-domain-tag-format.md) | 哈希域分隔标签格式 | Accepted |
-| [DECISION-0005](DECISION-0005-script-float-determinism.md) | 脚本 VM Float 确定性 | Accepted |
-| [DECISION-0006](DECISION-0006-reward-rounding.md) | 奖励与交易费余数归属 | Accepted |
-| [DECISION-0007](DECISION-0007-coinbase-hashinputs.md) | Coinbase HashInputs 计算 | Accepted |
-| [DECISION-0008](DECISION-0008-minthash-collision.md) | 铸凭哈希碰撞处理 | Accepted |
-| [DECISION-0009](DECISION-0009-hash-tree-edge-cases.md) | 哈希树边界情况 | Accepted |
-| [DECISION-0010](DECISION-0010-ml-dsa-65-integration.md) | ML-DSA-65 集成路径 | Accepted |
-| [DECISION-0011](DECISION-0011-address-text-encoding.md) | 地址文本编码 | Accepted |
-| [DECISION-0012](DECISION-0012-leader-blacklist-convention.md) | 首领黑名单层级 | Accepted |
-| [DECISION-0013](DECISION-0013-announcement-authority-keys.md) | 全网通告授权公钥 | Accepted |
-| [DECISION-0014](DECISION-0014-genesis-year-boundary.md) | 创世高度年度边界 | Accepted |
-| [DECISION-0015](DECISION-0015-coin-chx-ratio.md) | Coin 与 chx 换算 | Accepted |
-| [DECISION-0016](DECISION-0016-stakes-definition.md) | Stakes 精确定义 | Accepted |
-| [DECISION-0017](DECISION-0017-field-widths.md) | 区块头与交易头字段宽度 | Accepted |
-| [DECISION-0018](DECISION-0018-announcement-root-rotation.md) | 全网通告授权根的链上演化 | Accepted |
-| [DECISION-0019](DECISION-0019-poh-timestamp-derivation.md) | PoH 时间戳的推导与隔离 | Accepted |
-| [DECISION-0020](DECISION-0020-short-reference-collision-rule.md) | 短引用歧义的协议级处理 | Accepted |
+| [DEC-0001](DEC-0001-poh-inner-hash-algorithm.md) | PoH 铸凭哈希内层算法 | Accepted |
+| [DEC-0002](DEC-0002-poh-x-encoding.md) | PoH 铸凭哈希 X 参数编码 | Accepted |
+| [DEC-0003](DEC-0003-varint-encoding.md) | 规范化无符号 varint 编码 | Accepted |
+| [DEC-0004](DEC-0004-domain-tag-format.md) | 哈希域分隔标签格式 | Accepted |
+| [DEC-0005](DEC-0005-script-float-determinism.md) | 脚本 VM Float 确定性 | Accepted |
+| [DEC-0006](DEC-0006-reward-rounding.md) | 奖励与交易费余数归属 | Accepted |
+| [DEC-0007](DEC-0007-coinbase-hashinputs.md) | Coinbase HashInputs 计算 | Accepted |
+| [DEC-0008](DEC-0008-minthash-collision.md) | 铸凭哈希碰撞处理 | Accepted |
+| [DEC-0009](DEC-0009-hash-tree-edge-cases.md) | 哈希树边界情况 | Accepted |
+| [DEC-0010](DEC-0010-ml-dsa-65-integration.md) | ML-DSA-65 集成路径 | Accepted |
+| [DEC-0011](DEC-0011-address-text-encoding.md) | 地址文本编码 | Accepted |
+| [DEC-0012](DEC-0012-leader-blacklist-convention.md) | 首领黑名单层级 | Accepted |
+| [DEC-0013](DEC-0013-announcement-authority-keys.md) | 全网通告授权公钥 | Accepted |
+| [DEC-0014](DEC-0014-genesis-year-boundary.md) | 创世高度年度边界 | Accepted |
+| [DEC-0015](DEC-0015-coin-chx-ratio.md) | Coin 与 chx 换算 | Accepted |
+| [DEC-0016](DEC-0016-stakes-definition.md) | Stakes 精确定义 | Accepted |
+| [DEC-0017](DEC-0017-field-widths.md) | 区块头与交易头字段宽度 | Accepted |
+| [DEC-0018](DEC-0018-announcement-root-rotation.md) | 全网通告授权根的链上演化 | Accepted |
+| [DEC-0019](DEC-0019-poh-timestamp-derivation.md) | PoH 时间戳的推导与隔离 | Accepted |
+| [DEC-0020](DEC-0020-short-reference-collision-rule.md) | 短引用歧义的协议级处理 | Accepted |
 
 ## 不再单列的决策
 

@@ -1,4 +1,4 @@
-# DECISION-0019: PoH 时间戳的推导与隔离
+# DEC-0019: PoH 时间戳的推导与隔离
 
 ## Status（状态）
 
@@ -6,7 +6,7 @@ Accepted
 
 ## Context（背景）
 
-`conception/blockchain.md` 明确区块头不含独立时间戳字段，区块时间通过高度推算。`conception/1.共识-历史证明（PoH）.md` 的铸凭哈希参数 `X` 中含 `timeStamp`。`conception/附.交易.md` 与 `DECISION-0017` 又定义了交易头中的 `Timestamp int64`（毫秒）。两类时间戳同名但语义不同，实现者易混淆，可能导致 PoH 计算分歧。
+`conception/blockchain.md` 明确区块头不含独立时间戳字段，区块时间通过高度推算。`conception/1.共识-历史证明（PoH）.md` 的铸凭哈希参数 `X` 中含 `timeStamp`。`conception/附.交易.md` 与 `DEC-0017` 又定义了交易头中的 `Timestamp int64`（毫秒）。两类时间戳同名但语义不同，实现者易混淆，可能导致 PoH 计算分歧。
 
 ## Decision（决策）
 
@@ -45,4 +45,4 @@ timeStamp_for_PoH(height) = genesisTime + height * BlockInterval
 
 - 显式化 `conception/1.共识-历史证明（PoH）.md` 已采用的"由高度推算"语义。
 - 不改变 `conception/blockchain.md` 关于"区块头不含时间戳"的设定。
-- 与 `DECISION-0017` 中的交易头 `Timestamp` 字段在命名与用途上明确分离。
+- 与 `DEC-0017` 中的交易头 `Timestamp` 字段在命名与用途上明确分离。

@@ -1,4 +1,4 @@
-# DECISION-0002: PoH 铸凭哈希 X 参数编码
+# DEC-0002: PoH 铸凭哈希 X 参数编码
 
 ## Status（状态）
 

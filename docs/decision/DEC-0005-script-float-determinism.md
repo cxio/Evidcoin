@@ -1,4 +1,4 @@
-# DECISION-0005: 脚本 VM Float 确定性
+# DEC-0005: 脚本 VM Float 确定性
 
 ## Status（状态）
 

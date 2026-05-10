@@ -1,4 +1,4 @@
-# DECISION-0003: 规范化无符号 Varint 编码
+# DEC-0003: 规范化无符号 Varint 编码
 
 ## Status（状态）
 

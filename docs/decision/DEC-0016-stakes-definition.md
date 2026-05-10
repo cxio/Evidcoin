@@ -1,4 +1,4 @@
-# DECISION-0016: Stakes 精确定义
+# DEC-0016: Stakes 精确定义
 
 ## Status（状态）
 
@@ -32,7 +32,7 @@ Stakes[H] = sum(CoinAge(input_utxo)) mod 2^64
 - `amount_chx` 使用最小单位 `chx`。
 - 不足 1 小时的币龄舍去。
 - Coinbase 不计入 Stakes。
-- 字段类型为 `uint64`，编码见 `DECISION-0017`。
+- 字段类型为 `uint64`，编码见 `DEC-0017`。
 - 累加超过 `uint64` 时取低 64 位，不报错、不饱和。
 
 ## Rationale（理由）

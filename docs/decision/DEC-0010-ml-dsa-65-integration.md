@@ -1,4 +1,4 @@
-# DECISION-0010: ML-DSA-65 集成路径
+# DEC-0010: ML-DSA-65 集成路径
 
 ## Status（状态）
 

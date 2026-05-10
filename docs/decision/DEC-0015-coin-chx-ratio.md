@@ -1,4 +1,4 @@
-# DECISION-0015: Coin 与 chx 换算
+# DEC-0015: Coin 与 chx 换算
 
 ## Status（状态）
 

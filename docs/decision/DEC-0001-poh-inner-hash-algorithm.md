@@ -1,4 +1,4 @@
-# DECISION-0001: PoH 铸凭哈希算法
+# DEC-0001: PoH 铸凭哈希算法
 
 ## Status（状态）
 
@@ -22,9 +22,9 @@ mintHash = BLAKE3-256(domainTag || pubKey || mintTxID || referenceMintHash || X)
 
 - `mintTxID`：铸凭交易的 TxID（48 字节，按 conception/附.交易.md 定义）。
 - `referenceMintHash`：评参区块（`-9` 号）的铸凭哈希（32 字节）。
-- `X`：按 `DECISION-0002` 编码的字节序列。
+- `X`：按 `DEC-0002` 编码的字节序列。
 - `pubKey`：铸造者公钥的完整字节（铸凭交易首笔输入对应的公钥），编码与签名验证所用一致。
-- `domainTag`：按 `DECISION-0004` 格式构造，purpose 为 `"PoH-MintHash"`，version 为 `1`。
+- `domainTag`：按 `DEC-0004` 格式构造，purpose 为 `"PoH-MintHash"`，version 为 `1`。
 - `mintHash` 不依赖任何签名值；铸造者签名仅用于资格证明（见 conception/1.共识-历史证明（PoH）.md「择优凭证」），不参与本计算。
 
 ## Rationale（理由）

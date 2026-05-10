@@ -1,4 +1,4 @@
-# DECISION-0004: 哈希域分隔标签格式
+# DEC-0004: 哈希域分隔标签格式
 
 ## Status（状态）
 
@@ -23,7 +23,7 @@ Domain Tag 采用如下字节格式：
 | `"Evidcoin:"` | ASCII 固定前缀。 |
 | `Purpose` | ASCII 用途名。 |
 | `":v"` | ASCII 版本分隔符。 |
-| `Version` | 按 `DECISION-0003` 编码的无符号 varint，当前为 `01`。 |
+| `Version` | 按 `DEC-0003` 编码的无符号 varint，当前为 `01`。 |
 | `00` | NUL 终止符。 |
 
 当前用途名：
