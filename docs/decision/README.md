@@ -29,7 +29,7 @@
 | [DEC-0019](DEC-0019-issuance-schedule.md) | Issuance Schedule | Accepted | 发行 |
 | [DEC-0020](DEC-0020-public-service-activation-boundary.md) | Public Service Activation Boundary | Accepted | 公共服务 |
 | [DEC-0021](DEC-0021-announcement-trust-chain.md) | Announcement Trust Chain | Proposed | 通告 |
-| [DEC-0022](DEC-0022-script-float-determinism.md) | Script Float Determinism | Accepted | 脚本 |
+| [DEC-0022](DEC-0022-script-float-determinism.md) | Script Float Determinism | Proposed | 脚本 |
 | [DEC-0023](DEC-0023-script-canonical-byte-encoding.md) | Script Canonical Byte Encoding | Proposed | 脚本 |
 | [DEC-0024](DEC-0024-script-environment-registry.md) | Script Environment Registry | Proposed | 脚本 |
 | [DEC-0025](DEC-0025-script-cost-budget.md) | Script Cost Budget | Proposed | 脚本 |
@@ -42,8 +42,8 @@
 
 | Status | Count |
 |--------|-------|
-| Accepted | 9 |
-| Proposed | 20 |
+| Accepted | 8 |
+| Proposed | 21 |
 | Deprecated | 0 |
 | Superseded | 0 |
 | Absorbed | 0 |
