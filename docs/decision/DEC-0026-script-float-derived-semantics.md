@@ -12,7 +12,7 @@ conception 的转换指令允许多种类型转为 Float，运算指令也会将
 
 - `FLOAT` 接受 conception 已列类型：Nil、Bool、Byte、Rune、Int 和合法字符串。
 - `BigInt` 转 Float 是否允许尚待裁决；若允许，超出精确表达范围时必须定义舍入规则。
-- Float 运算后的 NaN/Inf 按 DEC-0022 视为无效。
+- Float 运算后的 NaN/Inf 传播、失败或规范化处理按 DEC-0022 最终裁决；在裁决前不得固定为拒绝或允许。
 - Float 到 Int、Byte、Rune 的转换按 conception 的截断或取整语义，但越界必须失败。
 - 字符串转 Float 使用固定语法子集，不依赖本地化、小数逗号或平台解析差异。
 
@@ -33,5 +33,6 @@ conception 的转换指令允许多种类型转为 Float，运算指令也会将
 ## Open questions
 
 - `BigInt` 是否可转 Float。
+- NaN/Inf 作为运算中间值或结果时的公共验证语义。
 - 字符串 Float 语法是否完全采用 Go `strconv.ParseFloat` 的合法子集。
 - `BOOL` 中极小 Float 判断是否需要改为 `x == 0`，该点属于 conception 建议修订项。

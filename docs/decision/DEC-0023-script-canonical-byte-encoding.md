@@ -16,7 +16,7 @@ conception 已定义脚本是编译后的指令码值序列，并为值指令、
 - 关联数据使用长度前缀加原始字节，长度不包含 opcode 与附参。
 - `Int` 使用 DEC-0001 的有符号 varint。
 - `BigInt` 使用最短大端补码或无符号幅值表示尚待裁决。
-- `Float` 使用 DEC-0022 的 big-endian binary64，并拒绝非规范零值、NaN 和 Inf。
+- `Float` 使用 DEC-0022 的 big-endian binary64；`-0.0` 应规范为 `+0.0`。NaN/Inf 的编码合法性按 DEC-0022 最终裁决，在裁决前不得固定为拒绝或允许。
 - 人类可读脚本文本不是共识编码，不参与 TxID。
 
 ## Rationale
@@ -35,5 +35,6 @@ conception 已定义脚本是编译后的指令码值序列，并为值指令、
 ## Open questions
 
 - `BigInt` 的负数编码形式。
+- NaN/Inf 字面量编码是否允许，以及若允许是否需要规范化 payload。
 - 字符串转义只影响文本编译，是否需要单独规范。
 - `Script` 类型的字节克隆是否允许携带未规范化脚本。
