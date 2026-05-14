@@ -13,6 +13,8 @@ Evidcoin 文档的正式结构收敛为两层：
 
 `proposal/` 与 `plan/` 当前为待重构材料，不作为新的正式决策依据。后续重构时应从 `conception/` 与 `decision/` 重新生成。
 
+`plans/` 目录下的文档为 AI Agent 工作过程中的临时实施计划，不作为正式文档的一部分，后续重构时无需参考之。
+
 
 ## 设计构想（Conception）
 
