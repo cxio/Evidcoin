@@ -105,7 +105,6 @@
 - Coinbase 中 `mint_proof` 字段顺序、兑奖槽位位序和未确认截留回收编码位置需冻结。
 - 脚本 `BigInt` 字节编码、环境条目标识数值、opcode 成本表和区块总成本函数需裁决。
 - conception 中 `BOOL` 对极小 Float 的判断使用 `x <= math.SmallestNonzeroFloat64`，可能把负数判为 false，建议作者复核。
-- conception 中主区块定义在 `2.共识-端点约定.md` 与 `附.组队校验.md` 表述不同：前者指竞争中权重相对最高区块，后者指择优池最优候选者区块，建议统一。
 - conception 中交易输入哈希公式在 `附.交易.md` 与 `blockchain.md` 的摘要表述不同，建议统一是否包含 `LeadPKHash`。
 - conception 中脚本比较/工具指令命名存在 `CMPFLO`，若其他材料出现不同拼写，应统一为指令集中的正式名称。
 
