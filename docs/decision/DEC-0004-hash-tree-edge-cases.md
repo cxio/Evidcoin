@@ -12,14 +12,14 @@ conception 明确区块交易集、输出集、附件片组和 UTXO/UTCO 指纹�
 
 - 通用树叶子哈希：`SHA3-384(DomainTag("hash-tree.leaf") || leafIndex || payload)`。
 - 分支哈希：`BLAKE3-256(DomainTag("hash-tree.branch") || left || right)`。
-- 单叶树根为该叶哈希。
+- 单叶树根为对该叶哈希的哈希：`BLAKE3-256(DomainTag("hash-tree.branch") || leafHash)`。
 - 奇数叶提升时，最后一个节点直接提升到下一层，不复制自身。
 - 空树根按具体结构定义；交易输出集和区块交易集不得为空，附件片组空值由附件规范另行定义。
-- 交易输入根继续按 conception 的 `Hash256(LeadHash || LeadPKHash || RestHash)`，不使用本通用树规则。
+- 交易输入根继续按 conception 的 `Hash256(ListHash || LeadPKHash)`，不使用本通用树规则。
 
 ## Rationale
 
-不复制奇数叶可避免引入人工重复数据；显式排除交易输入根可防止把 RestHash 当作通用树分支处理。
+不复制奇数叶可避免引入人工重复数据。
 
 ## Consequences
 
