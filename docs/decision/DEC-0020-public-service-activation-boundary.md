@@ -4,14 +4,15 @@ Status: Accepted
 
 ## Context
 
-conception 的 PoH 初段规则说明百日扩张期间 Coinbase 只有一笔输出，无公共服务奖励；第 101 日开始接受公共服务并启动对外奖励。
+conception 说明百日扩张期间 Coinbase 中没有对公共服务的奖励；第 101 日开始接受公共服务并启动对外奖励。旧 Decision 曾把百日扩张误写为 Coinbase 单输出，已与创世 Coinbase 两输出示例冲突。
 
 ## Decision
 
 - 区块 0 为创世块。
-- 区块 1 至 24000 属于百日扩张范围，Coinbase 不包含公共服务奖励输出。
+- 区块 0 至 24000 属于百日扩张范围，Coinbase 不包含公共服务奖励输出和兑奖槽。
 - 从高度 `24001` 的区块开始，Coinbase 启用公共服务奖励输出和兑奖槽。
-- 百日扩张期间 Coinbase 的单输出目标和收益归属由创世/启动规范指定，Decision 不另行伪造。
+- `24001` 起 Coinbase 必须包含 5 类奖励目标：铸凭者、校验组、Blockqs、Depots、STUN。
+- 百日扩张期间 Coinbase 输出集合不由本 DEC 固定为单输出；创世块已明确为校验组与铸凭者两项币金输出。
 
 ## Rationale
 
@@ -23,8 +24,9 @@ Coinbase 验证需要按高度切换输出集合。公共服务节点在激活�
 
 ## Conception references
 
-- `docs/conception/1.共识-历史证明（PoH）.md`
+- `docs/conception/blockchain.md`
 - `docs/conception/4.激励机制.md`
+- `docs/conception/附.交易.md`
 
 ## Open questions
 

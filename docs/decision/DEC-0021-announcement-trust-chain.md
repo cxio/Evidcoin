@@ -1,27 +1,24 @@
-# DEC-0021: Announcement Trust Chain（全网通告信任链）
+# DEC-0021: Announcement Trust Chain Removed（全网通告信任链已移除）
 
-Status: Proposed
+Status: Deprecated
 
 ## Context
 
-conception 定义全网通告为文本消息 Proof 输出，签名者由官方 App 内置或授权链上的授权公钥决定。旧方案使用创世特定签名公钥作为初始公告根，缺少 conception 依据。
+旧草案曾定义全网通告为文本消息 Proof 输出，并引入客户端公告根公钥集合。最近 conception 修订已经取消全网通告设计，当前 conception 中不再保留该协议边界。
 
 ## Decision
 
-建议仅保留以下边界：
-
-- 客户端可内置一组公告根公钥或公告根公钥哈希，但具体初始集合必须由发布规范给出。
-- 链上授权通告必须引用上一有效公告授权，并由当前有效公告密钥签名。
-- 通告标题必须以前缀 `Announcement:<Level>:` 开始。
-- 全网通告不得承载自动升级、脚本执行或权限扩展语义。
+- 不再定义全网通告信任链。
+- 不再定义公告根公钥集合、链上授权通告、通告标题格式或公告撤销规则。
+- 客户端发布、版本提示、节点公告或运营消息属于应用/发布流程，不进入当前协议 Decision。
 
 ## Rationale
 
-Decision 不能指定 conception 未给出的创世公告密钥。将其降为 Proposed 可保留实现方向，同时避免伪造信任根。
+Decision 不能保留已被 conception 取消的协议功能。继续保留公告根会伪造信任根，并影响创世规范边界。
 
 ## Consequences
 
-正式客户端发布前必须有人工作出公告根配置和轮换格式。
+旧 `Announcement:<Level>:` 格式、公告根开放问题和链上授权 Proof 格式全部废弃。如未来恢复通告设计，必须先在 conception 中重新提出。
 
 ## Conception references
 
@@ -29,6 +26,4 @@ Decision 不能指定 conception 未给出的创世公告密钥。将其降为 P
 
 ## Open questions
 
-- 初始公告根公钥集合由哪个发布工件承载。
-- 链上授权 Proof 的 payload 精确格式。
-- 公告撤销和过期规则。
+无。

@@ -27,6 +27,7 @@ Status: Proposed
 ## Conception references
 
 - `docs/conception/附.交易.md`
+- `docs/conception/附.组队校验.md`
 - `docs/conception/blockchain.md`
 - `docs/conception/2.共识-端点约定.md`
 

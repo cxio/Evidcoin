@@ -1,34 +1,31 @@
-# DEC-0017: Coinbase Hash Inputs（Coinbase 输入哈希）
+# DEC-0017: Coinbase HashInputs Removed（Coinbase 输入哈希已移除）
 
-Status: Proposed
+Status: Deprecated
 
 ## Context
 
-conception 明确 Coinbase 没有输入源，但交易头仍包含 `HashInputs`。需要为 Coinbase 的输入根提供确定性占位。
+旧草案曾为 Coinbase 的 `HashInputs` 定义确定性占位哈希。最新 conception 已明确 Coinbase 没有输入项，且 `HashInputs` 字段省略。
 
 ## Decision
 
-建议 Coinbase 的 `HashInputs` 为：
-
-```text
-BLAKE3-256(DomainTag("coinbase.inputs") || uint32_be(blockHeight))
-```
-
-- `blockHeight` 为 Coinbase 所在区块高度。
-- Coinbase 不编码普通输入列表，也不使用交易输入的 `LeadHash`、`LeadPKHash`、`RestHash` 结构。
+- Coinbase 不编码 `HashInputs`。
+- Coinbase 不使用 `coinbase.inputs` 域标签。
+- Coinbase 不编码普通输入列表，也不使用普通交易输入的 `LeadHash`、`LeadPKHash`、`RestHash` 结构。
+- Coinbase 的特殊字段和 TxID 规范转入 DEC-0018。
 
 ## Rationale
 
-绑定高度可避免不同高度同构 Coinbase 拥有相同输入占位。独立域标签避免与普通输入根混淆。
+保留占位哈希会与 conception 的“字段省略”直接冲突，并改变 Coinbase TxID、创世块哈希和签名消息。
 
 ## Consequences
 
-Coinbase TxID 依赖该占位规则；在 Coinbase 序列化冻结前保持 Proposed。
+所有使用 `BLAKE3-256(DomainTag("coinbase.inputs") || height)` 的测试向量和实现全部废弃。
 
 ## Conception references
 
 - `docs/conception/附.交易.md`
+- `docs/conception/blockchain.md`
 
 ## Open questions
 
-- 高度是否采用 `uint32`，或与长期链高度兼容改为 varint。
+无。

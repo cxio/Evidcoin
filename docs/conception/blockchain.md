@@ -174,7 +174,7 @@ TxHeader: {
     Version     uint16      // 版本号：1
     HashInputs  Hash256     // Coinbase 交易没有输入项，此字段省略
     HashOutputs Hash256     // 正常计算：BLAKE3-256(SHA3-384(LeafData))
-    Timestamp   uint64      // 创世时间戳（毫秒）。也即区块的时间戳，后续区块时间戳由此推导。
+    Timestamp   int64       // 创世时间戳（毫秒）。也即区块的时间戳，后续区块时间戳由此推导。
     MintPKHash  [32]byte    // Coinbase 交易没有首领输入，因此定义铸凭公钥哈希。
 
     // 以下为Coinbase交易特有的字段：
@@ -196,8 +196,8 @@ TxHeader: {
 > 百日内无公共服务奖励（见下文），因此省略公共服务的输出项。
 
 > #### 关于见证信息
-> Coinbase 交易是对整个交易（TxID）进行签名，没有授权种类的区分。
-> 依循常规，签名数据（见证信息）依然是独立的，可剪枝。
+> 对 Coinbase 交易的签名是对整个交易（TxID）进行签名，没有授权种类的区分。
+> 依循常规，该签名数据（见证信息）依然是独立的，可剪枝。
 >
 > 但作为创世区块，铸造者对区块 `CheckRoot` 的签名需要保留，这是区块链根的锚定。
 

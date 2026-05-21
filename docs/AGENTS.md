@@ -35,9 +35,6 @@ Evidcoin 文档的正式结构收敛为两层：
 | 脚本指令集 | `Instruction/*.md` |
 | 示例 | `examples/*.md` |
 
-> **注：**
-> `examples/` 目录下的文档为仅为示例参考，可能已经过时。
-
 
 ## 架构决策（Decision）
 

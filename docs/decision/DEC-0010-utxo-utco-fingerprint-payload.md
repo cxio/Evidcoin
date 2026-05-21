@@ -4,30 +4,34 @@ Status: Proposed
 
 ## Context
 
-conception 定义 UTXO/UTCO 四层宽成员指纹树，并说明末端叶子节点为 `TxID || DataID || FlagOutputs`。仍需固定 payload 序列化、状态位顺序和分组空节点处理。
+最新 conception 已简化 UTXO/UTCO 指纹：末端叶子节点只表达输出项未花费/未转出状态位序列，即 `Hash384(TxID || FlagOutputs)`。输出项详细数据和旧 `DataID` 不参与状态指纹。
+
+仍需固定 `FlagOutputs` 的字节级序列化、位顺序和空分组处理。
 
 ## Decision
 
 建议末端 payload 为：
 
 ```text
-LeafPayload = txid || data_id || flag_count || flag_bytes
+FlagOutputs = flag_byte_count || flag_bytes
+LeafPayload = txid || FlagOutputs
 LeafHash = SHA3-384(DomainTag("state.utxo"|"state.utco") || LeafPayload)
 ```
 
 - `txid` 为 48 字节完整交易 ID。
-- `data_id` 为该 TxID 下仍有效输出项 payload 按 `OutIndex` 升序编码后的 SHA3-384。
-- `flag_count` 表示有效标记覆盖的输出项数量，不是字节数。
-- `flag_bytes` 从低位到高位映射同一字节内递增的 `OutIndex`；位值 `1` 表示未花费或未转出，`0` 表示无效或不存在。
+- `flag_byte_count` 表示 `flag_bytes` 的字节数，跟随 conception 伪代码中的 `Count int // 标记位字节数`。
+- `flag_bytes` 每一位对应一个输出项；位值 `1` 表示未花费或未转出，`0` 表示无效或不存在。
+- 同一字节内建议低位到高位映射递增的 `OutIndex`，但该位序在作者确认前保持 Proposed。
 - 年度层、三级字节分层 `[8,13,18]` 和末端按 TxID 排序跟随 conception。
+- 输出项详细 payload、缓存器数据和任何 `DataID` 均不进入指纹。
 
 ## Rationale
 
-显式 `flag_count` 可区分尾部填充零与真实输出数量。低位优先便于位运算，但需要作者确认。
+只承诺状态位可显著减小 UTXO/UTCO 指纹维护成本，并与 conception 的“轻量级状态位集”一致。显式字节数可区分尾部填充零与实际状态位范围。
 
 ## Consequences
 
-状态指纹测试向量必须覆盖空分组、单输出、多输出、尾部不足 8 位和 UTCO 过期删除。
+状态指纹测试向量必须覆盖空分组、单输出、多输出、尾部不足 8 位和 UTCO 过期删除。所有旧 `DataID` 测试向量废弃。
 
 ## Conception references
 
@@ -38,5 +42,4 @@ LeafHash = SHA3-384(DomainTag("state.utxo"|"state.utco") || LeafPayload)
 ## Open questions
 
 - 位顺序是否最终采用低位优先。
-- `data_id` 是否应包含已无效输出的占位，或只包含仍有效输出。
 - 空年度或空分组的哈希表示尚未冻结。
