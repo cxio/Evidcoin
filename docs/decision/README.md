@@ -19,12 +19,12 @@
 
 | DEC | Title | Status | 主题 |
 |-----|-------|--------|------|
-| [DEC-0001](DEC-0001-canonical-integer-and-bytes-encoding.md) | Canonical Integer and Bytes Encoding | Proposed | 基础编码 |
-| [DEC-0002](DEC-0002-domain-tags-and-hash-profiles.md) | Domain Tags and Hash Profiles | Proposed | 哈希 |
-| [DEC-0003](DEC-0003-block-and-transaction-field-encoding.md) | Block and Transaction Field Encoding | Proposed | 字段编码 |
-| [DEC-0004](DEC-0004-hash-tree-and-proof-edge-cases.md) | Hash Tree and Proof Edge Cases | Proposed | 哈希树 |
-| [DEC-0101](DEC-0101-transaction-body-and-output-payloads.md) | Transaction Body and Output Payloads | Proposed | 交易 |
-| [DEC-0102](DEC-0102-signature-message-profile.md) | Signature Message Profile | Proposed | 签名 |
+| [DEC-0001](DEC-0001-canonical-integer-and-bytes-encoding.md) | Canonical Integer and Bytes Encoding | Accepted | 基础编码 |
+| [DEC-0002](DEC-0002-domain-tags-and-hash-profiles.md) | Domain Tags and Hash Profiles | Accepted | 哈希 |
+| [DEC-0003](DEC-0003-block-and-transaction-field-encoding.md) | Block and Transaction Field Encoding | Accepted | 字段编码 |
+| [DEC-0004](DEC-0004-hash-tree-and-proof-edge-cases.md) | Hash Tree and Proof Edge Cases | Accepted | 哈希树 |
+| [DEC-0101](DEC-0101-transaction-body-and-output-payloads.md) | Transaction Body and Output Payloads | Accepted | 交易 |
+| [DEC-0102](DEC-0102-signature-message-profile.md) | Signature Message Profile | Accepted | 签名 |
 | [DEC-0103](DEC-0103-witness-container-and-pruning.md) | Witness Container and Pruning | Proposed | 见证 |
 | [DEC-0104](DEC-0104-address-and-ml-dsa-profile.md) | Address and ML-DSA Profile | Proposed | 密码学 |
 | [DEC-0201](DEC-0201-utxo-utco-state-fingerprint.md) | UTXO/UTCO State Fingerprint | Proposed | 状态 |
@@ -57,8 +57,8 @@
 
 | Status | Count |
 |--------|-------|
-| Proposed | 21 |
-| Accepted | 0 |
+| Proposed | 15 |
+| Accepted | 6 |
 | Deprecated | 0 |
 | Absorbed | 0（历史清单见下文） |
 
