@@ -1,6 +1,6 @@
 # DEC-0201: UTXO/UTCO State Fingerprint（UTXO/UTCO 状态指纹）
 
-Status: Proposed
+Status: Accepted
 
 ## Context（背景）
 
@@ -8,7 +8,7 @@ Conception 已明确 UTXO/UTCO 指纹按年度、TxID 字节 `[8,13,18]` 分层�
 
 ## Decision（决策）
 
-建议状态位规则：
+状态位规则：
 
 - `FlagOutputs` 的第 `i` 位对应输出序位 `i`。
 - 位序为每字节低位优先，即 bit0 对应较小输出序位。
@@ -16,18 +16,28 @@ Conception 已明确 UTXO/UTCO 指纹按年度、TxID 字节 `[8,13,18]` 分层�
 - 尾部未使用 bit 必须为 0。
 - `1` 表示未花费或未转出，`0` 表示已无效。
 
-建议分层规则：
+分层规则：
 
 - 顶层年度按数值升序排列。
 - 年度内按 TxID 字节 `[8,13,18]` 分入三级宽成员节点。
 - 同一末端分组内按完整 TxID 字典序排列。
 - 空年度和空分组不编码；整棵空状态树使用专用空根。
+- UTXO 空状态树根为 `SHA3-384(DomainTag("utxo.empty"))`。
+- UTCO 空状态树根为 `SHA3-384(DomainTag("utco.empty"))`。
 
-建议叶子规则：
+叶子规则：
 
 ```text
 StateLeaf = SHA3-384(DomainTag("utxo.leaf" or "utco.leaf") || TxID || Count || FlagBytes)
 ```
+
+其中 `Count` 必须保留在叶子前像中，表示该 `TxID` 对应的有效输出数量，而不是 `FlagBytes` 字节数量。
+
+UTCO 过期规则：
+
+- Credit 过期时，对应状态位失效。
+- 若同一 `TxID` 下仍存在其它未转出且未过期 Credit，则保留该 UTCO 叶并更新状态位。
+- 若同一 `TxID` 下已无任何有效 Credit，则从 UTCO 状态树删除该叶。
 
 缓存边界：
 
@@ -50,8 +60,9 @@ StateLeaf = SHA3-384(DomainTag("utxo.leaf" or "utco.leaf") || TxID || Count || F
 - `docs/conception/附.组队校验.md#从-utxoutco-集检索输出项数据`
 - `docs/conception/附.交易.md#附utxoutco-集合`
 
-## Open Questions（开放问题）
+## Confirmation（确认）
 
-- 空状态树根使用全零、域标签哈希，还是 `SHA3-384(empty)`。
-- `Count` 是否保留在叶子前像中，或仅由 `FlagBytes` 长度推导。
-- Credit 过期移除时状态位是置 0 后保留，还是从 UTCO 叶中删除。
+- 状态位映射、低位优先 bit 顺序和 `1/0` 有效语义已确认。
+- 空状态树根使用 UTXO/UTCO 各自的域标签哈希。
+- `StateLeaf` 前像中保留 `Count`。
+- Credit 过期后若同一 `TxID` 下无有效 Credit，则删除 UTCO 叶。

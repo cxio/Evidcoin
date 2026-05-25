@@ -25,10 +25,10 @@
 | [DEC-0004](DEC-0004-hash-tree-and-proof-edge-cases.md) | Hash Tree and Proof Edge Cases | Accepted | 哈希树 |
 | [DEC-0101](DEC-0101-transaction-body-and-output-payloads.md) | Transaction Body and Output Payloads | Accepted | 交易 |
 | [DEC-0102](DEC-0102-signature-message-profile.md) | Signature Message Profile | Accepted | 签名 |
-| [DEC-0103](DEC-0103-witness-container-and-pruning.md) | Witness Container and Pruning | Proposed | 见证 |
-| [DEC-0104](DEC-0104-address-and-ml-dsa-profile.md) | Address and ML-DSA Profile | Proposed | 密码学 |
-| [DEC-0201](DEC-0201-utxo-utco-state-fingerprint.md) | UTXO/UTCO State Fingerprint | Proposed | 状态 |
-| [DEC-0301](DEC-0301-poh-mint-hash-and-mint-proof.md) | PoH Mint Hash and Mint Proof | Proposed | PoH |
+| [DEC-0103](DEC-0103-witness-container-and-pruning.md) | Witness Container and Pruning | Accepted | 见证 |
+| [DEC-0104](DEC-0104-address-and-ml-dsa-profile.md) | Address and ML-DSA Profile | Accepted | 密码学 |
+| [DEC-0201](DEC-0201-utxo-utco-state-fingerprint.md) | UTXO/UTCO State Fingerprint | Accepted | 状态 |
+| [DEC-0301](DEC-0301-poh-mint-hash-and-mint-proof.md) | PoH Mint Hash and Mint Proof | Accepted | PoH |
 | [DEC-0302](DEC-0302-genesis-and-initial-window.md) | Genesis and Initial Window | Proposed | 创世初段 |
 | [DEC-0303](DEC-0303-fork-choice-and-randomx-tiebreaker.md) | Fork Choice and RandomX Tiebreaker | Proposed | 分叉 |
 | [DEC-0401](DEC-0401-coinbase-serialization-rewards-and-award-slots.md) | Coinbase Serialization, Rewards and Award Slots | Proposed | Coinbase |
@@ -57,8 +57,8 @@
 
 | Status | Count |
 |--------|-------|
-| Proposed | 15 |
-| Accepted | 6 |
+| Proposed | 11 |
+| Accepted | 10 |
 | Deprecated | 0 |
 | Absorbed | 0（历史清单见下文） |
 

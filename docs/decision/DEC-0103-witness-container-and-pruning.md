@@ -1,6 +1,6 @@
 # DEC-0103: Witness Container and Pruning（见证容器与剪枝）
 
-Status: Proposed
+Status: Accepted
 
 ## Context（背景）
 
@@ -8,14 +8,14 @@ Conception 将见证信息从交易 ID 中排除，并允许后期剪枝。但�
 
 ## Decision（决策）
 
-建议每个输入拥有一个见证容器：
+每个输入拥有一个见证容器：
 
 ```text
 Witness = varint(item_count) || WitnessItem*
 WitnessItem = type byte || bytes
 ```
 
-建议标准 item 类型：
+标准 item 类型：
 
 - `0x01`：验证类别。
 - `0x02`：授权标记。
@@ -24,13 +24,19 @@ WitnessItem = type byte || bytes
 - `0x05`：补全公钥哈希。
 - `0x06`：解锁脚本外部数据。
 
-剪枝建议：
+剪枝规则：
 
 - 普通交易输入见证可剪枝。
 - 解锁脚本本身参与输入根，不属于可剪枝见证。
-- Coinbase 交易签名可在常规归档中保留，但长期共识最小验证不依赖它。
+- Coinbase 普通交易签名采用分层保存：常规归档和服务层可保留并声明是否提供；长期共识最小验证不依赖它。
 - 创世区块铸造者对 `CheckRoot` 的签名必须保留，用于链根锚定。
 - 择优凭证中对 `mintHash` 的签名不属于可剪枝见证，必须随 Coinbase 数据保留。
+
+多签见证排序规则：
+
+- 签名集与参与签名的公钥集必须保持一一对应顺序。
+- 补全集只包含未参与签名公钥的 `BLAKE3-256(pubKeyBytes)` 初级哈希，并按字典序升序排列。
+- 容器不重排签名和公钥；验证逻辑按见证内顺序验证签名，再与补全集合并计算复合公钥哈希。
 
 ## Rationale（理由）
 
@@ -49,7 +55,8 @@ WitnessItem = type byte || bytes
 - `docs/conception/1.共识-历史证明（PoH）.md#择优凭证`
 - `docs/conception/6.脚本系统.md#解锁数据`
 
-## Open Questions（开放问题）
+## Confirmation（确认）
 
-- Coinbase 普通交易签名是否属于必须永久保存的历史数据。
-- 多签见证中公钥集和补全集的排序是否由见证容器强制。
+- 每个输入一个 Witness 容器的格式已确认。
+- Coinbase 普通交易签名按分层保存处理，长期共识最小验证不依赖。
+- 多签见证中签名与公钥按配对顺序携带，补全集规范排序。
