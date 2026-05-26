@@ -4,7 +4,7 @@ Status: Proposed
 
 ## Context（背景）
 
-Conception 已明确 31 块分叉竞争、16 块过半胜出、长度 20 临界裁决、同铸造者低收益原则和 RandomX 平局方案。但完整比较算法、低收益定义、RandomX profile 和 3 倍币权销毁流程仍需冻结。
+Conception 已明确 31 块分叉竞争、16 块过半胜出、长度 20 临界裁决、同铸造者低收益原则和 RandomX 平局方案。但完整比较算法、低收益定义、RandomX profile 和 2 倍币权销毁流程仍需冻结。
 
 ## Decision（决策）
 
@@ -42,7 +42,7 @@ score = RandomX(seed, input)
 
 - RandomX 版本和参数未冻结前，平局裁决不可用于主网。
 - 低收益定义需与 Coinbase 输出和交易费销毁规则一致。
-- 3 倍币权销毁的冗余出块规则需在区块接收阶段独立实现。
+- 2 倍币权销毁的冗余出块规则需在区块接收阶段独立实现。
 
 ## Conception References（构想层依据）
 
@@ -55,4 +55,4 @@ score = RandomX(seed, input)
 
 - RandomX 的具体库、版本、输出长度、内存参数和轻/重模式。
 - “低收益”最终是个人收益、交易费收益，还是 Coinbase 总输出。
-- 3 倍币权销毁在连续后位超越时的完整确定性算法，见 `CONCEPTION-CONFLICTS.md` 的 `C-007`。
+- 2 倍币权销毁在连续后位超越时的完整确定性算法，见 `CONCEPTION-CONFLICTS.md` 的 `C-007`。
