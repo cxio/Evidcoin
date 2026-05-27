@@ -32,14 +32,14 @@
 | [DEC-0302](DEC-0302-genesis-and-initial-window.md) | Genesis and Initial Window | Accepted | 创世初段 |
 | [DEC-0303](DEC-0303-fork-choice-and-randomx-tiebreaker.md) | Fork Choice and RandomX Tiebreaker | Accepted | 分叉 |
 | [DEC-0401](DEC-0401-coinbase-serialization-rewards-and-award-slots.md) | Coinbase Serialization, Rewards and Award Slots | Accepted | Coinbase |
-| [DEC-0501](DEC-0501-script-bytecode-encoding.md) | Script Bytecode Encoding | Proposed | 脚本 |
-| [DEC-0502](DEC-0502-script-float-profile.md) | Script Float Profile | Proposed | 脚本 |
-| [DEC-0503](DEC-0503-script-registry-and-environment-boundary.md) | Script Registry and Environment Boundary | Proposed | 脚本 |
+| [DEC-0501](DEC-0501-script-bytecode-encoding.md) | Script Bytecode Encoding | Accepted | 脚本 |
+| [DEC-0502](DEC-0502-script-float-profile.md) | Script Float Profile | Accepted | 脚本 |
+| [DEC-0503](DEC-0503-script-registry-and-environment-boundary.md) | Script Registry and Environment Boundary | Accepted | 脚本 |
 | [DEC-0504](DEC-0504-script-cost-budget.md) | Script Cost Budget | Proposed | 脚本 |
 | [DEC-0505](DEC-0505-script-failure-and-disabled-opcodes.md) | Script Failure and Disabled Opcodes | Proposed | 脚本 |
 | [DEC-0601](DEC-0601-block-proof-package.md) | Block Proof Package | Accepted | 证明 |
-| [DEC-0602](DEC-0602-network-summary-txid-profile.md) | Network Summary TxID Profile | Proposed | 网络概要 |
-| [DEC-0603](DEC-0603-blockqs-verification-data-profile.md) | Blockqs Verification Data Profile | Proposed | Blockqs |
+| [DEC-0602](DEC-0602-network-summary-txid-profile.md) | Network Summary TxID Profile | Accepted | 网络概要 |
+| [DEC-0603](DEC-0603-blockqs-verification-data-profile.md) | Blockqs Verification Data Profile | Accepted | Blockqs |
 
 ## Topic Index（主题索引）
 
@@ -57,8 +57,8 @@
 
 | Status | Count |
 |--------|-------|
-| Proposed | 7 |
-| Accepted | 14 |
+| Proposed | 2 |
+| Accepted | 19 |
 | Deprecated | 0 |
 | Absorbed | 0（历史清单见下文） |
 

@@ -1,10 +1,10 @@
 # DEC-0502: Script Float Profile（脚本浮点配置）
 
-Status: Proposed
+Status: Accepted
 
 ## Context（背景）
 
-Conception 允许脚本使用 `Float`，并说明字面量不支持 NaN/Inf，但运算中可能产生异常浮点，可用 `ISEFV` 检测。浮点跨实现确定性、字节编码、取整、比较和异常传播仍需冻结。
+Conception 允许脚本使用 `Float`，并说明字面量不支持 NaN/Inf，但运算中可能产生异常浮点，可用 `ISEFV` 检测。浮点跨实现确定性、字节编码、取整、比较和异常传播需要冻结。
 
 ## Decision（决策）
 
@@ -13,10 +13,13 @@ Conception 允许脚本使用 `Float`，并说明字面量不支持 NaN/Inf，�
 - `Float` 使用 IEEE 754 binary64。
 - 字节编码使用 8 字节大端 bit pattern。
 - 输入字面量不得表达 NaN、+Inf、-Inf。
-- 运算产生 NaN 或 Inf 时不立即崩溃，由 `ISEFV` 检测；但进入公共验证最终 PASS 前若仍存在异常浮点，验证失败。
+- `POW`、除零、溢出等运算产生 NaN 或 Inf 时不立即崩溃，保留 IEEE 754 异常值继续执行，由 `ISEFV` 检测；但进入公共验证最终 PASS 前若仍存在异常浮点，验证失败。
 - `-0.0` 在数值比较中等于 `+0.0`，但字节编码保持原 bit pattern。
 - `Float -> Int` 默认向零截断。
-- `Float -> String` 使用固定规范格式，不依赖本地 locale。
+- `Float -> String` 默认使用最短 round-trip 十进制格式，不依赖本地 locale；等价于 Go `strconv.FormatFloat(f, 'g', -1, 64)`。
+- 若脚本显式使用 `STRING{e/E/f/g/G/x/X}` 格式标识，则按该格式执行。
+- `BYTES` 与 `PACK` 对 `Float` 输出 IEEE 754 binary64 的 8 字节大端 bit pattern。
+- 异常浮点也允许被 `BYTES` 或 `PACK` 输出为其 IEEE bit pattern；转换后值类型为 `Bytes`，不再触发最终异常 `Float` 残留检查。
 
 建议比较规则：
 
@@ -26,7 +29,7 @@ Conception 允许脚本使用 `Float`，并说明字面量不支持 NaN/Inf，�
 
 ## Rationale（理由）
 
-完全禁止浮点会削弱脚本表达力；保留 binary64 并冻结异常语义，可在可用性和确定性之间折中。异常浮点不应静默通过公共验证。
+完全禁止浮点会削弱脚本表达力；保留 binary64 并冻结异常语义，可在可用性和确定性之间折中。异常浮点不应静默通过公共验证，但脚本可以显式检测并转换为其它类型。最短 round-trip 字符串格式能保证默认文本表示可无损解析回同一 binary64，同时避免固定小数或固定科学计数法的冗长和边界问题。
 
 ## Consequences（影响）
 
@@ -43,6 +46,4 @@ Conception 允许脚本使用 `Float`，并说明字面量不支持 NaN/Inf，�
 
 ## Open Questions（开放问题）
 
-- `Float -> String` 的精确格式，是最短 round-trip 还是固定小数/科学计数法。
-- `POW`、除零、溢出产生异常浮点时是保留值还是立即失败。
-- `PACK` 和 `BYTES` 对 `Float` 是否直接输出 IEEE 754 bit pattern。
+None.
