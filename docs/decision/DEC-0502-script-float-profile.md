@@ -13,7 +13,7 @@ Conception 允许脚本使用 `Float`，并说明字面量不支持 NaN/Inf，�
 - `Float` 使用 IEEE 754 binary64。
 - 字节编码使用 8 字节大端 bit pattern。
 - 输入字面量不得表达 NaN、+Inf、-Inf。
-- `POW`、除零、溢出等运算产生 NaN 或 Inf 时不立即崩溃，保留 IEEE 754 异常值继续执行，由 `ISEFV` 检测；但进入公共验证最终 PASS 前若仍存在异常浮点，验证失败。
+- `POW`、除零、溢出等运算产生 NaN 或 Inf 时不立即崩溃，保留 IEEE 754 异常值继续执行，由 `ISEFV` 检测。
 - `-0.0` 在数值比较中等于 `+0.0`，但字节编码保持原 bit pattern。
 - `Float -> Int` 默认向零截断。
 - `Float -> String` 默认使用最短 round-trip 十进制格式，不依赖本地 locale；等价于 Go `strconv.FormatFloat(f, 'g', -1, 64)`。
@@ -25,7 +25,7 @@ Conception 允许脚本使用 `Float`，并说明字面量不支持 NaN/Inf，�
 
 - 任一操作数为 NaN 时，除 `ISEFV` 外的比较返回 `false`。
 - `EQUAL(+0.0, -0.0)` 返回 `true`。
-- 排序类比较对 NaN 返回失败状态，而不是任意排序。
+- 排序类比较中遇到 NaN 会导致脚本执行失败，验证不通过。
 
 ## Rationale（理由）
 
