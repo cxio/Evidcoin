@@ -100,9 +100,9 @@ Layer 0 基础层:    pkg/types/, pkg/crypto/  ← 无内部依赖
 BlockInterval   = 6 * time.Minute
 BlocksPerYear   = 87661
 MaxStackHeight  = 255
-MaxStackItem    = 1023
-MaxLockScript   = 1023
-MaxUnlockScript = 4095
+MaxStackItem    = 4095
+MaxLockScript   = 8191
+MaxUnlockScript = 8191
 MaxTxSize       = 65535
 ```
 
