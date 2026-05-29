@@ -33,7 +33,7 @@
 ### Task 2: 01.Types-And-Encoding.md（基础类型与编码）
 **Files:** Create `docs/proposal/01.Types-And-Encoding.md`
 **来源：** conception 6.脚本、1.值指令、8.转换指令、附.交易(地址)；DEC-0001。
-**要点：** ULEB128 最短编码、定宽大端、字节序列 `varint(len)||bytes`、定宽字段白名单、年度=UTC 自然年、BigInt 序列化 `0x01||sign||magnitude`；基础值类型（Byte/Rune/Int/BigInt/Float/String/Bytes）。
+**要点：** ULEB128 最短编码、定宽大端、字节序列 `varint(len)||bytes`、定宽字段白名单、年度=UTC 自然年、BigInt 序列化 `slen||magnitude`；基础值类型（Byte/Rune/Int/BigInt/Float/String/Bytes）。
 **冲突/缺口落地：** 单位体系（chx/Bi/毫币）混用 → 「待决问题」+建议统一口径。
 按通用工作流 A→E。
 
