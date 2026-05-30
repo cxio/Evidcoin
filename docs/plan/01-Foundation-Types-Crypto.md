@@ -124,9 +124,9 @@ git commit -m "feat: add fixed hash identifier types"
 - `BlockInterval == 6 * time.Minute`。
 - `BlocksPerYear == 87661`。
 - `IsYearBoundary(0) == true`。
-- `YearOfHeight(0) == 0`。
-- `YearOfHeight(87660) == 0`。
-- `YearOfHeight(87661) == 1`。
+- `HeightYear(0) == 0`。
+- `HeightYear(87660) == 0`。
+- `HeightYear(87661) == 1`。
 - `BlockTime(genesis, 0) == genesis`。
 - `BlockTime(genesis, 1) == genesis + 6 minutes`。
 - `IsYearBoundary(BlocksPerYear) == true`。
@@ -139,9 +139,15 @@ go test ./pkg/types -run 'Test(BlockTime|Constants|YearBoundary)' -v
 
 **Step 3: 最小实现**
 
-实现 `BlockHeight` 命名类型、`BlockTime`、`YearOfHeight`、`IsYearBoundary`。创世高度 0 是年度边界，年度公式为 `height / BlocksPerYear`（`BlocksPerYear = 87661`）。
+实现 `BlockHeight` 命名类型、`BlockTime`、`HeightYear`、`IsYearBoundary`。创世高度 0 是年度边界，年度公式为 `height / BlocksPerYear`（`BlocksPerYear = 87661`）。
 
-> **注：** 协议年度字段另有「UTC 自然年份数值」口径（DEC-0001，用于交易短引用、状态指纹分层），与此处「按 87661 区块计的年度边界」是不同维度，勿混用（详见第 03 章 Stakes/年度承载）。
+`BlockHeight` 底层类型固定为 `uint32`（与第 01 章 §1.4 定宽白名单中区块头 `Height` 为 uint32 一致）；凡参与区块头哈希/签名输入的高度编码必须走 `AppendUint32BE`，不得使用 `int`/`uint64` 底层或 varint，否则将导致 `BlockID` 不唯一。
+
+> **注（两套年度口径，命名须显式区分，勿混用）：**
+> - **高度年度（`HeightYear`）**：按 87661 区块计的年度边界，`HeightYear(height) = height / BlocksPerYear`，用于年块/年度边界判定（本 Task）。
+> - **自然年度（`CalendarYear`）**：「UTC 自然年份数值」口径（DEC-0001，如 `2025`），用于交易输入项短引用、UTXO/UTCO 状态指纹分层（详见第 03、09 章 Stakes/年度承载）。
+>
+> 两者是不同维度，实现与测试中必须用不同命名（`HeightYear` vs `CalendarYear`）区分，禁止互相替代。
 
 **Step 4: 验证并提交**
 
