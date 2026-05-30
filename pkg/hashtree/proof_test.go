@@ -31,7 +31,7 @@ func TestProofWrongDirectionFails(t *testing.T) {
 	if len(p.Siblings) == 0 {
 		t.Fatal("expected sibling steps")
 	}
-	// Flip the first direction; verification must fail.
+	// 翻转第一个方向位；验证应失败。
 	if p.Siblings[0].Direction == SiblingLeft {
 		p.Siblings[0].Direction = SiblingRight
 	} else {

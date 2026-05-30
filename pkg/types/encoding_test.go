@@ -157,15 +157,15 @@ func TestCanonicalEncodingBigInt(t *testing.T) {
 }
 
 func TestCanonicalEncodingBigIntRejects(t *testing.T) {
-	// magnitude with leading zero (non-minimal)
+	// 绝对值存在前导零（非最短表示）
 	if _, _, err := ReadBigInt([]byte{0x02, 0x00, 0x01}); err == nil {
 		t.Error("expected non-minimal error")
 	}
-	// negative zero
+	// 负零
 	if _, _, err := ReadBigInt([]byte{0x80}); err == nil {
 		t.Error("expected negative-zero error")
 	}
-	// magnitude exceeding 127 bytes
+	// 绝对值长度超过 127 字节
 	big128 := new(big.Int).Lsh(big.NewInt(1), 128*8)
 	if _, err := AppendBigInt(nil, big128); err == nil {
 		t.Error("expected too-large error")

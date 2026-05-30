@@ -2,15 +2,15 @@ package types
 
 // 可变长度字节序列、列表与可选字段编码（DEC-0001 §1.3）。
 
-// AppendBytes appends b to dst as a length-prefixed byte sequence:
-// varint(len(b)) || b. An empty slice encodes as a single 0x00 length.
+// AppendBytes 将 b 作为“长度前缀 + 数据”的字节序列追加到 dst：
+// varint(len(b)) || b。空切片编码为单字节长度 0x00。
 func AppendBytes(dst, b []byte) []byte {
 	dst = AppendVarUint(dst, uint64(len(b)))
 	return append(dst, b...)
 }
 
-// ReadBytes reads a length-prefixed byte sequence from the front of src.
-// The returned slice is a fresh copy and does not alias src.
+// ReadBytes 从 src 前缀读取一个带长度前缀的字节序列。
+// 返回切片为新副本，不与 src 共享底层内存。
 func ReadBytes(src []byte) (b []byte, n int, err error) {
 	length, ln, err := ReadVarUint(src)
 	if err != nil {
@@ -25,8 +25,8 @@ func ReadBytes(src []byte) (b []byte, n int, err error) {
 	return out, end, nil
 }
 
-// AppendOptional appends an optional value: 0x00 when absent, or 0x01 followed
-// by the value produced by appendValue when present (DEC-0001 optional 编码).
+// AppendOptional 追加一个可选值：缺失时写入 0x00；存在时写入 0x01，
+// 再追加由 appendValue 生成的值（DEC-0001 optional 编码）。
 func AppendOptional(dst []byte, present bool, appendValue func([]byte) []byte) []byte {
 	if !present {
 		return append(dst, 0x00)
@@ -35,8 +35,8 @@ func AppendOptional(dst []byte, present bool, appendValue func([]byte) []byte) [
 	return appendValue(dst)
 }
 
-// ReadOptionalMarker reads a single optional presence marker from src and
-// reports whether a value follows. A marker other than 0x00/0x01 is rejected.
+// ReadOptionalMarker 从 src 读取一个可选字段存在标记，并报告后续是否有值。
+// 标记不是 0x00/0x01 时视为非法并拒绝。
 func ReadOptionalMarker(src []byte) (present bool, n int, err error) {
 	if len(src) < 1 {
 		return false, 0, ErrShortBuffer
@@ -51,8 +51,8 @@ func ReadOptionalMarker(src []byte) (present bool, n int, err error) {
 	}
 }
 
-// AppendList appends a list: varint(count) followed by each element as produced
-// by appendElem. The caller is responsible for element encoding.
+// AppendList 追加列表编码：先写 varint(count)，再写每个由 appendElem 生成的元素。
+// 元素的具体编码规则由调用方负责。
 func AppendList[T any](dst []byte, items []T, appendElem func([]byte, T) []byte) []byte {
 	dst = AppendVarUint(dst, uint64(len(items)))
 	for i := range items {

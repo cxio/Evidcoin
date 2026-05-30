@@ -5,49 +5,47 @@ import "errors"
 // 签名抽象（DEC-0104 固定 ML-DSA-65 / cloudflare-circl profile）。上层只依赖这些
 // 接口，不直接绑定具体后量子签名库，便于未来单独评估迁移（A-2 观察项）。
 
-// AlgorithmID identifies a signature algorithm profile.
+// AlgorithmID 标识签名算法配置。
 type AlgorithmID uint8
 
 const (
-	// AlgUnknown is the zero-value, invalid algorithm.
+	// AlgUnknown 是零值，表示无效算法。
 	AlgUnknown AlgorithmID = 0
-	// AlgMLDSA65 is the ML-DSA-65 profile (cloudflare/circl, DEC-0104).
+	// AlgMLDSA65 是 ML-DSA-65 配置（cloudflare/circl，DEC-0104）。
 	AlgMLDSA65 AlgorithmID = 1
 )
 
-// ErrAlgorithmMismatch is returned when a verifier and signature disagree on
-// the algorithm profile.
+// ErrAlgorithmMismatch 表示验签器与签名在算法配置上不一致。
 var ErrAlgorithmMismatch = errors.New("crypto: signature algorithm mismatch")
 
-// PublicKey is an algorithm-tagged public key whose canonical byte encoding
-// feeds public-key hashing and address derivation.
+// PublicKey 是带算法标记的公钥，其规范字节编码用于公钥哈希与地址派生。
 type PublicKey interface {
-	// Algorithm returns the signature algorithm profile.
+	// Algorithm 返回签名算法配置。
 	Algorithm() AlgorithmID
-	// Bytes returns the canonical public key encoding (a fresh copy).
+	// Bytes 返回规范公钥编码（新副本）。
 	Bytes() []byte
 }
 
-// Signature is an algorithm-tagged signature value.
+// Signature 是带算法标记的签名值。
 type Signature interface {
-	// Algorithm returns the signature algorithm profile.
+	// Algorithm 返回签名算法配置。
 	Algorithm() AlgorithmID
-	// Bytes returns the canonical signature encoding (a fresh copy).
+	// Bytes 返回规范签名编码（新副本）。
 	Bytes() []byte
 }
 
-// Signer produces signatures over a signature message byte sequence
-// (the message profile is defined in 第 08 章 / DEC-0102).
+// Signer 负责对签名消息字节序列产生签名
+// （消息配置定义见第 08 章 / DEC-0102）。
 type Signer interface {
-	// PublicKey returns the signer's public key.
+	// PublicKey 返回签名者公钥。
 	PublicKey() PublicKey
-	// Sign signs the given message bytes.
+	// Sign 对给定消息字节进行签名。
 	Sign(message []byte) (Signature, error)
 }
 
-// Verifier verifies signatures against a public key.
+// Verifier 使用公钥验证签名。
 type Verifier interface {
-	// Verify reports whether sig is a valid signature of message under pub.
-	// It returns ErrAlgorithmMismatch when the algorithm profiles disagree.
+	// Verify 返回 sig 是否为 pub 对 message 的合法签名。
+	// 当算法配置不一致时返回 ErrAlgorithmMismatch。
 	Verify(pub PublicKey, message []byte, sig Signature) (bool, error)
 }

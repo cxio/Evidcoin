@@ -94,20 +94,20 @@ func TestDecodeAddressRejects(t *testing.T) {
 	h := AddressHashSingle([]byte("key"))
 	addr, _ := EncodeAddress(Mainnet, h)
 
-	// wrong prefix
+	// 前缀错误
 	if _, _, err := DecodeAddress("Zx" + addr[2:]); err == nil {
 		t.Error("expected unknown network error")
 	}
-	// corrupted checksum: flip last char's neighbourhood by altering payload
+	// 校验和损坏：通过篡改载荷改变末尾字符附近内容
 	bad := addr[:len(addr)-1] + flipBase58Char(addr[len(addr)-1])
 	if _, _, err := DecodeAddress(bad); err == nil {
 		t.Error("expected checksum/length error for corrupted address")
 	}
-	// invalid base58 (contains '0', not in Bitcoin alphabet)
+	// 非法 base58（包含 '0'，不在 Bitcoin 字母表内）
 	if _, _, err := DecodeAddress("Cx0OIl"); err == nil {
 		t.Error("expected malformed error for invalid base58")
 	}
-	// too short
+	// 过短
 	if _, _, err := DecodeAddress("C"); err == nil {
 		t.Error("expected malformed error for too-short address")
 	}
@@ -126,7 +126,7 @@ func TestSingleAndMultiIndistinguishable(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// Both are plain 32-byte hashes with no structural marker.
+	// 二者都是纯 32 字节哈希，不含结构标记。
 	if len(single.Bytes()) != len(multi.Bytes()) {
 		t.Fatal("single and multisig address hashes differ in length")
 	}

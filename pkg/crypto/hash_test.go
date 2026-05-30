@@ -58,7 +58,7 @@ func TestHashOutputLengths(t *testing.T) {
 
 func TestHashDomainSeparation(t *testing.T) {
 	data := []byte("same-payload")
-	// Same payload under different SHA3-384 domains must differ.
+	// 相同 payload 在不同 SHA3-384 域下的结果必须不同。
 	if bytes.Equal(HashBlockHeader(data).Bytes(), HashTxHeader(data).Bytes()) {
 		t.Error("block.header and tx.header collide on same payload")
 	}

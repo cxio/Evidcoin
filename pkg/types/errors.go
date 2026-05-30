@@ -8,31 +8,31 @@ import (
 // 编码与类型错误。协议解码器必须拒绝非规范输入，而非容忍后重编码。
 
 var (
-	// ErrShortBuffer is returned when a fixed-width decode runs out of input.
+	// ErrShortBuffer 表示定宽解码时输入字节不足。
 	ErrShortBuffer = errors.New("types: buffer too short")
-	// ErrVarintTooLong is returned when a varint exceeds the 10-byte uint64 bound.
+	// ErrVarintTooLong 表示变长整数超过 uint64 的 10 字节上限。
 	ErrVarintTooLong = errors.New("types: varint too long")
-	// ErrVarintOverflow is returned when a varint does not fit into a uint64.
+	// ErrVarintOverflow 表示变长整数数值无法装入 uint64。
 	ErrVarintOverflow = errors.New("types: varint overflow")
-	// ErrVarintTruncated is returned when a varint lacks its terminating byte.
+	// ErrVarintTruncated 表示变长整数缺少终止字节。
 	ErrVarintTruncated = errors.New("types: varint truncated")
-	// ErrVarintNotMinimal is returned when a varint is not shortest-encoded.
+	// ErrVarintNotMinimal 表示变长整数未采用最短编码。
 	ErrVarintNotMinimal = errors.New("types: varint not minimal")
-	// ErrBigIntTooLarge is returned when a BigInt magnitude exceeds 127 bytes.
+	// ErrBigIntTooLarge 表示 BigInt 绝对值长度超过 127 字节。
 	ErrBigIntTooLarge = errors.New("types: bigint magnitude exceeds 127 bytes")
-	// ErrBigIntNotMinimal is returned when a BigInt magnitude has a leading zero.
+	// ErrBigIntNotMinimal 表示 BigInt 绝对值存在前导零，非最短表示。
 	ErrBigIntNotMinimal = errors.New("types: bigint magnitude not minimal")
-	// ErrBigIntNegativeZero is returned when a BigInt encodes a negative zero.
+	// ErrBigIntNegativeZero 表示 BigInt 编码为负零。
 	ErrBigIntNegativeZero = errors.New("types: bigint negative zero")
-	// ErrInvalidOptionalMarker is returned for an optional marker other than 0x00/0x01.
+	// ErrInvalidOptionalMarker 表示可选字段标记不是 0x00 或 0x01。
 	ErrInvalidOptionalMarker = errors.New("types: invalid optional marker")
-	// ErrAmountOverflow is returned when a parsed amount exceeds uint64 range.
+	// ErrAmountOverflow 表示解析后的金额超出 uint64 范围。
 	ErrAmountOverflow = errors.New("types: amount overflow")
-	// ErrAmountFormat is returned for a malformed decimal amount string.
+	// ErrAmountFormat 表示金额十进制字符串格式非法。
 	ErrAmountFormat = errors.New("types: invalid amount format")
 )
 
-// lengthError reports a fixed-length construction mismatch.
+// lengthError 表示定长类型构造时长度不匹配。
 type lengthError struct {
 	typ  string
 	want int

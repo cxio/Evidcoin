@@ -6,9 +6,9 @@ import (
 	"testing"
 )
 
-// testSigner is a deterministic HMAC-based fake used to exercise the Signer /
-// Verifier interface contract without binding to a concrete ML-DSA library
-// (DEC-0104 freezes circl as the production profile; that binding is deferred).
+// testSigner 是一个确定性的基于 HMAC 的测试桩，用于验证 Signer / Verifier
+// 接口契约，而不直接绑定具体 ML-DSA 库
+// （DEC-0104 已冻结 circl 为生产配置；该绑定在后续阶段实现）。
 
 const algTest AlgorithmID = 200
 

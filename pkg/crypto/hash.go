@@ -1,6 +1,5 @@
-// Package crypto freezes the protocol-wide hash profiles, domain-isolation
-// tags, public-key/address encoding and post-quantum signature (ML-DSA-65)
-// abstraction. It depends only on pkg/types and third-party crypto libraries.
+// Package crypto 固化协议级哈希配置、域隔离标签、公钥/地址编码与后量子签名
+// （ML-DSA-65）抽象。该包仅依赖 pkg/types 与第三方密码库。
 package crypto
 
 import (
@@ -11,10 +10,10 @@ import (
 	"lukechampine.com/blake3"
 )
 
-// domainPrefix is the fixed namespace prefix for all domain tags (DEC-0002).
+// domainPrefix 是所有域标签统一使用的固定命名空间前缀（DEC-0002）。
 const domainPrefix = "Evidcoin/v1/"
 
-// domain tag names (14-item full set: DEC-0002 12 items + DEC-0201 two empty roots).
+// 域标签名称（完整 14 项：DEC-0002 的 12 项 + DEC-0201 的两个空根标签）。
 const (
 	tagNameBlockHeader   = "block.header"
 	tagNameTxHeader      = "tx.header"
@@ -32,9 +31,8 @@ const (
 	tagNameUTCOEmpty     = "utco.empty"
 )
 
-// Precomputed domain tags (`"Evidcoin/v1/" || name || 0x00`). These are the
-// only authoritative protocol tags; callers must not pass arbitrary tags into
-// the hash API, isolation is bound to the use-specific functions below.
+// 预计算域标签（`"Evidcoin/v1/" || name || 0x00`）。这些是协议唯一权威标签；
+// 调用方不得向哈希 API 传入任意自定义标签，域隔离由下方按用途函数绑定。
 var (
 	tagBlockHeader   = DomainTag(tagNameBlockHeader)
 	tagTxHeader      = DomainTag(tagNameTxHeader)
@@ -52,8 +50,8 @@ var (
 	tagUTCOEmpty     = DomainTag(tagNameUTCOEmpty)
 )
 
-// DomainTag builds a domain tag from a use name: "Evidcoin/v1/" || name || 0x00
-// (DEC-0002). The tag must be the first segment of a hash preimage.
+// DomainTag 根据用途名称构造域标签："Evidcoin/v1/" || name || 0x00
+// （DEC-0002）。该标签必须作为哈希原像的首段。
 func DomainTag(name string) []byte {
 	tag := make([]byte, 0, len(domainPrefix)+len(name)+1)
 	tag = append(tag, domainPrefix...)
@@ -62,7 +60,7 @@ func DomainTag(name string) []byte {
 	return tag
 }
 
-// sum writes each part into h in order and returns the digest.
+// sum 按顺序将各段写入 h 并返回摘要。
 func sum(h hash.Hash, parts ...[]byte) []byte {
 	for _, p := range parts {
 		h.Write(p)
@@ -73,8 +71,8 @@ func sum(h hash.Hash, parts ...[]byte) []byte {
 func sha3_384(parts ...[]byte) []byte { return sum(sha3.New384(), parts...) }
 func sha3_512(parts ...[]byte) []byte { return sum(sha3.New512(), parts...) }
 
-// blake3_256 returns the 32-byte BLAKE3 digest of the concatenated parts. BLAKE3
-// is never used in keyed mode (DEC-0002); isolation relies solely on the tag.
+// blake3_256 返回拼接输入的 32 字节 BLAKE3 摘要。BLAKE3 从不使用 keyed
+// 模式（DEC-0002）；隔离完全依赖域标签。
 func blake3_256(parts ...[]byte) [32]byte {
 	h := blake3.New(32, nil)
 	for _, p := range parts {
@@ -85,82 +83,82 @@ func blake3_256(parts ...[]byte) [32]byte {
 	return out
 }
 
-// HashBlockHeader hashes a block header preimage (SHA3-384 + block.header).
+// HashBlockHeader 对区块头原像做哈希（SHA3-384 + block.header）。
 func HashBlockHeader(data []byte) types.BlockID {
 	id, _ := types.NewBlockID(sha3_384(tagBlockHeader, data))
 	return id
 }
 
-// HashTxHeader hashes a transaction header preimage (SHA3-384 + tx.header).
+// HashTxHeader 对交易头原像做哈希（SHA3-384 + tx.header）。
 func HashTxHeader(data []byte) types.TxID {
 	id, _ := types.NewTxID(sha3_384(tagTxHeader, data))
 	return id
 }
 
-// HashCheckRoot hashes a check-root preimage (SHA3-384 + checkroot).
+// HashCheckRoot 对校验根原像做哈希（SHA3-384 + checkroot）。
 func HashCheckRoot(data []byte) types.CheckRoot {
 	r, _ := types.NewCheckRoot(sha3_384(tagCheckRoot, data))
 	return r
 }
 
-// HashTreeLeaf hashes a generic tree leaf payload (SHA3-384 + tree.leaf).
+// HashTreeLeaf 对通用树叶子 payload 做哈希（SHA3-384 + tree.leaf）。
 func HashTreeLeaf(data []byte) types.Hash48 {
 	h, _ := types.NewHash48(sha3_384(tagTreeLeaf, data))
 	return h
 }
 
-// HashTreeBranch hashes a generic tree branch preimage (BLAKE3-256 + tree.branch).
-// data is the concatenation left || right.
+// HashTreeBranch 对通用树分支原像做哈希（BLAKE3-256 + tree.branch）。
+// data 为 left || right 的拼接。
 func HashTreeBranch(data []byte) types.TreeHash {
 	return types.TreeHash(blake3_256(tagTreeBranch, data))
 }
 
-// HashUTXOLeaf hashes a UTXO end leaf payload (SHA3-384 + utxo.leaf).
+// HashUTXOLeaf 对 UTXO 末端叶子 payload 做哈希（SHA3-384 + utxo.leaf）。
 func HashUTXOLeaf(data []byte) types.Hash48 {
 	h, _ := types.NewHash48(sha3_384(tagUTXOLeaf, data))
 	return h
 }
 
-// HashUTCOLeaf hashes a UTCO end leaf payload (SHA3-384 + utco.leaf).
+// HashUTCOLeaf 对 UTCO 末端叶子 payload 做哈希（SHA3-384 + utco.leaf）。
 func HashUTCOLeaf(data []byte) types.Hash48 {
 	h, _ := types.NewHash48(sha3_384(tagUTCOLeaf, data))
 	return h
 }
 
-// HashAttachment hashes an attachment full fingerprint (SHA3-512 + attachment.fingerprint).
+// HashAttachment 对附件完整指纹做哈希（SHA3-512 + attachment.fingerprint）。
 func HashAttachment(data []byte) types.AttachmentHash {
 	h, _ := types.NewAttachmentHash(sha3_512(tagAttachment, data))
 	return h
 }
 
-// HashMint hashes a mint proof preimage (BLAKE3-256 + mint.hash, 32 bytes).
+// HashMint 对铸凭证明原像做哈希（BLAKE3-256 + mint.hash，32 字节）。
 func HashMint(data []byte) types.MintHash {
 	return types.MintHash(blake3_256(tagMintHash, data))
 }
 
-// SignatureMessageTag returns the signature.message domain tag bytes for use by
-// the signature message profile (DEC-0102, 第 08 章).
+// SignatureMessageTag 返回 signature.message 域标签字节，供签名消息配置使用
+// （DEC-0102，第 08 章）。
 func SignatureMessageTag() []byte {
 	out := make([]byte, len(tagSignatureMsg))
 	copy(out, tagSignatureMsg)
 	return out
 }
 
-// EmptyUTXORoot returns the UTXO empty-state tree root: SHA3-384(DomainTag("utxo.empty")).
+// EmptyUTXORoot 返回 UTXO 空状态树根：SHA3-384(DomainTag("utxo.empty")).
 func EmptyUTXORoot() types.Hash48 {
 	h, _ := types.NewHash48(sha3_384(tagUTXOEmpty))
 	return h
 }
 
-// EmptyUTCORoot returns the UTCO empty-state tree root: SHA3-384(DomainTag("utco.empty")).
+// EmptyUTCORoot 返回 UTCO 空状态树根：SHA3-384(DomainTag("utco.empty")).
 func EmptyUTCORoot() types.Hash48 {
 	h, _ := types.NewHash48(sha3_384(tagUTCOEmpty))
 	return h
 }
 
-// HashAttachmentPieceLeaf hashes an attachment piece tree leaf. This is the sole
-// domain-tag-free exception (DEC-0002): BLAKE3-256(2-byte seq || BLAKE3-256(piece)),
-// a 34-byte preimage with NO domain tag, so external file-sharing tools can reuse it.
+// HashAttachmentPieceLeaf 对附件分片树叶子做哈希。这是唯一不带域标签的例外
+// （DEC-0002）：BLAKE3-256(2-byte seq || BLAKE3-256(piece))，
+// 原像长度 34 字节且不含域标签，以便外部文件分享工具复用。
 func HashAttachmentPieceLeaf(seq uint16, piece []byte) types.TreeHash {
 	pieceHash := blake3_256(piece)
 	var seqBytes [2]byte
@@ -169,8 +167,8 @@ func HashAttachmentPieceLeaf(seq uint16, piece []byte) types.TreeHash {
 	return types.TreeHash(blake3_256(seqBytes[:], pieceHash[:]))
 }
 
-// HashAttachmentPieceBranch hashes an attachment piece tree branch:
-// BLAKE3-256(left || right), with NO domain tag (DEC-0002 exception).
+// HashAttachmentPieceBranch 对附件分片树分支做哈希：
+// BLAKE3-256(left || right)，不带域标签（DEC-0002 例外）。
 func HashAttachmentPieceBranch(left, right types.TreeHash) types.TreeHash {
 	l := types.Hash32(left)
 	r := types.Hash32(right)

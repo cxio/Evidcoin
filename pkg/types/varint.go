@@ -1,11 +1,11 @@
 package types
 
-// maxVarUintLen is the maximum number of bytes a uint64 ULEB128 varint can use.
+// maxVarUintLen 是 uint64 ULEB128 变长整数可使用的最大字节数。
 const maxVarUintLen = 10
 
-// AppendVarUint appends v to dst as a canonical ULEB128 unsigned varint
-// (DEC-0001 §1.2): each byte carries 7 data bits with the high bit signalling
-// continuation, least-significant group first. The encoding is always shortest.
+// AppendVarUint 将 v 以规范 ULEB128 无符号变长整数格式追加到 dst。
+// 按 DEC-0001 §1.2：每个字节承载 7 位数据，高位 bit 表示是否续接，
+// 且从低有效位分组开始编码。编码始终采用最短形式。
 func AppendVarUint(dst []byte, v uint64) []byte {
 	for v >= 0x80 {
 		dst = append(dst, byte(v)|0x80)
@@ -14,10 +14,9 @@ func AppendVarUint(dst []byte, v uint64) []byte {
 	return append(dst, byte(v))
 }
 
-// ReadVarUint reads a canonical ULEB128 unsigned varint from the front of src.
-// It returns the decoded value and the number of bytes consumed. Non-minimal
-// encodings (redundant trailing zero group), overflowing values and truncated
-// inputs are rejected, never silently accepted (DEC-0001 边界).
+// ReadVarUint 从 src 前缀读取一个规范 ULEB128 无符号变长整数。
+// 返回解码值与已消费字节数。对非最短编码（冗余高位零组）、
+// 数值溢出与截断输入一律拒绝，不做静默容错（DEC-0001 边界）。
 func ReadVarUint(src []byte) (value uint64, n int, err error) {
 	var shift uint
 	for i := 0; i < len(src); i++ {

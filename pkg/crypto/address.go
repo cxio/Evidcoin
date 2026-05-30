@@ -12,34 +12,34 @@ import (
 	"golang.org/x/crypto/sha3"
 )
 
-// Network identifies the address network and selects the text prefix (DEC-0104).
+// Network 标识地址所属网络，并决定文本前缀（DEC-0104）。
 type Network string
 
 const (
-	// Mainnet uses the "Cx" address prefix.
+	// Mainnet 使用 "Cx" 地址前缀。
 	Mainnet Network = "Cx"
-	// Testnet uses the "Tx" address prefix.
+	// Testnet 使用 "Tx" 地址前缀。
 	Testnet Network = "Tx"
-	// Devnet uses the "Dx" address prefix.
+	// Devnet 使用 "Dx" 地址前缀。
 	Devnet Network = "Dx"
 )
 
-// Address errors.
+// 地址相关错误。
 var (
-	// ErrMultisigRatio is returned for an invalid m/n ratio (m or n is 0, or m > n).
+	// ErrMultisigRatio 表示 m/n 配比非法（m 或 n 为 0，或 m > n）。
 	ErrMultisigRatio = errors.New("crypto: invalid multisig m/n ratio")
-	// ErrMultisigDuplicate is returned when multisig public keys contain a duplicate.
+	// ErrMultisigDuplicate 表示多签公钥中存在重复项。
 	ErrMultisigDuplicate = errors.New("crypto: duplicate multisig public key")
-	// ErrUnknownNetwork is returned for an unrecognised network prefix.
+	// ErrUnknownNetwork 表示网络前缀无法识别。
 	ErrUnknownNetwork = errors.New("crypto: unknown network prefix")
-	// ErrBadChecksum is returned when an address checksum does not verify.
+	// ErrBadChecksum 表示地址校验和验证失败。
 	ErrBadChecksum = errors.New("crypto: address checksum mismatch")
-	// ErrBadAddress is returned for a malformed address (bad base58 or length).
+	// ErrBadAddress 表示地址格式非法（base58 非法或长度不对）。
 	ErrBadAddress = errors.New("crypto: malformed address")
 )
 
-// AddressHashSingle derives a single-signature public key hash:
-// SHA3-256( DomainTag("address.single") || BLAKE2b-512(pubKey) ) (DEC-0002/DEC-0104).
+// AddressHashSingle 计算单签公钥哈希：
+// SHA3-256( DomainTag("address.single") || BLAKE2b-512(pubKey) )（DEC-0002/DEC-0104）。
 func AddressHashSingle(pubKey []byte) types.AddressHash {
 	inner := blake2b.Sum512(pubKey)
 	pre := make([]byte, 0, len(tagAddressSingle)+len(inner))
@@ -50,13 +50,12 @@ func AddressHashSingle(pubKey []byte) types.AddressHash {
 	return h
 }
 
-// AddressHashMulti derives a composite (multisig) public key hash for an
-// m-of-n scheme (DEC-0104):
+// AddressHashMulti 为 m-of-n 多签方案计算组合公钥哈希（DEC-0104）：
 //  1. BaseH_i = BLAKE3-256(pubKey_i)
-//  2. sort BaseH lexicographically and concatenate
+//  2. 按字典序排序 BaseH 并拼接
 //  3. PKHmix = SHA3-256( DomainTag("address.multi") || m || n || BaseHAll )
 //
-// m and n must be non-zero with m <= n, len(pubKeys) == n, and no duplicates.
+// 要求 m、n 均非 0 且 m <= n，len(pubKeys) == n，并且公钥不能重复。
 func AddressHashMulti(m, n uint8, pubKeys [][]byte) (types.AddressHash, error) {
 	var zero types.AddressHash
 	if m == 0 || n == 0 || m > n {
@@ -74,7 +73,7 @@ func AddressHashMulti(m, n uint8, pubKeys [][]byte) (types.AddressHash, error) {
 	sort.Slice(baseHashes, func(i, j int) bool {
 		return bytes.Compare(baseHashes[i], baseHashes[j]) < 0
 	})
-	// Reject duplicate public keys (their base hashes are now adjacent).
+	// 拒绝重复公钥（排序后其 base hash 会相邻）。
 	for i := 1; i < len(baseHashes); i++ {
 		if bytes.Equal(baseHashes[i-1], baseHashes[i]) {
 			return zero, ErrMultisigDuplicate
@@ -92,10 +91,10 @@ func AddressHashMulti(m, n uint8, pubKeys [][]byte) (types.AddressHash, error) {
 	return types.NewAddressHash(out[:])
 }
 
-// EncodeAddress renders a 32-byte public key hash as address text:
-// prefix || Base58(pubKeyHash || checksum), where
-// checksum = last4(SHA2-256(SHA2-256(prefix || pubKeyHash))) (DEC-0104).
-// The prefix participates in the checksum but is not part of the base58 payload.
+// EncodeAddress 将 32 字节公钥哈希编码为地址文本：
+// prefix || Base58(pubKeyHash || checksum)，其中
+// checksum = last4(SHA2-256(SHA2-256(prefix || pubKeyHash)))（DEC-0104）。
+// prefix 参与校验和计算，但不进入 base58 载荷。
 func EncodeAddress(net Network, h types.AddressHash) (string, error) {
 	prefix := string(net)
 	if !validNetwork(net) {
@@ -109,9 +108,8 @@ func EncodeAddress(net Network, h types.AddressHash) (string, error) {
 	return prefix + base58.Encode(payload), nil
 }
 
-// DecodeAddress recovers the network and 32-byte public key hash from address
-// text, verifying the checksum. It rejects unknown prefixes, invalid base58,
-// wrong length and checksum failures.
+// DecodeAddress 从地址文本恢复网络与 32 字节公钥哈希，并校验校验和。
+// 对未知前缀、非法 base58、长度错误与校验失败均会拒绝。
 func DecodeAddress(addr string) (Network, types.AddressHash, error) {
 	var zero types.AddressHash
 	if len(addr) < 2 {
@@ -150,7 +148,7 @@ func validNetwork(net Network) bool {
 	}
 }
 
-// addressChecksum returns last4(SHA2-256(SHA2-256(prefix || pubKeyHash))).
+// addressChecksum 返回 last4(SHA2-256(SHA2-256(prefix || pubKeyHash))).
 func addressChecksum(prefix string, pubKeyHash []byte) []byte {
 	buf := make([]byte, 0, len(prefix)+len(pubKeyHash))
 	buf = append(buf, prefix...)

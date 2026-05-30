@@ -2,26 +2,26 @@ package types
 
 import "time"
 
-// BlockHeight is a block height. Its underlying type is fixed to uint32 to match
-// the block header Height field (DEC-0001 定宽白名单); any height that feeds a
-// block header hash/signature must be encoded via AppendUint32BE.
+// BlockHeight 表示区块高度。其底层类型固定为 uint32，以匹配区块头 Height 字段
+// （DEC-0001 定宽白名单）；任何参与区块头哈希/签名的高度值都必须通过
+// AppendUint32BE 进行编码。
 type BlockHeight uint32
 
-// HeightYear returns the height-based year index of h, i.e. h / BlocksPerYear.
-// This is the 87661-block year boundary used for year blocks; it is distinct
-// from the UTC CalendarYear used by transaction short references (do not mix).
+// HeightYear 返回 h 的“按高度划分”的年份索引，即 h / BlocksPerYear。
+// 这是年块使用的 87661 区块年边界；它不同于交易短引用使用的 UTC
+// CalendarYear，二者不可混用。
 func HeightYear(h BlockHeight) uint32 {
 	return uint32(h) / BlocksPerYear
 }
 
-// IsYearBoundary reports whether height h sits on a height-based year boundary
-// (a multiple of BlocksPerYear). The genesis height 0 is a year boundary.
+// IsYearBoundary 判断高度 h 是否落在按高度划分的年边界上
+// （即 BlocksPerYear 的整数倍）。创世高度 0 也属于年边界。
 func IsYearBoundary(h BlockHeight) bool {
 	return uint32(h)%BlocksPerYear == 0
 }
 
-// BlockTime returns the canonical timestamp of the block at height h, computed
-// as genesis plus h block intervals.
+// BlockTime 返回高度 h 区块的规范时间戳，计算方式为
+// genesis 时间加上 h 个出块间隔。
 func BlockTime(genesis time.Time, h BlockHeight) time.Time {
 	return genesis.Add(time.Duration(h) * BlockInterval)
 }

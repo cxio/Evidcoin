@@ -56,13 +56,13 @@ func TestHashBytesNoAlias(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// Mutating the source must not affect the stored hash.
+	// 修改源切片不应影响已存储哈希。
 	in[0] = 0xFF
 	got := h.Bytes()
 	if got[0] != 0 {
 		t.Fatalf("hash aliases input buffer: got[0]=%d", got[0])
 	}
-	// Mutating the returned slice must not affect the stored hash.
+	// 修改返回切片不应影响已存储哈希。
 	got[1] = 0xFF
 	again := h.Bytes()
 	if again[1] != 1 {
@@ -105,12 +105,12 @@ func TestIDBytesRoundTrip(t *testing.T) {
 	}
 }
 
-// TestIDTypeIsolation documents that BlockID and TxID are distinct named types.
-// They share the 48-byte layout but cannot be assigned without explicit
-// conversion; this compiles only because the conversion is explicit.
+// TestIDTypeIsolation 说明 BlockID 与 TxID 是彼此独立的命名类型。
+// 二者虽然同为 48 字节布局，但不能隐式赋值，必须显式转换；
+// 本测试能编译仅因为使用了显式转换。
 func TestIDTypeIsolation(t *testing.T) {
 	id := MustBlockID(make([]byte, 48))
-	tx := TxID(id) // explicit conversion required, direct assignment would not compile
+	tx := TxID(id) // 必须显式转换；直接赋值将无法通过编译
 	if !bytes.Equal(tx.Bytes(), id.Bytes()) {
 		t.Fatal("conversion changed bytes")
 	}

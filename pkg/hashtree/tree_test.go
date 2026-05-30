@@ -58,8 +58,8 @@ func TestOrderedLeafSequencePrefixMatters(t *testing.T) {
 }
 
 func TestOddLevelPromotionNotDuplicated(t *testing.T) {
-	// 3 leaves: level0=[a,b,c]; expected root = branch(branch(a,b), c),
-	// i.e. c is promoted, NOT duplicated as branch(c,c).
+	// 3 个叶子：level0=[a,b,c]；期望根为 branch(branch(a,b), c)，
+	// 即 c 直接提升，而不是复制为 branch(c,c)。
 	l := leaves(3)
 	tree, _ := BuildTree(l)
 

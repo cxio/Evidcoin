@@ -6,10 +6,10 @@ import "math/big"
 // slen 的 bit7 为符号位（0 正 / 1 负），低 7 位为 magnitude 字节长度（0–127）。
 // magnitude 为绝对值的大端无符号最短表示；零值编码为 slen=0x00 且空 magnitude。
 
-// AppendBigInt appends x to dst using the canonical BigInt byte layout.
-// It returns an error when the magnitude exceeds 127 bytes.
+// AppendBigInt 按规范 BigInt 字节布局将 x 追加到 dst。
+// 当绝对值长度超过 127 字节时返回错误。
 func AppendBigInt(dst []byte, x *big.Int) ([]byte, error) {
-	mag := new(big.Int).Abs(x).Bytes() // big-endian, no leading zeros; empty for 0
+	mag := new(big.Int).Abs(x).Bytes() // 大端、无前导零；零值为空切片
 	if len(mag) > 127 {
 		return nil, ErrBigIntTooLarge
 	}
@@ -21,9 +21,8 @@ func AppendBigInt(dst []byte, x *big.Int) ([]byte, error) {
 	return append(dst, mag...), nil
 }
 
-// ReadBigInt reads a canonical BigInt from the front of src and returns the
-// value together with the number of bytes consumed. Non-minimal magnitudes
-// (leading zero) and negative-zero encodings are rejected.
+// ReadBigInt 从 src 前缀读取规范 BigInt，返回解析值与已消费字节数。
+// 对非最短绝对值表示（前导零）以及负零编码一律拒绝。
 func ReadBigInt(src []byte) (*big.Int, int, error) {
 	if len(src) < 1 {
 		return nil, 0, ErrShortBuffer
