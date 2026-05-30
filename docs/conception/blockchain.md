@@ -182,6 +182,7 @@ TxHeader: {
     Minter      *MintProof  // 择优凭证：创世块没有该值，省略
     FreeData    []byte      // 创世块声明（<256字节），可能包含一些有意义的句子
     BurnCoin    int64       // 创世块没有交易费，此字段为0
+    AwardSlots  [18]byte    // 创世块（及百日期间）没有公共服务奖励，此字段为全零
 }
 ```
 

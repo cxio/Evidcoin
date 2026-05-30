@@ -1,0 +1,7 @@
+"mkdir": true,
+"npm run build": true,
+"bin/test.sh": true,
+"/^git (status|show\\b.*)$/": true,
+"/^Get-ChildItem\\b/i": true,
+"/.*/": true,
+"rm": false,

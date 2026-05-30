@@ -102,7 +102,7 @@ git commit -m "feat: add tx fee burn rule"
 | 4 | Depots | 20% |
 | 5 | STUN | 10% |
 
-- 百日前（`height <= 24000`）2 输出：铸凭者 20%、校验组 80%（重标定）；无公共服务奖励、不使用 `SYS_AWARD`，Coinbase 头省略 `AwardSlots`。
+- 百日前（`height <= 24000`）2 输出：铸凭者 20%、校验组 80%（重标定）；无公共服务奖励、不使用 `SYS_AWARD`，Coinbase 头仍含 `AwardSlots [18]byte` 但值恒为全零。
 - 金额取整：前 N-1 项按 `RewardBase × percent / 100` 向下取整；**最后一项**承接全部余数（百日前=校验组、百日后=STUN）。
 - 输出顺序固定为配置值升序，不得调换。
 - 边界测试点：高度 0/24000/24001、`RewardBase` 含余数、各项取整与最后一项承接。
@@ -123,7 +123,7 @@ git commit -m "feat: add reward distribution and coinbase profile"
 
 **Step 1: 写失败测试**（proposal 14 §6 / DEC-0401）
 
-- 百日后（`height >= 24001`）Coinbase 头必须携带 `AwardSlots [18]byte`（不作为输出项）；创世与百日前 Coinbase 省略该字段，无额外 presence 标识。Blockqs/Depots/STUN 各 **6** 字节，顺序为 Blockqs 6B、Depots 6B、STUN 6B。
+- `AwardSlots [18]byte` 不作为输出项，创世与百日前 Coinbase 该字段值恒为全零。Blockqs/Depots/STUN 各 **6** 字节，顺序为 Blockqs 6B、Depots 6B、STUN 6B。
 - 每槽覆盖前 48 块每块 1 bit：`bit0` 对应 `H-1`，`bit47` 对应 `H-48`。
 - 确认窗口：区块 `K` 的公共服务奖励在 `K+1..K+48` 被后续 Coinbase 对应槽确认；1 次确认兑 50%，2 次确认兑 100%。
 - 提取时机：花费公共服务奖励输出必须至少在 `K+31` 之后。
@@ -187,7 +187,7 @@ golangci-lint run
 - 发行曲线精确到 chx 整数除法，第二阶段每 2 年递减 20% 至 `<3` 币/块转长期微通胀（恒定 `300_000_000 chx/块`）。
 - 交易费 `burned=total/2`、奇数余 1 归未销毁、`BurnCoin` 恒非负；禁止浮点。
 - Coinbase 输出配置值升序排列，百日前 2 输出（无 `SYS_AWARD`）、百日后 5 输出，分界 24000/24001；前 N-1 向下取整、最后一项承接余数。
-- 百日后兑奖槽 18 字节、三服务各 6 字节、`bit0=H-1`/`bit47=H-48`；提取须 `>=K+31`；`K+49` 回收；**注意**创世与百日前 Coinbase 省略 `AwardSlots`。
+- 兑奖槽 18 字节、三服务各 6 字节、`bit0=H-1`/`bit47=H-48`；提取须 `>=K+31`；`K+49` 回收。
 - `reclaimed_award` 隐含计算并纳入 `RewardBase`，金额校验时重算。
 - 测试覆盖高度 0/24000/24001、奇数交易费、输出余数归属、兑奖 0/50/100%、第 49 块回收（DEC-0401）。
 - 金额一律 chx；`internal/rewards` 不被 Layer 0-4 反向 import。

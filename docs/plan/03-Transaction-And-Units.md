@@ -278,11 +278,11 @@ git commit -m "feat: add transaction size limit"
 
 - 普通交易费 = Coin 输入总额 - Coin 输出总额；输出总额大于输入总额拒绝。
 - 不因输出项数量超过输入项数量 2 倍而拒绝普通交易；百日扩张比例检查仅属客户端构造策略（proposal 05/14）。
-- Coinbase 头字段顺序（DEC-0003/DEC-0401）：`Version(uint16) || HashOutputs[32] || Timestamp(int64) || MintPKHash[32]定长 || BlockHeight(uint32) || Minter(MintProof) || FreeData(varint(len)||bytes, len≤255) || BurnCoin(int64) || AwardSlots[18]byte(仅 height>=24001)`；**无 `HashInputs` 字段**。
+- Coinbase 头字段顺序（DEC-0003/DEC-0401）：`Version(uint16) || HashOutputs[32] || Timestamp(int64) || MintPKHash[32]定长 || BlockHeight(uint32) || Minter(MintProof) || FreeData(varint(len)||bytes, len≤255) || BurnCoin(int64) || AwardSlots[18]byte`；`AwardSlots` 对所有 Coinbase（含创世）始终存在，创世与百日前其值恒为全零；**无 `HashInputs` 字段**。
 - `Minter`（择优凭证）**当且仅当 `BlockHeight == 0`（创世）时省略**，无额外 presence 标识（结构见第 07 章 PoH）。
 - Coinbase 必须位于区块交易序列第 0 项；使用独立 parser，TxID 用 `tx.header` 域但前像为 Coinbase 字段集。
 - Coinbase 输出只能是 Coin；出现 Credit/Proof/Mediator/Custom 输出必须拒绝（DEC-0401）。
-- 奖励分配、`BurnCoin` 销毁与兑奖槽（`AwardSlots`）金额单位 `chx`，结算逻辑放第 10 章；本层只固定 Coinbase 结构编码与位置规则。创世与百日前 Coinbase 省略 `AwardSlots`，百日后必须编码 18 字节。
+- 奖励分配、`BurnCoin` 销毁与兑奖槽（`AwardSlots`）金额单位 `chx`，结算逻辑放第 10 章；本层只固定 Coinbase 结构编码与位置规则。
 
 **Step 2: 实现**
 
