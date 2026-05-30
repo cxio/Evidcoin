@@ -2,9 +2,9 @@
 
 **Goal:** 实现 Evidcoin 的基础类型、规范化编码、Hash/ID 类型、密码学抽象和基础哈希树工具。
 
-**Architecture:** `pkg/types/` 只提供无内部依赖的类型、常量和编码能力，`pkg/crypto/` 在其上提供 Hash、地址哈希和签名抽象。哈希树工具应优先放在基础层可复用包中；ADR-0013 已固定哈希树边界策略为协议默认，证明路径编码等仍待决规则通过显式策略参数或拒绝路径处理。
+**Architecture:** `pkg/types/` 只提供无内部依赖的类型、常量和编码能力，`pkg/crypto/` 在其上提供 Hash、域标签、地址/多签复合公钥哈希和签名抽象，`pkg/hashtree/` 提供通用二叉树与专用树规则。DEC-0004 已固定哈希树边界策略（空根由各结构自定义、单叶即根、奇数层提升不复制、验证路径不含 leafIndex）为协议默认。
 
-**Tech Stack:** Go 1.26.2、`golang.org/x/crypto/sha3`、`golang.org/x/crypto/blake2b`、`lukechampine.com/blake3`、表驱动测试。
+**Tech Stack:** Go 1.26.2、`golang.org/x/crypto/sha3`、`golang.org/x/crypto/blake2b`、`lukechampine.com/blake3`、`github.com/cloudflare/circl`（ML-DSA-65，DEC-0104）、`github.com/mr-tron/base58`、表驱动测试。
 
 ---
 
@@ -35,12 +35,12 @@
 | `pkg/types/id.go` | `BlockID`、`TxID`、`CheckRoot`、`AddressHash`、`TreeHash`、`AttachmentHash`、`MintHash` |
 | `pkg/types/constants.go` | `BlockInterval`、`BlocksPerYear`、脚本和交易限制常量 |
 | `pkg/types/encoding.go` | `Encoder`、`Decoder`、规范化编码入口 |
-| `pkg/types/varint.go` | ADR-0003 LEB128 / Protocol Buffers canonical unsigned varint |
+| `pkg/types/varint.go` | DEC-0001 ULEB128 canonical unsigned varint（最短编码强制） |
 | `pkg/types/int.go` | 固定宽度 big-endian 整数编码 |
 | `pkg/types/bytes.go` | 可变长度 Bytes、列表、optional 编码工具 |
 | `pkg/types/errors.go` | 类型和编码错误 |
 | `pkg/crypto/hash.go` | SHA3、BLAKE3、domain tag Hash API |
-| `pkg/crypto/address.go` | `SHA3-256(BLAKE2b-512(pubkey material))`、ADR-0020 `EncodeAddress` / `DecodeAddress` |
+| `pkg/crypto/address.go` | 单签 `SHA3-256(BLAKE2b-512(pubkey))`、多签复合公钥哈希、DEC-0104 `EncodeAddress` / `DecodeAddress`（Cx/Tx/Dx + Base58Check） |
 | `pkg/crypto/signature.go` | `Signer`、`Verifier`、`PublicKey`、`Signature` 抽象 |
 | `pkg/crypto/testsigner_test.go` | 测试签名器，避免早期绑定 ML-DSA 库 |
 | `pkg/hashtree/tree.go` | 二元树构建和策略 |
@@ -86,12 +86,14 @@ type BlockID Hash48
 type TxID Hash48
 type CheckRoot Hash48
 type AddressHash Hash32
-type TreeHash Hash32
-type AttachmentHash Hash64
-type MintHash Hash64
+type TreeHash Hash32       // 通用树枝 / BLAKE3-256
+type AttachmentHash Hash64 // 附件完整指纹 / SHA3-512（DEC-0002）
+type MintHash Hash32       // 铸凭哈希 / BLAKE3-256 32B（DEC-0301，非 64B）
 ```
 
 构造函数命名建议：`NewHash32`、`NewBlockID`、`MustBlockID`。`Must*` 只在测试和静态向量中使用。
+
+> **注（与旧 plan 的修正）：** `MintHash` 为 **32 字节**（DEC-0301 `MintHash [32]byte`，BLAKE3-256），不是 64 字节。
 
 **Step 4: 验证**
 
@@ -137,7 +139,9 @@ go test ./pkg/types -run 'Test(BlockTime|Constants|YearBoundary)' -v
 
 **Step 3: 最小实现**
 
-实现 `BlockHeight` 命名类型、`BlockTime`、`YearOfHeight`、`IsYearBoundary`。创世高度 0 是年度边界，年度公式为 `height / BlocksPerYear`（ADR-0030）。
+实现 `BlockHeight` 命名类型、`BlockTime`、`YearOfHeight`、`IsYearBoundary`。创世高度 0 是年度边界，年度公式为 `height / BlocksPerYear`（`BlocksPerYear = 87661`）。
+
+> **注：** 协议年度字段另有「UTC 自然年份数值」口径（DEC-0001，用于交易短引用、状态指纹分层），与此处「按 87661 区块计的年度边界」是不同维度，勿混用（详见第 03 章 Stakes/年度承载）。
 
 **Step 4: 验证并提交**
 
@@ -163,7 +167,7 @@ git commit -m "feat: add block time constants"
 
 - `uint16`、`uint32`、`uint64` big-endian 编码。
 - 固定宽度整数短输入、长输入拒绝。
-- ADR-0003 LEB128 unsigned varint 测试向量：`0 -> 0x00`、`127 -> 0x7F`、`128 -> 0x80 0x01`、`16383 -> 0xFF 0x7F`、`16384 -> 0x80 0x80 0x01`。
+- DEC-0001 ULEB128 unsigned varint 测试向量：`0 -> 0x00`、`127 -> 0x7F`、`128 -> 0x80 0x01`、`16383 -> 0xFF 0x7F`、`16384 -> 0x80 0x80 0x01`。
 - `uint64` 最大值编码长度为 10 字节。
 - 非最短 varint 编码必须拒绝，例如 `0x80 0x00`。
 - varint 溢出和缺少终止字节的输入必须拒绝。
@@ -212,13 +216,12 @@ git commit -m "feat: add canonical encoding helpers"
 
 测试：
 
-- `SHA3-384` 输出 48B。
-- `SHA3-512` 输出 64B。
-- `BLAKE3-256` 输出 32B。
-- `BLAKE3-512-XOF` 输出 64B，不能等于默认 32B digest 补零。
-- ADR-0004 domain tag 格式为 `"Evidcoin:" + Purpose + ":v" + 0x01 + "\x00"`。
-- 同 payload 不同固定 Purpose 输出不同。
-- 调用方不能传入协议 domain tag；协议 tag 必须由 `pkg/crypto` 内部按 Purpose 绑定。
+- `SHA3-384` 输出 48B；`SHA3-512` 输出 64B；`BLAKE3-256` 输出 32B。
+- DEC-0002 域标签格式为 `"Evidcoin/v1/" || name || 0x00`（ASCII 常量，作为前像首段）。
+- 14 项域标签全集齐备：`block.header`、`tx.header`、`tree.leaf`、`tree.branch`、`checkroot`、`utxo.leaf`、`utco.leaf`、`mint.hash`、`signature.message`、`attachment.fingerprint`、`address.single`、`address.multi`、`utxo.empty`、`utco.empty`。
+- 同 payload 不同域标签输出不同。
+- 调用方不能传入协议域标签；协议标签必须由 `pkg/crypto` 内部按用途绑定。
+- 附件片组树为唯一免域标签例外（DEC-0002）：`BLAKE3-256(2-byte seq || BLAKE3-256(piece))`，前像不前置域标签。
 
 **Step 2: 添加依赖**
 
@@ -234,20 +237,21 @@ go test ./pkg/crypto -run TestHash -v
 
 **Step 4: 最小实现**
 
-实现用途明确的函数：
+实现用途明确的函数（算法 profile 见 DEC-0002 / proposal 02 §3）：
 
-- `HashBlockHeader(data []byte) types.BlockID`
-- `HashTransaction(data []byte) types.TxID`
-- `HashCheckRoot(data []byte) types.CheckRoot`
-- `HashTreeBranch(data []byte) types.TreeHash`
-- `HashTreeLeaf(data []byte) types.Hash48`
-- `HashStateLeaf(data []byte) types.Hash48`
-- `HashStateData(data []byte) types.Hash48`
-- `HashAttachment(data []byte) types.AttachmentHash`
-- `HashMintInner(data []byte) types.TreeHash`
-- `HashMint(data []byte) types.MintHash`
+- `HashBlockHeader(data []byte) types.BlockID`（SHA3-384 + `block.header`）
+- `HashTxHeader(data []byte) types.TxID`（SHA3-384 + `tx.header`）
+- `HashCheckRoot(data []byte) types.CheckRoot`（SHA3-384 + `checkroot`）
+- `HashTreeLeaf(data []byte) types.Hash48`（SHA3-384 + `tree.leaf`）
+- `HashTreeBranch(data []byte) types.TreeHash`（BLAKE3-256 + `tree.branch`）
+- `HashUTXOLeaf(data []byte) types.Hash48`（SHA3-384 + `utxo.leaf`）
+- `HashUTCOLeaf(data []byte) types.Hash48`（SHA3-384 + `utco.leaf`）
+- `HashAttachment(data []byte) types.AttachmentHash`（SHA3-512 + `attachment.fingerprint`）
+- `HashMint(data []byte) types.MintHash`（BLAKE3-256 + `mint.hash`，32B）
+- `EmptyUTXORoot() types.Hash48` / `EmptyUTCORoot() types.Hash48`（`SHA3-384(DomainTag("utxo.empty"))` / `utco.empty`）
+- `HashAttachmentPieceTree(...)`：免域标签路径，与协议树明确隔离。
 
-Domain tag 已由 ADR-0004 固定，API 内部必须绑定对应 Purpose，不允许调用方传入协议 tag。非协议测试如需辅助函数，必须与协议 Hash API 明确隔离。
+域标签已由 DEC-0002 固定，API 内部必须绑定对应用途，不允许调用方传入协议标签；附件片组树是唯一免域标签例外。非协议测试辅助函数必须与协议 Hash API 明确隔离。
 
 **Step 5: 验证并提交**
 
@@ -269,29 +273,26 @@ git commit -m "feat: add protocol hash functions"
 
 测试：
 
-- 相同公钥材料生成相同 32B `AddressHash`。
-- 不同公钥材料生成不同 `AddressHash`。
-- `EncodeAddress` 输出 `Cx` 前缀和 ADR-0020 Base58Check payload。
-- `DecodeAddress` 可恢复原始 32B `AddressHash`。
-- `DecodeAddress` 对错误前缀、非法 Base58、长度错误和 checksum 失败返回错误。
-- 签名器签名后验证通过。
-- 消息变更验证失败。
-- 公钥变更验证失败。
-- 算法 ID 不匹配验证失败。
+- 单签：`SHA3-256(BLAKE2b-512(pubkey))` 生成 32B `AddressHash`（`address.single` 域）。
+- 多签（复合公钥哈希，`address.multi` 域）：各公钥 `BLAKE3-256` 初级哈希→字典序排序串联→前置 `m||n`→`SHA3-256(BLAKE2b-512(...))`；`m,n` 均非 0 且 `m<=n`，重复公钥非法。
+- 不同公钥材料生成不同 `AddressHash`；单签与多签地址外观无区别。
+- `EncodeAddress` 输出 `prefix || Base58(pubKeyHash || checksum)`；`checksum = last4(SHA2-256(SHA2-256(prefix || pubKeyHash)))`，`prefix` 参与校验但不进 Base58 负载（DEC-0104）。
+- 网络前缀：主网 `Cx`、测试网 `Tx`、开发网 `Dx`；Base58 用 Bitcoin 字母表。
+- `DecodeAddress` 可恢复原始 32B `AddressHash`；对错误前缀、非法 Base58、长度错误和 checksum 失败返回错误。
+- 签名器签名后验证通过；消息/公钥变更、算法 ID 不匹配验证失败。
 
 **Step 2: 实现测试签名器**
 
 早期不要强绑 ML-DSA-65 具体库。测试签名器可以放在 `_test.go` 中，用 HMAC 或确定性 fake 结构验证接口行为。
 
-**Step 3: ML-DSA-65 库选择确认**
+**Step 3: ML-DSA-65 profile（DEC-0104 已固定 circl）**
 
-正式接入 ML-DSA-65 前按 ADR-0018 检查并向用户报告选择方案，获得确认后再继续：
+DEC-0104 已冻结 ML-DSA-65 profile 为 `github.com/cloudflare/circl`：
 
-1. 优先 Go 标准库（若 Go 1.26+ 已包含稳定 `crypto/mldsa` 且支持 ML-DSA-65）。
-2. 其次 `github.com/cloudflare/circl`。
-3. 备选 `filippo.io/mldsa` 或其它经过同行评审的实现。
+- 公钥/私钥/签名序列化采用 circl 的 canonical byte encoding。
+- 签名验证输入为第 04 章（DEC-0102）定义的签名消息字节序列。
 
-无论选择哪个库，上层只能依赖 `pkg/crypto` 的 `Signer` / `Verifier` 接口。
+> **待决 A-2：** 根 `AGENTS.md` 提示“ML-DSA 优先标准库”，而 DEC-0104 锁定 circl。本 Plan 以 **DEC-0104（circl）为准**；是否随 Go 1.26 标准库成熟切换为待决，需先确认标准库与 circl 的 canonical 编码是否一致；不一致时冻结其一。A-2 裁决前不得混用标准库。上层只能依赖 `pkg/crypto` 的 `Signer` / `Verifier` 接口。
 
 **Step 4: 验证并提交**
 
@@ -301,7 +302,7 @@ git add pkg/crypto/address.go pkg/crypto/signature.go pkg/crypto/address_test.go
 git commit -m "feat: add address hash and signature interfaces"
 ```
 
-## Task 5A: Amount 与 Coin/chx 显示层转换
+## Task 5A: Amount 与 Bi/chx 显示层转换
 
 **Files:**
 - Modify: `pkg/types/constants.go`
@@ -310,17 +311,17 @@ git commit -m "feat: add address hash and signature interfaces"
 
 **Step 1: 写失败测试**
 
-测试：
+测试（单位口径 C-8 已裁决：`1 Bi = 10^8 chx`，`chx` 为最小承载单位，proposal 01）：
 
-- `type Amount uint64` 可表达协议层金额。
-- `ChxPerCoin == 100_000_000`。
-- `Amount(1 * ChxPerCoin)` 显示为 `1.00000000 Coin` 或项目选定的等价格式。
-- 显示层转换能处理 0、1 chx、1 Coin 和 `uint64` 边界值。
-- 用户输入解析不得使用浮点数参与协议层运算；如提供 decimal parser，必须测试 8 位小数、超过 8 位小数拒绝和溢出拒绝。
+- `type Amount uint64` 可表达协议层金额（以 `chx` 整数承载）。
+- `ChxPerBi == 100_000_000`。
+- `Amount(1 * ChxPerBi)` 显示为 `1.00000000 Bi` 或项目选定的等价格式。
+- 显示层转换能处理 0、1 chx、1 Bi 和 `uint64` 边界值。
+- 用户输入解析不得用浮点数参与协议层运算；如提供 decimal parser，必须测试 8 位小数、超 8 位拒绝和溢出拒绝。
 
 **Step 2: 最小实现**
 
-实现 `Amount`、`ChxPerCoin` 和显示层转换辅助函数。协议层计算只接受 `Amount` / `uint64 chx`，不得用 `float64` 表示金额。
+实现 `Amount`、`ChxPerBi` 和显示层转换辅助函数。协议层计算只接受 `Amount` / `uint64 chx`，不得用 `float64` 表示金额。`Bi`（= 币）仅为展示/换算单位。
 
 **Step 3: 验证并提交**
 
@@ -347,14 +348,15 @@ git commit -m "feat: add amount unit helpers"
 - 内部分支输出 32B。
 - 同一叶子主体配不同 3-byte sequence prefix 得到不同 leaf hash。
 - 同一叶子主体配不同 2-byte sequence prefix 得到不同 leaf hash。
-- 证明路径方向错误时验证失败。
-- 空树返回对应根 Hash 长度的全零值。
-- 单叶树根等于叶子 Hash。
-- 奇数叶复制最后一个叶子后配对计算。
+- 证明路径方向错误时验证失败；验证路径不携带 `leafIndex`（DEC-0004）。
+- 单叶树根等于该叶哈希（不额外套一层分支）。
+- 奇数层最后一个节点**直接提升**到下一层，**不复制自身**。
+- 同一叶子主体配不同 3-byte 序号前缀得到不同 leaf hash（区块交易树）。
+- 空根由各结构自定义（通用树不预设全零根；UTXO/UTCO 空根 `utxo.empty`/`utco.empty` 由第 05 章承载）。
 
 **Step 2: 最小实现**
 
-实现 ADR-0013 固定的默认协议行为：空树根为对应 Hash 长度全零值，单叶树根等于叶子 Hash，奇数叶复制末叶后配对计算。如保留 `OddLeafPolicy`、`EmptyTreePolicy` 仅用于非协议测试辅助，默认值必须固定为 ADR-0013 行为，不得再用“缺少策略配置返回错误”作为协议默认。
+实现 DEC-0004 固定的默认协议行为：**奇数层直接提升（不复制）、单叶树根等于叶哈希、验证路径携带方向位且不含 `leafIndex`**。分支 BLAKE3-256 + `tree.branch`，叶 SHA3-384 + `tree.leaf`（附件片组树走免域标签路径）。空根策略由各专用树自定义，不得在通用树中硬编为全零。
 
 **Step 3: 验证并提交**
 
@@ -384,4 +386,4 @@ golangci-lint run
 - `pkg/crypto` 不依赖 `internal/*`。
 - 所有 Hash 输出长度与 Proposal 一致。
 - 固定长度 ID 不能语义混用。
-- ADR-0013 固定的哈希树边界策略已实现；其它未决 Hash 树策略没有被默认为协议事实。
+- DEC-0004 固定的哈希树边界策略（奇数层提升不复制、单叶即根、路径不含 leafIndex）已实现；空根交由各专用树承载，未被默认为全零协议事实。

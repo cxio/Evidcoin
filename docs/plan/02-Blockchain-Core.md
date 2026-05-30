@@ -11,10 +11,10 @@
 ## 来源提案
 
 - `docs/proposal/05.Blockchain-Core.md`
-- 依赖 `docs/proposal/01.Types-And-Encoding.md`
-- 依赖 `docs/proposal/02.Cryptography-And-Hashing.md`
-- 依赖 `docs/proposal/03.Identifiers-And-Constants.md`
-- 依赖 ADR-0022：`CheckRoot[H]` 使用高度 `H-1` 执行后的前置状态指纹；`h == 0` 使用空状态指纹。
+- 依赖 `docs/proposal/01.Types-And-Encoding.md`、`02.Cryptography-And-Hashing.md`、`03.Identifiers-And-Constants.md`、`04.Hash-Trees.md`
+- DEC-0003：区块头字段编码顺序、`YearBlock` 省略规则、常规 112B / 年块 160B。
+- DEC-0002（引用）：`block.header`、`checkroot` 域标签 + SHA3-384 profile。
+- CheckRoot 状态根口径（proposal 05 §2）：`UTXORoot`/`UTCORoot` 取**前一区块完成后**的状态指纹；创世 `h==0` 关联 UTXO/UTCO 为空根（第 05 章空根规则）。
 
 ## 非目标
 
@@ -38,20 +38,26 @@
 | `internal/blockchain/validate.go` | 最小头链验证 |
 | `internal/blockchain/yearblock.go` | 年块边界和 `YearBlock` 查询 |
 | `internal/blockchain/checkroot.go` | `CheckRoot` 组合函数 |
+| `internal/blockchain/sizelimit.go` | 区块尺寸限额曲线（含解锁脚本、不含见证） |
+| `internal/blockchain/genesis.go` | 创世区块头工件（边界） |
 | `internal/blockchain/errors.go` | 错误定义 |
 
 ## 数据设计
 
-`BlockHeader` 字段顺序必须固定：
+`BlockHeader` 字段顺序必须固定（DEC-0003）：
 
-1. `Version`
-2. `Height`
-3. `PrevBlock`
-4. `CheckRoot`
-5. `Stakes`
-6. `YearBlock`
+| 序 | 字段 | 类型/宽度 | 说明 |
+|----|------|-----------|------|
+| 1 | `Version` | `uint32` 大端 | 创世固定 1 |
+| 2 | `Height` | `uint32` 大端 | 代替时间戳 |
+| 3 | `PrevBlock` | `[48]byte` | 前块 ID |
+| 4 | `CheckRoot` | `[48]byte` | 校验根 |
+| 5 | `Stakes` | `uint64` 大端 | 区块收录交易币权（币量×币龄）合计，单位「聊时」，溢出截断 |
+| 6 | `YearBlock` | `[48]byte` | **仅 `Height % BlocksPerYear == 0` 时存在**，否则完全省略（不编码全零占位） |
 
-`Stakes` 的具体单位和宽度属于未被 ADR-0001 至 ADR-0031 覆盖的剩余开放问题。实现时先定义为显式类型并标注为开放规格项，测试只覆盖编码稳定性，不覆盖经济语义。
+- 区块头尺寸：常规 `4+4+48+48+8 = 112` 字节；年块多 48 字节 = **160** 字节（DEC-0003）。
+- 无时间戳字段：时间戳由高度与出块间隔（6min）从创世时间戳推导。
+- `Stakes` 经济语义（币龄 ≥1 小时、花费归零、`-32` 区块铸凭因子）由第 07 章承载；本层只固定编码与字段语义，不实现经济计算。
 
 ## Task 1: 区块头编码与 BlockID
 
@@ -190,7 +196,7 @@ git commit -m "feat: add minimal header chain validation"
 
 **Step 2: 实现**
 
-实现查询和验证辅助。`YearBlock` 在创世和非边界高度的确切含义属于未被 ADR-0001 至 ADR-0031 覆盖的剩余开放问题，代码用文档注释说明采用的临时规则，并在 `08-Open-Questions-And-Acceptance.md` 关联开放项。
+实现查询和验证辅助。`YearBlock` 仅在 `Height % BlocksPerYear == 0` 时存在并参与 BlockID 前像；非年块前像不含该字段。创世（高度 0）`YearBlock` **存在但全零**（`0 % BlocksPerYear == 0` 故字段存在，无前一年块故值全零，proposal 05 §9）。
 
 **Step 3: 验证并提交**
 
@@ -218,7 +224,7 @@ git commit -m "feat: add year block helpers"
 
 **Step 2: 实现**
 
-只组合已给定的根，不在核心层计算交易树或状态树。若提供高度感知辅助函数，应按 ADR-0022 在 `h == 0` 时使用空状态指纹，在普通区块读取上一高度状态指纹。
+只组合已给定的根，不在核心层计算交易树或状态树。组合固定为 `SHA3-384(DomainTag("checkroot") || TreeRoot || UTXORoot || UTCORoot)`（proposal 05 §2）。若提供高度感知辅助函数，`h == 0` 使用空状态指纹（第 05 章空根），普通区块读取上一高度 `H-1` 完成后的状态指纹。
 
 **Step 3: 验证并提交**
 
@@ -227,6 +233,36 @@ go test ./internal/blockchain -run 'TestCheckRoot' -v
 git add internal/blockchain/checkroot.go internal/blockchain/checkroot_test.go
 git commit -m "feat: add check root composition"
 ```
+
+## Task 7: 区块尺寸限额曲线
+
+**Files:**
+- Create: `internal/blockchain/sizelimit.go`
+- Create: `internal/blockchain/sizelimit_test.go`
+
+**Step 1: 写失败测试**
+
+测试（proposal 05 §8，限额仅约束数据量，包含解锁脚本但不含见证）：
+
+- 第 1~3 月（`7305×3 = 21915` 块）固定 **1MB**。
+- 第 4~12 月每月递增 1MB，至 **10MB**；月块数 `87661/12 ≈ 7305`，末月容纳尾数（`7305×11 + 7306 = 87661`）。
+- 第 2 年起每恒星年 87661 块逐年递增 **1MB**。
+- 边界高度（0/21914/21915/87660/87661/175321 等）限额取值准确。
+
+**Step 2: 实现并提交**
+
+实现 `BlockSizeLimit(height uint32) int` 等辅助；尺寸口径含解锁脚本、不含见证。
+
+```bash
+go test ./internal/blockchain -run 'TestBlockSizeLimit' -v
+git add internal/blockchain/sizelimit.go internal/blockchain/sizelimit_test.go
+git commit -m "feat: add block size limit curve"
+```
+
+## 创世工件与手动切链（边界）
+
+- **创世区块头工件（proposal 05 §9）：** `Version=1`、`Height=0`、`PrevBlock` 全零、`Stakes=0`、`YearBlock` 存在但全零；`CheckRoot` 按常规计算（仅一笔 Coinbase，关联 UTXO/UTCO 为空根）。创世 BlockID（`Genesis-ID`）与创世时间戳属 **C-9 待决**，裁决前以占位标注阻塞（见 `/memories/repo/docs-genesis-boundary.md`：不虚构创世时间戳/初始输出/启动归属）。本层仅固定创世**实现边界与验证规则**。
+- **手动切链（proposal 05 §7）：** 全球分区 >2 小时（>20 块分叉）时两链均可能合法，由用户手动选择认可主链；人工切链是社会性「用脚投票」，**非算法逻辑**，本包不自动重组长期分叉。
 
 ## 阶段验收
 

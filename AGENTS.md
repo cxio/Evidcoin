@@ -38,17 +38,20 @@ go mod tidy && go mod verify
 
 各阶段验收标准：`go build ./...` 通过、`go test ./...` 通过、核心逻辑覆盖率 ≥80%、`go fmt` 无变更、`golangci-lint` 无警告。
 
-## 文档三层体系
+## 文档四层体系
 
 这是本项目最关键的架构特征，所有实现必须追溯到文档：
 
 | 层级 | 目录 | 作者 | 内容 |
 |------|------|------|------|
 | 构想层（Tier 1） | `docs/conception/` | 人工编写 | 原始设计思想（中文） |
-| 提案层（Tier 2） | `docs/proposal/` | AI 生成 | 详细技术规格，追溯自构想层 |
-| 方案层（Tier 3） | `docs/plan/` | AI 生成 | 按阶段的实施计划，含代码骨架 |
+| 决策层（Tier 2） | `docs/decision/` | AI 生成 | 补充决策（`DEC-NNNN`），仅记录 conception 尚未明确的规范化细节 |
+| 提案层（Tier 3） | `docs/proposal/` | AI 生成 | 详细技术规格，追溯自构想层 + 决策层 |
+| 方案层（Tier 4） | `docs/plan/` | AI 生成 | 按阶段的实施计划，含代码骨架，追溯自提案层 |
 
-实现任何功能前，应先阅读对应的 `docs/plan/` 文件，再追溯到 `docs/proposal/`，如有疑问再查 `docs/conception/`。
+**权威顺序：** `conception` > `decision` > `proposal` > `plan`，冲突以更上层为准。
+
+实现任何功能前，应先阅读对应的 `docs/plan/` 文件，再追溯到 `docs/proposal/`，如有疑问再查 `docs/decision/` 与 `docs/conception/`。
 
 ## 代码架构
 
@@ -65,18 +68,23 @@ Layer 0 基础层:    pkg/types/, pkg/crypto/  ← 无内部依赖
 
 **禁止跨层或反向依赖**。高层依赖低层，低层不能 import 高层。
 
-### 8 阶段实施计划
+### 实施阶段（11 阶段，对应 `docs/plan/`）
 
 | 阶段 | 重点 | 包 |
 |------|------|----|
-| 1 | 基础类型与密码学 | `pkg/types/`, `pkg/crypto/` |
-| 2 | 区块链核心 | `internal/blockchain/` |
-| 3 | 交易模型 | `internal/tx/` |
-| 4 | UTXO/UTCO 状态 | `internal/utxo/`, `internal/utco/` |
-| 5 | 脚本引擎 | `internal/script/` |
-| 6 | PoH 共识 | `internal/consensus/` |
-| 7 | 团队验证 | 接口定义 |
-| 8 | 服务接口 | 外部服务接口 |
+| 01 | 基础类型、密码学与哈希树 | `pkg/types/`, `pkg/crypto/`, `pkg/hashtree/` |
+| 02 | 区块链核心 | `internal/blockchain/` |
+| 03 | 交易模型与信元 | `internal/tx/` |
+| 04 | 签名与见证 | `internal/tx/` |
+| 05 | UTXO/UTCO 状态 | `internal/utxo/`, `internal/utco/` |
+| 06 | 脚本系统 | `internal/script/` |
+| 07 | PoH 共识 | `internal/consensus/` |
+| 08 | 端点约定与分叉选择 | `internal/consensus/` |
+| 09 | 组队校验 | `internal/validation/`（接口） |
+| 10 | 激励与 Coinbase | `internal/rewards/` |
+| 11 | 公共服务接口 | `internal/services/`（接口） |
+
+> `docs/plan/00-Implementation-Roadmap.md` 为路线图索引，`12-Open-Questions-And-Acceptance.md` 汇总全局待决与验收。
 
 ## 关键常量与密码学
 

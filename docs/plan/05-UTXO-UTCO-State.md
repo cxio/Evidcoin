@@ -10,14 +10,13 @@
 
 ## 来源提案
 
-- `docs/proposal/08.UTXO-UTCO-State.md`
-- 依赖 `docs/proposal/06.Transaction-Model.md`
-- 依赖 `docs/proposal/07.Coin-Credit-Proof-Units.md`
-- 依赖 `docs/proposal/04.Hash-Trees.md`
-- 依赖 ADR-0008：状态指纹树使用 `TxID[8]`、`TxID[13]`、`TxID[18]` 的 0-based 字节索引路由。
-- 依赖 ADR-0015：禁止同一区块内链式消费，输入只能引用已确认历史区块输出。
-- 依赖 ADR-0016：`TxIDPart` 碰撞歧义时拒绝交易，不扩展长度，不预留升级路径。
-- 依赖 ADR-0022：区块验证使用前置状态指纹，区块执行后生成下一高度的前置状态指纹。
+- `docs/proposal/09.UTXO-UTCO-State.md`
+- 依赖 `docs/proposal/06.Transaction-Model.md`、`07.Coin-Credit-Proof-Units.md`、`04.Hash-Trees.md`、`02.Cryptography-And-Hashing.md`
+- DEC-0201：四层宽成员树（年度 + TxID `[8,13,18]` 分层 + 末端完整 TxID 字典序）、叶子前像 `TxID || Count || FlagBytes`、FlagBytes 位序低位优先、空根 `utxo.empty`/`utco.empty`、UTCO 过期、缓存边界。
+- DEC-0002（引用）：`utxo.leaf`/`utco.leaf`/`utxo.empty`/`utco.empty`/`tree.branch` 域标签。
+- 状态根口径（proposal 09 §7）：UTXORoot/UTCORoot 取**前一区块完成后**状态集，供 plan 02 的 CheckRoot 合并。
+- 短引用碰撞拒绝按 proposal 06 §5 / DEC-0101（TxID 排序首个匹配）。
+- 同块链式消费禁止：输入只能引用已确认历史区块输出（proposal 09 §1，交易独立性）。
 
 ## 包边界
 
@@ -86,9 +85,9 @@ git commit -m "feat: add utxo entries"
 
 测试：
 
-- Entry 包含年度、完整 `TxID`、`OutIndex`、Credit payload、接收者、创建者、配置、标题、描述、附件 ID、锁定脚本、创建/激活高度、截止高度、剩余转移次数、有效位。
-- 转移次数为 0 的 Credit 不可再转移。
-- 到期 Credit 不可解析为有效输入。
+- Entry 包含年度、完整 `TxID`、`OutIndex`、Credit payload（接收者/创建者/标题/描述/附件 ID）、锁定脚本、创建高度、有效位。
+- Credit 为一次性转移/消费：转移即消费旧 UTCO 并新建（proposal 07 §5），不维护多次转移计数。
+- 过期 Credit（`age > 31 × 87661`）不可解析为有效输入；`age == 31 × 87661` 仍可用。
 
 **Step 2: 实现并提交**
 
@@ -113,7 +112,7 @@ git commit -m "feat: add utco entries"
 - 完整 outpoint 可解析。
 - `Year + TxIDPart + OutIndex` 唯一匹配可解析。
 - 多个有效项匹配同一局部引用时拒绝。
-- 歧义拒绝是固定协议策略；根据 ADR-0016，同年度理论最大交易量下 160 位 `TxIDPart` 碰撞概率约为 `10^-30` 量级，因此不增加动态扩展机制。
+- 歧义拒绝是固定协议策略（DEC-0101 / proposal 06 §5）：同年度内末端叶按 TxID 排序、首个匹配即引用；引用错误交易无法验证，用户应预查询或延长引用字节数，不增加动态扩展机制。
 - 无匹配返回缺失错误。
 - 无效项不参与有效解析。
 
@@ -139,7 +138,7 @@ git commit -m "feat: resolve state references"
 - 正常 Coin 输入消费后无效。
 - 同一批次重复消费拒绝。
 - 输出 Coin 插入 UTXO。
-- 销毁 flag 的 Coin 不进入 UTXO。
+- 自定义类输出（Config bit7=1）不进入 UTXO；普通交易无销毁位（销毁仅由 Coinbase `BurnCoin` 表达，不产出可花费项）。
 - Proof/Credit 输入传入 UTXO apply 时拒绝。
 - 同一区块 A 输出被 B 输入引用时拒绝，无论 A 是否在 B 之前；输入只能引用已确认历史区块中的 UTXO。
 
@@ -177,12 +176,10 @@ git commit -m "feat: apply utxo state transitions"
 测试：
 
 - 新建 Credit 插入 UTCO。
-- 转移 Credit 消费旧 UTCO 并插入新 UTCO。
-- 不可变字段变更拒绝。
-- 可修改字段按配置允许变更。
-- 可修改性只能降级。
-- 到期 Credit 在区块结束清理。
-- 转移次数归零后不进入 UTCO。
+- 转移 Credit 消费旧 UTCO 并插入新 UTCO（一次性转移，proposal 07 §5）。
+- payload 不可变字段（创建者/标题/描述/附件 ID）变更拒绝。
+- 过期 Credit（`age > 31 × 87661`）在区块结束清理：状态位失效，同 TxID 无任何有效 Credit 时删除该 UTCO 叶（proposal 09 §6）。
+- 同 TxID 仍有其它未转出且未过期 Credit 时保留叶并 `Count` 递减。
 - 同一区块 A 输出被 B 输入引用时拒绝，无论 A 是否在 B 之前；输入只能引用已确认历史区块中的 UTCO。
 
 **Step 2: 实现**
@@ -207,13 +204,14 @@ git commit -m "feat: apply utco state transitions"
 
 **Step 1: 写失败测试**
 
-测试：
+测试（DEC-0201 §3-§4）：
 
-- `LeafHash = SHA3-384(TxID || DataID || FlagOutputs)`。
-- `DataID = SHA3-384(OutputsPayloadsSortedByOutIndex)`。
-- `OutIndex` 升序影响稳定性。
-- UTXO 和 UTCO 同结构但类型/API 不可混用。
-- flag `1` 与 `0` 变化会改变叶子 Hash。
+- 末端叶前像 = `DomainTag("utxo.leaf"/"utco.leaf") || TxID || Count || FlagBytes`，叶哈希 = `SHA3-384(前像)`。
+- `Count` 为该 TxID 的**有效输出数量**（非 FlagBytes 字节数），减至零时该叶可移除。
+- `FlagBytes` 第 i 位对应输出序位 i，**每字节低位优先**（bit0 对应较小序位），`1`=未花费/未转出，`0`=已花费/已转出或无效，尾部未用 bit 必须为 `0`。
+- 输出详情（缓存集）**不参与**叶前像，仅作检索优化。
+- UTXO 与 UTCO 同结构但类型/API 不可混用（域标签不同）。
+- 任一 flag 位或 `Count` 变化会改变叶哈希。
 
 **Step 2: 实现并提交**
 
@@ -233,18 +231,21 @@ git commit -m "feat: add state fingerprint leaves"
 
 **Step 1: 写失败测试**
 
-测试：
+测试（DEC-0201 §2、§5）：
 
-- 顶层按年度分级。
-- 后三级使用 `TxID[8]`、`TxID[13]`、`TxID[18]` 分层，且均为 0-based 字节索引。
-- 使用具体 TxID 测试向量验证第 9、14、19 个字节分别进入三层路由，避免 1-based 误实现。
-- 同一数据进入 UTXO root 与 UTCO root 时有语义隔离。
-- 空状态 root 为 48 bytes 全零值。
+- 顶层按年度**数值升序**分级。
+- 后三级使用 TxID 字节 `[8]`、`[13]`、`[18]` 分层（0-based）。
+- 使用具体 TxID 测试向量验证第 9、14、19 个字节分别进入三级路由，避免 1-based 误实现。
+- 同一末端分组内按**完整 TxID 字典序**排列。
+- 空年度、空分组不编码。
+- 分支节点按 `tree.branch` 域标签编码；该树不套用第 04 章通用二叉证明格式。
+- 空状态 root 使用专用空根：UTXO = `SHA3-384(DomainTag("utxo.empty"))`，UTCO = `SHA3-384(DomainTag("utco.empty"))`（**非全零**）。
+- 同一数据进入 UTXO root 与 UTCO root 时语义隔离（空根/叶域标签不同）。
 - 单项、多项 root 稳定。
 
 **Step 2: 实现**
 
-四层宽成员树节点组合细节属于未被 ADR-0001 至 ADR-0031 覆盖的剩余开放问题；先只实现 bucket 分组和叶子列表，root 函数除空状态全零根外返回 `ErrSpecIncomplete`。不要发明非空状态最终 root。
+DEC-0201 已冻结四层宽成员树完整结构（年度升序 + `[8,13,18]` 分层 + 末端完整 TxID 字典序 + `tree.branch` 分支域 + 末端 `utxo.leaf`/`utco.leaf` 域 SHA3-384 + 专用空根）。完整实现该结构，不再返回 `ErrSpecIncomplete`。
 
 **Step 3: 验证并提交**
 
@@ -294,8 +295,11 @@ golangci-lint run
 
 通过标准：
 
-- UTXO 和 UTCO 状态语义隔离。
-- 局部引用歧义拒绝。
-- 同批次重复消费拒绝。
-- Proof 不进入任一状态集。
-- 状态指纹未决部分不会伪装成最终协议 root。
+- UTXO 和 UTCO 状态语义隔离（空根/叶域标签不同）。
+- 局部引用歧义按 DEC-0101 拒绝（TxID 排序首个匹配）。
+- 同批次重复消费、同块链式引用拒绝。
+- Proof 不进入任一状态集；自定义类输出不进入状态集。
+- 四层宽成员树按 DEC-0201 完整实现：年度升序 + `[8,13,18]` 分层 + 末端完整 TxID 字典序；叶前像 `TxID || Count || FlagBytes`；空根用 `utxo.empty`/`utco.empty` 域哈希（非全零）。
+- 叶前像 `Count` 为有效输出数，FlagBytes 位序低位优先、尾部 0。
+- UTCO 过期（`age > 31×87661`）删叶逻辑与第 07 章联动。
+- 状态根取前一区块完成态，供 plan 02 CheckRoot 合并；缓存集（输出详情）不参与状态根。

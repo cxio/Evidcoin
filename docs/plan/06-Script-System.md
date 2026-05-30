@@ -10,16 +10,15 @@
 
 ## 来源提案
 
-- `docs/proposal/09.Script-System.md`
-- `docs/proposal/Instruction/README.md`
-- `docs/proposal/Instruction/0.Base-Constraints.md`
-- `docs/proposal/Instruction/1.Value-Instructions.md` 到 `18.Extension-Instructions.md`
-- 依赖 ADR-0005：脚本 Float 使用 binary64、round-to-nearest-even、NaN 规范化和公共验证限制。
-- 依赖 ADR-0006：脚本初始 pass 状态为 `true`，空脚本默认通过。
-- 依赖 ADR-0007：`CHECK` 可双向覆盖 pass 状态，最终态决定结果。
-- 依赖 ADR-0014：脚本资源上限按 `< N` 语义修正为 255/1023/1023/4095。
-- 依赖 ADR-0019：`SYS_NULL` 是 unlock script 唯一超范围例外。
-- 依赖 ADR-0024：`SYS_CHKPASS` 标准验证签名只从 Witness 环境读取；`FN_CHECKSIG` / `FN_MCHECKSIG` 定制验证可从普通脚本数据读取签名；UnlockScript 由交易输入 Hash 承诺。
+- `docs/proposal/10.Script-System.md`
+- `docs/proposal/Instruction/`（逐条指令规格基线，冻结）
+- DEC-0501：字节码编码（opcode/附参/关联数据、参数消费顺序、源码字面量歧义、`CALL` 公共验证分析）。
+- DEC-0502：浮点 profile（binary64、异常浮点保留、比较与转换语义）。
+- DEC-0503：注册表与环境边界（子空间独立编号、公共验证边界、环境命名 `BlockTime`/`TxTime`）。
+- DEC-0504：成本模型（三层预算 `MaxInputScriptCost`/`MaxTxScriptCost`/`MaxBlockScriptCost`、外部引用计数归属调用方；具体数值待 C-6）。
+- DEC-0505：执行状态机、通关状态语义、禁用指令清单（`SCRIPT`/`VALUE`/`EVAL`/`INOUT`）、执行边界（具体失败枚举待 C-7 细化）。
+- 资源上限（proposal §13 / 第 03 章）：`MaxStackHeight=255`（<256）、`MaxStackItem=4095`（<4KB）、`MaxLockScript=8191`（<8KB）、`MaxUnlockScript=8191`（<8KB）。
+- 签名读取边界（proposal §7 + DEC-0102/0103）：标准验证签名从见证环境读取；`FN_CHECKSIG`/`FN_MCHECKSIG` 定制验证可从脚本数据读取；解锁脚本由交易输入根承诺。
 
 ## 非目标
 
@@ -84,7 +83,7 @@
 - opcode `170-224` 为函数指令范围。
 - opcode `225-250` 为模块指令范围。
 - opcode `251-253` 为扩展指令范围。
-- opcode `254-255` 为系统保留，默认拒绝。
+- opcode `254-255` 未分配（255 为基础指令集理论上限），默认拒绝。
 - 每条注册指令必须包含 mnemonic、附参 schema、关联数据 schema、实参数量模型、返回数量、解锁脚本可用性、确定性、公私可用性、成本等级、错误场景描述。
 
 **Step 2: 实现并提交**
@@ -110,9 +109,9 @@ git commit -m "feat: add script opcode registry"
 - 附参长度不足拒绝。
 - 关联数据长度不足拒绝。
 - 多余尾随数据拒绝，除非明确是下一条指令。
-- `MaxLockScript` 边界：1023 bytes 合法，1024 bytes 拒绝。
-- `MaxUnlockScript` 边界：4095 bytes 合法，4096 bytes 拒绝。
-- unlock script 只允许 opcode `0-50` 和 `SYS_NULL`；`SYS_NULL` 合法，其他系统指令如 `SYS_TIME` 非法。
+- `MaxLockScript` 边界：8191 bytes 合法，8192 bytes 拒绝（识别/锁定脚本，<8KB）。
+- `MaxUnlockScript` 边界：8191 bytes 合法，8192 bytes 拒绝（<8KB；不含标准内置见证，定制验证签名若入解锁脚本则计入）。
+- unlock script 只允许 opcode `0-50` 和 `SYS_NULL`（opcode 169）；`SYS_NULL` 合法，其他系统指令如 `SYS_TIME` 非法。
 
 **Step 2: 实现并提交**
 
@@ -139,11 +138,11 @@ git commit -m "feat: decode script bytecode"
 - 支持 `Nil`、`Bool`、`Byte`、`Int`、`String`、`Bytes` 等先导类型。
 - 栈 LIFO。
 - 空栈 pop 拒绝。
-- `MaxStackHeight` 边界：255 个栈元素合法，256 个拒绝。
-- `MaxStackItem` 边界：1023 bytes 合法，1024 bytes 拒绝。
+- `MaxStackHeight` 边界：255 个栈元素合法，256 个拒绝（<256）。
+- `MaxStackItem` 边界：4095 bytes 合法，4096 bytes 拒绝（<4KB）。
 - 实参区 FIFO。
-- Float NaN 入栈前规范化为 quiet NaN `0x7FF8000000000000`。
-- Float `+Inf` 和 `-Inf` 入栈后保留。
+- Float 字面量不得表达 NaN/+Inf/-Inf（输入即拒绝）；运算产生的 NaN/Inf 保留为异常值继续执行，由 `ISEFV` 检测。
+- `-0.0` 数值比较等于 `+0.0`，但字节编码保持原 bit pattern。
 
 **Step 2: 实现**
 
@@ -172,17 +171,16 @@ git commit -m "feat: add script runtime values"
 
 测试：
 
-- 状态包括 `Running`、`Passed`、`Failed`、`Exited`、`Returned`、`EndedForPublicValidation`。
-- `END` 在公共验证中结束公共路径。
-- 公共验证遇到无数据 `INPUT` 视为隐式 `END`。
-- `SYS_TIME`、`SHELL`、`EXT_PRIV` 在公共路径拒绝。
-- 成本预算耗尽拒绝。
-- 空脚本通过。
-- 无结果指令脚本通过。
-- 仅 `CHECK(false)` 拒绝。
-- `CHECK(true)` 后 `CHECK(false)` 最终拒绝。
-- `CHECK(false)` 后 `CHECK(true)` 最终通过。
-- 公共验证路径中 Float 直接作为 `CHECK/PASS` 参数拒绝。
+- 执行状态（DEC-0505）：`Running`、`PassStop`、`VerifyFail`、`ScriptError`、`CostFail`、`PrivateStop`。
+- 初始通关状态为 `true`；空脚本以 `true` 产生 `PassStop`（通过）。
+- `END` 与公共验证路径中的无数据 `INPUT` 以当前通关状态产生 `PassStop`。
+- `PASS false` 立即 `VerifyFail`；`PASS true` 继续；`CHECK true/false` 写入后继续，后写覆盖前值。
+- `CHECK(true)` 后 `CHECK(false)` 最终 `PassStop(false)`（不合法）；`CHECK(false)` 后 `CHECK(true)` 最终通过。
+- `SYS_TIME`、`EXT_PRIV` 在公共验证路径触达即 `ScriptError`；`GOTO`/`EMBED` 目标缺失/不可验证即 `ScriptError`。
+- `SHELL` 在公共路径不执行本地程序，但正常消费实参、做栈/类型检查、计入公共成本（不拒绝）。
+- 公共验证触达禁用指令 `SCRIPT`/`INOUT` 立即 `ScriptError`。
+- 成本预算耗尽产生 `CostFail`。
+- 公共 `END`/`INPUT` 后的私有路径不执行、不计成本、不因其中禁用指令拒绝。
 
 **Step 2: 实现并提交**
 
@@ -292,8 +290,9 @@ git commit -m "feat: add script environment interfaces"
 - 隐式跨类比较默认拒绝。
 - `EVERY`、`SOME` 对空集合语义明确测试。
 - 转换必须按源类型到目标类型规则表执行。
-- Float NaN 比较：`EQUAL` 为 false，`NEQUAL` 为 true，大小比较拒绝，`ISNAN` 对 Float NaN 返回 true。
-- Float 转换：NaN 规范化，Infinity 保留；NaN/Infinity 转离散数值类型拒绝。
+- Float 比较：除 `ISEFV` 外任一操作数为 NaN 的比较返回 `false`；`EQUAL(+0.0,-0.0)` 为 true；排序类比较遇 NaN 导致脚本执行失败、验证不通过。
+- 异常浮点由 `ISEFV` 检测（非 `ISNAN`）。
+- Float 转换：`Float->Int` 默认向零截断；`BYTES`/`PACK` 对异常浮点输出 8 字节大端 bit pattern（转换后为 `Bytes`，不再触发最终异常残留检查）。
 
 **Step 2: 实现并提交**
 
@@ -325,13 +324,14 @@ git commit -m "feat: add deterministic script instructions"
 
 测试：
 
-- `SHELL` 公共路径拒绝。
+- 禁用指令 `SCRIPT`/`VALUE`/`EVAL`/`INOUT` 公共验证路径触达即 `ScriptError`（静态出现不拒绝）。
+- `CALL`、`SHELL` 不属于禁用指令；`SHELL` 公共路径不执行本地程序但正常消费实参、计入成本。
 - `RANDOM/SLRAND` 未实现确定性 PRNG 前拒绝公共执行。
-- `EXT_MO`、`EXT_PRIV` 默认禁用。
+- `EXT_PRIV` 公共验证路径 `ScriptError`；`EXT_MO` 模块扩展须经白名单方法表。
 - 模块指令只能通过白名单方法表调用。
 - 模式匹配必须有最大步数或预算。
-- `GOTO` 顶层跳转和深度限制生效。
-- `EMBED <= 4` 生效。
+- `GOTO` 跳转次数 `<= 2`、跳转深度 `<= 3` 生效。
+- `EMBED` 嵌入次数 `<= 4`、嵌入深度 `== 0`（嵌入脚本不可再 `EMBED`/`GOTO`）生效。
 
 **Step 2: 实现拒绝和安全骨架**
 
@@ -361,8 +361,10 @@ golangci-lint run
 
 通过标准：
 
-- unlock script opcode 限制生效。
+- unlock script opcode 限制（`[0-50]` + `SYS_NULL`）生效。
 - 公共/私有模式差异被测试覆盖。
-- VM 资源限制被测试覆盖。
-- 未决或危险指令默认拒绝，而不是静默执行。
-- `internal/script` 不 import `internal/consensus`。
+- 资源上限 255/4095/8191/8191 被边界值测试覆盖。
+- 执行状态机六态（DEC-0505）与通关状态覆盖语义被测试覆盖。
+- 禁用指令（`SCRIPT`/`VALUE`/`EVAL`/`INOUT`）仅在公共执行路径触达时 `ScriptError`；`CALL`/`SHELL` 不禁用。
+- 脚本 hash/成本基于字节码而非源码。
+- `internal/script` 不 import `internal/consensus`、`internal/utxo`、`internal/utco`。
