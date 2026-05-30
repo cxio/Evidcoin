@@ -22,7 +22,7 @@
 | 01 | [`01.Types-And-Encoding.md`](01.Types-And-Encoding.md) | `pkg/types` | 基础类型与规范编码（ULEB128、定宽、字节序列、BigInt） |
 | 02 | [`02.Cryptography-And-Hashing.md`](02.Cryptography-And-Hashing.md) | `pkg/crypto` | 域标签全集、哈希 profile、地址、ML-DSA-65 |
 | 03 | [`03.Identifiers-And-Constants.md`](03.Identifiers-And-Constants.md) | `pkg/types` | 标识符（Protocol/Chain/Genesis/Bound-ID）、核心常量 |
-| 04 | [`04.Hash-Trees.md`](04.Hash-Trees.md) | `pkg/types` | 通用二叉树与专用树（交易树/输入根/片组树） |
+| 04 | [`04.Hash-Trees.md`](04.Hash-Trees.md) | `pkg/hashtree` | 通用二叉树与专用树（交易树/输入根/片组树） |
 | 05 | [`05.Blockchain-Core.md`](05.Blockchain-Core.md) | `internal/blockchain` | 区块头、CheckRoot、币权、限额曲线、创世工件 |
 | 06 | [`06.Transaction-Model.md`](06.Transaction-Model.md) | `internal/tx` | 普通/Coinbase 交易头、交易体、输入输出、合法性 |
 | 07 | [`07.Coin-Credit-Proof-Units.md`](07.Coin-Credit-Proof-Units.md) | `internal/tx` | Coin/Credit/Proof 三类 payload、附件 ID |

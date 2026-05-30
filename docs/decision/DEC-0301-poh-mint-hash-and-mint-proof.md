@@ -50,7 +50,6 @@ DomainTag("mint.hash") || MintPubKey || MintTxID || Stakes || RefMintHash || X
 ## Consequences（影响）
 
 - `MintPubKey` 必须能证明其哈希等于 `MintPKHash`，或在无 `MintPKHash` 时作为 `LeadPKHash` 参与输入根验证。
-- 若 `Stakes=0`，`X` 编码为单字节 `0x00`。
 - 初段 Coinbase 作为铸凭交易时必须设置 `MintPKHash`，并且必须已经确认。
 
 ## Conception References（构想层依据）

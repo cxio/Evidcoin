@@ -4,12 +4,12 @@
 
 ## 目录结构概览
 
-Evidcoin 文档分为四个正式层级，权威性自上而下递减：
+Evidcoin 文档分为四个层级：2个核心层级，由用户设计，2个辅助层级，由 AI 生成。权威性自上而下递减：
 
 | 层级 | 目录 | 作者 | 说明 |
 |------|------|------|------|
 | Conception（构想层） | `conception/` | 人工编写 | 设计构想，作者对协议、系统和应用边界的原始设计。 |
-| Decision（决策层） | `decision/` | AI 生成 | 架构决策，仅记录 conception 尚未明确的补充决策（`DEC-NNNN`）。 |
+| Decision（决策层） | `decision/` | AI 生成 + 人工审阅 | 架构决策，仅记录 conception 尚未明确的补充决策（`DEC-NNNN`）。 |
 | Proposal（提案层） | `proposal/` | AI 生成 | 详细技术规格，追溯自 conception + decision。 |
 | Plan（方案层） | `plan/` | AI 生成 | 按阶段的实施计划（TDD 任务、包边界、文件清单），追溯自 proposal。 |
 

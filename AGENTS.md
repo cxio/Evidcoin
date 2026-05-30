@@ -119,7 +119,7 @@ MaxTxSize       = 65535
 ```
 golang.org/x/crypto              # SHA3
 lukechampine.com/blake3          # BLAKE3
-github.com/cloudflare/circl      # ML-DSA-65（Go 1.25 可能已内置，优先用标准库）
+github.com/cloudflare/circl      # ML-DSA-65（观察：未来可能迁移到标准库）
 github.com/mr-tron/base58        # Base58 地址编码
 ```
 

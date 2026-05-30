@@ -12,7 +12,7 @@
 
 - `docs/proposal/11.PoH-Consensus.md`（主源）
 - 依赖 `docs/proposal/05.Blockchain-Core.md`（区块头、`Stakes`、`CheckRoot`）、`06.Transaction-Model.md`（交易头、Coinbase、`MintPKHash`/`LeadPKHash`）、`04.Hash-Trees.md`（验证路径、输入根）、`08.Signatures-And-Witness.md`（铸造者签名）、`02.Cryptography-And-Hashing.md`（域标签/哈希 profile）。
-- **DEC-0301**：铸凭哈希前像字段顺序与编码、`X = BE(minimal_unsigned(BlockHeight × Mix))`（`Mix=0x517cc1b727220a95`）、`Stakes==0` 时 `X=0x00`、`MintProof` 五字段顺序、择优三级升序（`MintHash → TxID → PubKey`）、`MintPKHash`/`LeadPKHash` 两路身份、Coinbase 铸凭资格。
+- **DEC-0301**：铸凭哈希前像字段顺序与编码、`X = BE(minimal_unsigned(BlockHeight × Mix))`（`Mix=0x517cc1b727220a95`）、`MintProof` 五字段顺序、择优三级升序（`MintHash → TxID → PubKey`）、`MintPKHash`/`LeadPKHash` 两路身份、Coinbase 铸凭资格。
 - **DEC-0302**：创世工件双形式（`genesis.bin`/`genesis.json`）、创世 `MintHash` 全零、初段评参高度、初段铸凭高度放宽、#1/#2 规则、初段 Coinbase 资格、边界测试点。
 
 ## 包边界
@@ -47,12 +47,12 @@
 **Step 1: 写失败测试**（proposal 11 §2 / DEC-0301）
 
 - 前像顺序固定：`BLAKE3-256( DomainTag("mint.hash") || MintPubKey || MintTxID || Stakes(BE u64) || RefMintHash || X )`，输出 32B。
-- `X = BE(minimal_unsigned(BlockHeight × Mix))`，`Mix=0x517cc1b727220a95`；测试向量覆盖：`Stakes==0` 不影响 `X`（`X` 仅由高度×Mix 决定），但**注意** DEC-0301 另规定 `Stakes==0` 时 `X` 编码为单字节 `0x00`——以 DEC-0301 文本为准，测试覆盖两条规则的边界用例并就近标注来源行。
+- `X = BE(minimal_unsigned(BlockHeight × Mix))`，`Mix=0x517cc1b727220a95`；`X` 仅由区块高度与 `Mix` 决定，与 `Stakes` 无关。测试向量必须覆盖同一 `BlockHeight` 下 `Stakes=0` 与 `Stakes>0` 时 `X` 字节相同，但完整铸凭哈希因 `Stakes` 字段不同而不同。
 - `RefMintHash`：评参块 Coinbase 的铸凭哈希；创世块/初段无 `Minter` 时取全零 32B。
 - 择优对比：按 `MintHash` 32B 字典序升序，值小者胜；相等按完整 `TxID` 升序，再按 `MintPubKey` 字节升序（三级）。
 - 排序必须按 unsigned lexicographic byte order，不得按 hex 字符串。
 
-> **待澄清标注：** 测试中对「`Stakes==0` 时 `X` 取 `0x00`」与「`X=BE(minimal_unsigned(height×Mix))`」两条 DEC-0301 表述的精确叠加关系，须就近引用 DEC-0301 对应条目；如发现两条规则文本冲突，暂停并按文档同步流程回写 proposal/decision，不在 Plan 中私自选值。
+> **已裁决标注：** `X` 与 `Stakes` 无关；DEC-0301 中曾存在的「Stakes 零值改变 X 编码」表述属于历史遗留错误，已从 decision/proposal 清除。本任务不得再生成或保留该旧规则的测试向量。
 
 **Step 2: 实现并提交**
 

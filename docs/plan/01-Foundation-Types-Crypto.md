@@ -292,7 +292,7 @@ DEC-0104 已冻结 ML-DSA-65 profile 为 `github.com/cloudflare/circl`：
 - 公钥/私钥/签名序列化采用 circl 的 canonical byte encoding。
 - 签名验证输入为第 04 章（DEC-0102）定义的签名消息字节序列。
 
-> **待决 A-2：** 根 `AGENTS.md` 提示“ML-DSA 优先标准库”，而 DEC-0104 锁定 circl。本 Plan 以 **DEC-0104（circl）为准**；是否随 Go 1.26 标准库成熟切换为待决，需先确认标准库与 circl 的 canonical 编码是否一致；不一致时冻结其一。A-2 裁决前不得混用标准库。上层只能依赖 `pkg/crypto` 的 `Signer` / `Verifier` 接口。
+> **A-2 未来兼容观察项：** 本 Plan 以 **DEC-0104（circl）为准**；是否随 Go 标准库成熟迁移不属于当前全局待决项。编码时不得混用标准库实现，上层只能依赖 `pkg/crypto` 的 `Signer` / `Verifier` 接口，以便未来单独评估迁移。
 
 **Step 4: 验证并提交**
 

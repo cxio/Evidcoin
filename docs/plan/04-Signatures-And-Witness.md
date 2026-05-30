@@ -169,7 +169,7 @@ git commit -m "feat: add single and multisig verification"
 测试：
 
 - 签名验证输入即 Task 1/Task 5 定义的签名消息字节序列。
-- 验证仅通过 `pkg/crypto` 的 `Signer`/`Verifier` 接口（ML-DSA-65 profile = circl，DEC-0104；A-2 待决见第 01 章）。
+- 验证仅通过 `pkg/crypto` 的 `Signer`/`Verifier` 接口（ML-DSA-65 profile = circl，DEC-0104；A-2 仅为未来兼容观察项，见第 01 章）。
 - 错误签名、错误公钥、`SIGOUT_SELF` 越界、辅项互斥违例返回各自明确错误。
 
 **Step 2: 实现并提交**

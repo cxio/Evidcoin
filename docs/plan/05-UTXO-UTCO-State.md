@@ -12,7 +12,7 @@
 
 - `docs/proposal/09.UTXO-UTCO-State.md`
 - 依赖 `docs/proposal/06.Transaction-Model.md`、`07.Coin-Credit-Proof-Units.md`、`04.Hash-Trees.md`、`02.Cryptography-And-Hashing.md`
-- DEC-0201：四层宽成员树（年度 + TxID `[8,13,18]` 分层 + 末端完整 TxID 字典序）、叶子前像 `TxID || Count || FlagBytes`、FlagBytes 位序低位优先、空根 `utxo.empty`/`utco.empty`、UTCO 过期、缓存边界。
+- DEC-0201：五层宽成员树（年度层 + TxID `[8]`/`[13]`/`[18]` 三层 + 末端完整 TxID 叶子层）、叶子前像 `TxID || Count || FlagBytes`、FlagBytes 位序低位优先、空根 `utxo.empty`/`utco.empty`、UTCO 过期、缓存边界。
 - DEC-0002（引用）：`utxo.leaf`/`utco.leaf`/`utxo.empty`/`utco.empty`/`tree.branch` 域标签。
 - 状态根口径（proposal 09 §7）：UTXORoot/UTCORoot 取**前一区块完成后**状态集，供 plan 02 的 CheckRoot 合并。
 - 短引用碰撞拒绝按 proposal 06 §5 / DEC-0101（TxID 排序首个匹配）。
@@ -221,7 +221,7 @@ git add internal/utxo/fingerprint.go internal/utco/fingerprint.go internal/utxo/
 git commit -m "feat: add state fingerprint leaves"
 ```
 
-## Task 7: 四层状态指纹 root
+## Task 7: 五层状态指纹 root
 
 **Files:**
 - Modify: `internal/utxo/fingerprint.go`
@@ -245,7 +245,7 @@ git commit -m "feat: add state fingerprint leaves"
 
 **Step 2: 实现**
 
-DEC-0201 已冻结四层宽成员树完整结构（年度升序 + `[8,13,18]` 分层 + 末端完整 TxID 字典序 + `tree.branch` 分支域 + 末端 `utxo.leaf`/`utco.leaf` 域 SHA3-384 + 专用空根）。完整实现该结构，不再返回 `ErrSpecIncomplete`。
+DEC-0201 已冻结五层宽成员树完整结构（年度层升序 + TxID `[8]`/`[13]`/`[18]` 三层分组 + 末端完整 TxID 叶子层字典序 + `tree.branch` 分支域 + 末端 `utxo.leaf`/`utco.leaf` 域 SHA3-384 + 专用空根）。完整实现该结构，不再返回 `ErrSpecIncomplete`。
 
 **Step 3: 验证并提交**
 
@@ -299,7 +299,7 @@ golangci-lint run
 - 局部引用歧义按 DEC-0101 拒绝（TxID 排序首个匹配）。
 - 同批次重复消费、同块链式引用拒绝。
 - Proof 不进入任一状态集；自定义类输出不进入状态集。
-- 四层宽成员树按 DEC-0201 完整实现：年度升序 + `[8,13,18]` 分层 + 末端完整 TxID 字典序；叶前像 `TxID || Count || FlagBytes`；空根用 `utxo.empty`/`utco.empty` 域哈希（非全零）。
+- 五层宽成员树按 DEC-0201 完整实现：年度层升序 + TxID `[8]`/`[13]`/`[18]` 三层分组 + 末端完整 TxID 叶子层字典序；叶前像 `TxID || Count || FlagBytes`；空根用 `utxo.empty`/`utco.empty` 域哈希（非全零）。
 - 叶前像 `Count` 为有效输出数，FlagBytes 位序低位优先、尾部 0。
 - UTCO 过期（`age > 31×87661`）删叶逻辑与第 07 章联动。
 - 状态根取前一区块完成态，供 plan 02 CheckRoot 合并；缓存集（输出详情）不参与状态根。
