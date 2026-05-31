@@ -12,7 +12,7 @@
 - Go 版本来自 `go.mod`：`go 1.26.2`，模块名 `github.com/cxio/evidcoin`。没有 Makefile 或 CI workflow，直接用 Go 命令验证。
 - 全量验证：`go fmt ./... && go test ./... && go test -cover ./... && go build ./... && go mod tidy && go mod verify && golangci-lint run`。
 - 聚焦包测试：`go test ./internal/blockchain -run TestName -v` 或 `go test ./pkg/types -run TestName -v`。
-- 阶段验收要求核心逻辑覆盖率至少 80%，`golangci-lint run` 无 warning；若本机未安装 lint，只能报告环境阻塞，不能写“lint 通过”。
+- 阶段验收要求核心逻辑覆盖率至少 80%，`golangci-lint run` 无 warning；先尝试执行，若本机未安装 lint，只能报告环境阻塞，不能写“lint 通过”。
 - 运行 `go mod tidy` 后必须检查 `go.mod`/`go.sum` diff，只保留任务需要的依赖变化。
 
 ## 分层边界

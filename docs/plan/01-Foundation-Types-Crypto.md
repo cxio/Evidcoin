@@ -4,7 +4,7 @@
 
 **Architecture:** `pkg/types/` 只提供无内部依赖的类型、常量和编码能力，`pkg/crypto/` 在其上提供 Hash、域标签、地址/多签复合公钥哈希和签名抽象，`pkg/hashtree/` 提供通用二叉树与专用树规则。DEC-0004 已固定哈希树边界策略（空根由各结构自定义、单叶根按 tree.branch profile 归一化为 32B、奇数层提升不复制、验证路径不含 leafIndex）为协议默认。
 
-**Tech Stack:** Go 1.26.2、`golang.org/x/crypto/sha3`、`golang.org/x/crypto/blake2b`、`lukechampine.com/blake3`、`github.com/cloudflare/circl`（ML-DSA-65，DEC-0104）、`github.com/mr-tron/base58`、表驱动测试。
+**Tech Stack:** Go 1.26.2、`golang.org/x/crypto/blake2b`、`lukechampine.com/blake3`、`github.com/cloudflare/circl`（ML-DSA-65，DEC-0104）、`github.com/mr-tron/base58`、表驱动测试。
 
 ---
 
@@ -232,7 +232,7 @@ git commit -m "feat: add canonical encoding helpers"
 **Step 2: 添加依赖**
 
 ```bash
-go get golang.org/x/crypto/sha3 golang.org/x/crypto/blake2b lukechampine.com/blake3
+go get golang.org/x/crypto/blake2b lukechampine.com/blake3
 ```
 
 **Step 3: 运行测试确认失败**
