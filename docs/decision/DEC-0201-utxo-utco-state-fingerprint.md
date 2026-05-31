@@ -23,8 +23,8 @@ Conception 已明确 UTXO/UTCO 指纹按年度、TxID 字节索引 `[7,11,15]` �
 - 三个分层索引必须全部落在 DEC-0101 `TxIDPart >=16` 的最短输入引用覆盖范围内。
 - 同一末端分组内按完整 TxID 字典序排列。
 - 空年度和空分组不编码；整棵空状态树使用专用空根。
-- UTXO 空状态树根为 `SHA3-384(DomainTag("utxo.empty"))`。
-- UTCO 空状态树根为 `SHA3-384(DomainTag("utco.empty"))`。
+- UTXO 空状态树根为 `BLAKE3-256(DomainTag("utxo.empty"))`，输出 32 字节。
+- UTCO 空状态树根为 `BLAKE3-256(DomainTag("utco.empty"))`，输出 32 字节。
 
 叶子规则：
 
@@ -47,7 +47,7 @@ UTCO 过期规则：
 
 ## Rationale（理由）
 
-按输出序位映射状态位可以避免把输出详情纳入状态根，保持指纹轻量。年度和完整 TxID 排序可保证跨实现构造相同根。TxID 分层选择 `[7,11,15]` 是为了同时避开过低字节的可塑性偏好，并保证最短 `TxIDPart`（16 字节）已经包含全部三级路由字节。
+按输出序位映射状态位可以避免把输出详情纳入状态根，保持指纹轻量。年度和完整 TxID 排序可保证跨实现构造相同根。空状态根使用 32 字节 BLAKE3-256，是为了与非空宽成员状态树根保持同一 `tree.branch`/树根宽度；UTXO/UTCO 仍由各自空根域标签隔离。TxID 分层选择 `[7,11,15]` 是为了同时避开过低字节的可塑性偏好，并保证最短 `TxIDPart`（16 字节）已经包含全部三级路由字节。
 
 ## Consequences（影响）
 
@@ -65,7 +65,7 @@ UTCO 过期规则：
 ## Confirmation（确认）
 
 - 状态位映射、低位优先 bit 顺序和 `1/0` 有效语义已确认。
-- 空状态树根使用 UTXO/UTCO 各自的域标签哈希。
+- 空状态树根使用 UTXO/UTCO 各自的域标签哈希，输出 32 字节树根。
 - `StateLeaf` 前像中保留 `Count`。
 - 年度内三级分层使用 0-based TxID 字节索引 `[7,11,15]`，以适配 `TxIDPart >=16` 的最短输入引用。
 - Credit 过期后若同一 `TxID` 下无有效 Credit，则删除 UTCO 叶。

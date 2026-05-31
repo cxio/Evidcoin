@@ -76,13 +76,16 @@ func TestHashBlockHeaderVector(t *testing.T) {
 }
 
 func TestEmptyRoots(t *testing.T) {
-	wantUTXO := sha3.Sum384(tagUTXOEmpty)
+	wantUTXO := blake3.Sum256(tagUTXOEmpty)
 	if !bytes.Equal(EmptyUTXORoot().Bytes(), wantUTXO[:]) {
 		t.Error("EmptyUTXORoot mismatch")
 	}
-	wantUTCO := sha3.Sum384(tagUTCOEmpty)
+	wantUTCO := blake3.Sum256(tagUTCOEmpty)
 	if !bytes.Equal(EmptyUTCORoot().Bytes(), wantUTCO[:]) {
 		t.Error("EmptyUTCORoot mismatch")
+	}
+	if len(EmptyUTXORoot().Bytes()) != 32 || len(EmptyUTCORoot().Bytes()) != 32 {
+		t.Fatal("empty UTXO/UTCO roots must be 32-byte tree roots")
 	}
 	if bytes.Equal(EmptyUTXORoot().Bytes(), EmptyUTCORoot().Bytes()) {
 		t.Error("UTXO and UTCO empty roots must differ")

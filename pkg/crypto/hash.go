@@ -144,16 +144,14 @@ func SignatureMessageTag() []byte {
 	return out
 }
 
-// EmptyUTXORoot 返回 UTXO 空状态树根：SHA3-384(DomainTag("utxo.empty")).
-func EmptyUTXORoot() types.Hash48 {
-	h, _ := types.NewHash48(sha3_384(tagUTXOEmpty))
-	return h
+// EmptyUTXORoot 返回 UTXO 空状态树根：BLAKE3-256(DomainTag("utxo.empty")).
+func EmptyUTXORoot() types.TreeHash {
+	return types.TreeHash(blake3_256(tagUTXOEmpty))
 }
 
-// EmptyUTCORoot 返回 UTCO 空状态树根：SHA3-384(DomainTag("utco.empty")).
-func EmptyUTCORoot() types.Hash48 {
-	h, _ := types.NewHash48(sha3_384(tagUTCOEmpty))
-	return h
+// EmptyUTCORoot 返回 UTCO 空状态树根：BLAKE3-256(DomainTag("utco.empty")).
+func EmptyUTCORoot() types.TreeHash {
+	return types.TreeHash(blake3_256(tagUTCOEmpty))
 }
 
 // HashInputList 计算交易输入项列表的串联哈希 ListHash（第 04 章 §3.3）：

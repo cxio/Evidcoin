@@ -254,7 +254,7 @@ go test ./pkg/crypto -run TestHash -v
 - `HashUTCOLeaf(data []byte) types.Hash48`（SHA3-384 + `utco.leaf`）
 - `HashAttachment(data []byte) types.AttachmentHash`（SHA3-512 + `attachment.fingerprint`）
 - `HashMint(data []byte) types.MintHash`（BLAKE3-256 + `mint.hash`，32B）
-- `EmptyUTXORoot() types.Hash48` / `EmptyUTCORoot() types.Hash48`（`SHA3-384(DomainTag("utxo.empty"))` / `utco.empty`）
+- `EmptyUTXORoot() types.TreeHash` / `EmptyUTCORoot() types.TreeHash`（`BLAKE3-256(DomainTag("utxo.empty"))` / `utco.empty`，32B）
 - `HashAttachmentPieceTree(...)`：免域标签路径，与协议树明确隔离。
 
 域标签已由 DEC-0002 固定，API 内部必须绑定对应用途，不允许调用方传入协议标签；附件片组树是唯一免域标签例外。非协议测试辅助函数必须与协议 Hash API 明确隔离。

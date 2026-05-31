@@ -216,7 +216,7 @@ git commit -m "feat: add year block helpers"
 
 测试：
 
-- 输入 `TransactionTreeRoot || UTXORoot || UTCORoot` 得到 48B `CheckRoot`。
+- 输入 `TransactionTreeRoot || UTXORoot || UTCORoot` 得到 48B `CheckRoot`；三者均为 32B 树根。
 - 改变任一输入会改变结果。
 - UTXO 与 UTCO 输入顺序调换会改变结果。
 - `h == 0` 时调用方传入空状态指纹，组合结果稳定可复现。

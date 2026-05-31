@@ -11,7 +11,7 @@ import (
 // 具体实现由第 09 章状态层承载；本层只依赖该读取契约以组合 CheckRoot。
 type StateFingerprintProvider interface {
 	// StateFingerprint 返回 completedHeight 区块执行完成后的 UTXO/UTCO 指纹。
-	StateFingerprint(completedHeight uint32) (utxoRoot, utcoRoot types.Hash48, err error)
+	StateFingerprint(completedHeight uint32) (utxoRoot, utcoRoot types.TreeHash, err error)
 }
 
 // ComputeCheckRoot 组合校验根（第 05 章 §2）：
@@ -20,7 +20,7 @@ type StateFingerprintProvider interface {
 //
 // treeRoot 为区块交易树根（第 04 章 §3.1），UTXORoot/UTCORoot 为前一区块完成后的
 // 状态指纹。UTXO 与 UTCO 顺序固定，不可调换。
-func ComputeCheckRoot(treeRoot []byte, utxoRoot, utcoRoot types.Hash48) types.CheckRoot {
+func ComputeCheckRoot(treeRoot []byte, utxoRoot, utcoRoot types.TreeHash) types.CheckRoot {
 	pre := make([]byte, 0, len(treeRoot)+len(utxoRoot)+len(utcoRoot))
 	pre = append(pre, treeRoot...)
 	pre = append(pre, utxoRoot.Bytes()...)
@@ -32,7 +32,7 @@ func ComputeCheckRoot(treeRoot []byte, utxoRoot, utcoRoot types.Hash48) types.Ch
 // height == 0（创世）无前一区块，使用空状态指纹（第 05 章空根规则，不查询 provider）；
 // height > 0 读取上一高度 height-1 完成后的状态指纹（链式状态约束，第 09 章）。
 func ComputeCheckRootAt(height uint32, treeRoot []byte, provider StateFingerprintProvider) (types.CheckRoot, error) {
-	var utxoRoot, utcoRoot types.Hash48
+	var utxoRoot, utcoRoot types.TreeHash
 	if height == 0 {
 		utxoRoot = crypto.EmptyUTXORoot()
 		utcoRoot = crypto.EmptyUTCORoot()

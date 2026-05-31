@@ -239,7 +239,7 @@ git commit -m "feat: add state fingerprint leaves"
 - 同一末端分组内按**完整 TxID 字典序**排列。
 - 空年度、空分组不编码。
 - 分支节点按 `tree.branch` 域标签编码；该树不套用第 04 章通用二叉证明格式。
-- 空状态 root 使用专用空根：UTXO = `SHA3-384(DomainTag("utxo.empty"))`，UTCO = `SHA3-384(DomainTag("utco.empty"))`（**非全零**）。
+- 空状态 root 使用专用空根：UTXO = `BLAKE3-256(DomainTag("utxo.empty"))`，UTCO = `BLAKE3-256(DomainTag("utco.empty"))`（32B，**非全零**）。
 - 同一数据进入 UTXO root 与 UTCO root 时语义隔离（空根/叶域标签不同）。
 - 单项、多项 root 稳定。
 
@@ -299,7 +299,7 @@ golangci-lint run
 - 局部引用歧义按 DEC-0101 拒绝（TxID 排序首个匹配）。
 - 同批次重复消费、同块链式引用拒绝。
 - Proof 不进入任一状态集；自定义类输出不进入状态集。
-- 五层宽成员树按 DEC-0201 完整实现：年度层升序 + TxID 0-based `[7]`/`[11]`/`[15]` 三层分组（第 8、12、16 个字节，覆盖最短 `TxIDPart >=16`）+ 末端完整 TxID 叶子层字典序；叶前像 `TxID || Count || FlagBytes`；空根用 `utxo.empty`/`utco.empty` 域哈希（非全零）。
+- 五层宽成员树按 DEC-0201 完整实现：年度层升序 + TxID 0-based `[7]`/`[11]`/`[15]` 三层分组（第 8、12、16 个字节，覆盖最短 `TxIDPart >=16`）+ 末端完整 TxID 叶子层字典序；叶前像 `TxID || Count || FlagBytes`；空根用 `utxo.empty`/`utco.empty` 域标签的 `BLAKE3-256` 哈希（32B，非全零）。
 - 叶前像 `Count` 为有效输出数，FlagBytes 位序低位优先、尾部 0。
 - UTCO 过期（`age > 31×87661`）删叶逻辑与第 07 章联动。
 - 状态根取前一区块完成态，供 plan 02 CheckRoot 合并；缓存集（输出详情）不参与状态根。
