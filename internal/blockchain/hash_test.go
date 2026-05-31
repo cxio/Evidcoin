@@ -32,7 +32,10 @@ func TestBlockIDDeterministic(t *testing.T) {
 			Stakes:    9,
 		}
 	}
-	if build().ID() != build().ID() {
+	// 用两个独立构建的实例比较，验证 ID 仅由字段决定（确定性）。
+	first := build().ID()
+	second := build().ID()
+	if first != second {
 		t.Fatal("相同字段的 BlockID 不一致")
 	}
 }
