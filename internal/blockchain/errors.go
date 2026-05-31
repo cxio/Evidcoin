@@ -18,4 +18,7 @@ var (
 	ErrBlockIDMismatch = errors.New("blockchain: block id mismatch")
 	// ErrYearBlockMissing 表示请求的年度边界区块头（年块）未存储，无法提供年块引用。
 	ErrYearBlockMissing = errors.New("blockchain: year block not found")
+	// ErrInvalidGenesisHeader 表示区块头不符合创世工件确定边界规则
+	// （Version=1、Height=0、PrevBlock/Stakes/YearBlock 全零，第 05 章 §9）。
+	ErrInvalidGenesisHeader = errors.New("blockchain: invalid genesis header artifact")
 )
