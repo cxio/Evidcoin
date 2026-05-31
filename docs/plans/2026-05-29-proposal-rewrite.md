@@ -93,7 +93,7 @@
 
 ### Task 11: 09.UTXO-UTCO-State.md
 **来源：** conception 附.组队校验、blockchain；DEC-0201。
-**要点：** FlagOutputs/Count 位语义、四层宽成员树分层（年度+TxID `[8,13,18]`）、空根 `utxo.empty`/`utco.empty`、叶子前像、UTCO 过期处理、链式约束（三路耦合）、缓存边界。
+**要点：** FlagOutputs/Count 位语义、四层宽成员树分层（年度+TxID `[7,11,15]`）、空根 `utxo.empty`/`utco.empty`、叶子前像、UTCO 过期处理、链式约束（三路耦合）、缓存边界。
 **冲突/缺口落地：** 空根域标签与第 02 章保持一致。
 按通用工作流 A→E。
 

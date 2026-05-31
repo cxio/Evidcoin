@@ -46,7 +46,7 @@
 **覆盖：** proposal 08。**包：** `internal/tx`。**要点：** 签名消息布局（ChainScope/SigScope/TxHeaderCore/Covered*）、授权种类 8 位、辅项冲突、Coinbase 签名消息、见证容器与剪枝、多签 M-of-N 与三套排序对照；DEC-0102·0103·0104。
 
 ### Task 7: 05-UTXO-UTCO-State.md
-**覆盖：** proposal 09。**包：** `internal/utxo`·`internal/utco`。**要点：** FlagOutputs/Count 位语义、四层宽成员树 `[8,13,18]`、空根 `utxo.empty`/`utco.empty`、叶子前像、UTCO 过期、链式约束；DEC-0201·0002。
+**覆盖：** proposal 09。**包：** `internal/utxo`·`internal/utco`。**要点：** FlagOutputs/Count 位语义、四层宽成员树 `[7,11,15]`、空根 `utxo.empty`/`utco.empty`、叶子前像、UTCO 过期、链式约束；DEC-0201·0002。
 
 ### Task 8: 06-Script-System.md
 **覆盖：** proposal 10 + Instruction/。**包：** `internal/script`。**要点：** 栈/实参区/附参/局部域全局域、254 指令分段、5 前缀 18 类别 3 特例、字节码编码、浮点 profile、注册表与环境边界、公共/私有路径与禁用指令、成本模型框架、解锁段 opcode 限制；DEC-0501~0505。待决：C-6 成本数值、C-7 禁用解除 → 相关 Task 阻塞。
