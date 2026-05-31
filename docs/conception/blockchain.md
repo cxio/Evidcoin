@@ -131,7 +131,7 @@ BlockHeader: {
 - UTCO 集指纹，结构同上。
 - 区块交易集的二元哈希校验树（含序，类 Merkle）。
 - 交易输入集哈希树，仅2层：叶子 + 根。
-- 交易输出集哈希树：`RootHash = Hash256( Tree<Outputs> )`。
+- 交易输出集哈希树：`RootHash = Hash256:Tree<Outputs>`。
 - 附件片组集哈希树（分片数据哈希校验树，含序，类 Merkle）。
 
 
