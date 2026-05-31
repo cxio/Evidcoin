@@ -36,7 +36,7 @@
 |------|------|
 | `internal/tx/header.go` | `TxHeader`、规范化编码、`TxID` |
 | `internal/tx/input.go` | `LeadInput`、`RestInput`、局部引用结构、UnlockScript 输入字段 |
-| `internal/tx/input_hash.go` | `LeadHash`、`RestHash`、`HashInputs` |
+| `internal/tx/input_hash.go` | `ListHash`、`LeadPKHash`、`HashInputs` |
 | `internal/tx/size.go` | 不含见证的 `MaxTxSize` 检查（见证定义见第 04 章） |
 | `internal/tx/output.go` | 输出 envelope、类型与标记 |
 | `internal/tx/coin.go` | Coin payload |
@@ -89,15 +89,14 @@ git commit -m "feat: add transaction header hashing"
 
 测试：
 
-- `LeadInput` 必须包含完整 48B `TxID`。
 - `LeadInput` 必须标记为 Coin 输入。
 - `LeadInput` 和 `RestInput` 均包含 `UnlockScript`。
 - 定制验证签名字节可位于 `UnlockScript`，并作为普通输入字节参与规范编码。
-- `RestInput` 使用 `TxIDPart` 前 20B、`Year`、`OutIndex`。
+- 输入项使用 `TxIDPart`，长度 `>=16`。
 - Proof 输入类型被结构验证拒绝。
-- `HashInputs = BLAKE3-256(LeadHash || RestHash)`。
-- 修改任一输入的 `UnlockScript` 会改变 `LeadHash` 或 `RestHash`，继而改变 `HashInputs` 和 `TxID`。
-- Rest inputs 顺序变化导致 `HashInputs` 变化。
+- `HashInputs = BLAKE3-256(ListHash || LeadPKHash)`。
+- 修改任一输入的 `UnlockScript` 会改变 `ListHash`，继而改变 `HashInputs` 和 `TxID`。
+- List inputs 顺序变化导致 `HashInputs` 变化。
 
 **Step 2: 实现**
 
@@ -227,11 +226,12 @@ git commit -m "feat: add non-coin transaction units"
 - 输出列表顺序变化导致 `HashOutputs` 变化。
 - `Serial` 不匹配输出位置时拒绝。
 - 单输出、多个输出路径可计算。
+- 单输出时，`HashOutputs` 等于单叶树根按 tree.branch profile 一元归一化后的 32B 根。
 - 空输出普通交易拒绝。
 
 **Step 2: 实现**
 
-使用 `pkg/hashtree`，空树、单叶、奇数层按 DEC-0004 的已决策略实现（奇数层最后节点直接提升不复制、单叶即根）。
+使用 `pkg/hashtree` 计算输出树根。`HashOutputs = Hash256:Tree<Outputs>` 中的 `Hash256` 仅表示采用 256 位树根 profile；空树、单叶、奇数层按 DEC-0004 的已决策略实现：单叶根为 `BLAKE3-256(DomainTag("tree.branch") || leafHash)`，不复制叶子，不构造 `leafHash || leafHash`；奇数层最后节点直接提升不复制。
 
 **Step 3: 验证并提交**
 

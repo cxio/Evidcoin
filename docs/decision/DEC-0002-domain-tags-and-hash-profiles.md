@@ -33,14 +33,14 @@ Conception 已指定区块头、交易头、树枝、附件、公钥哈希和铸
 - `address.single`
 - `address.multi`
 
-说明：交易输出哈希树（`HashOutputs = Hash256(Tree<Outputs>)`）、交易输入哈希树、区块交易哈希树、UTXO/UTCO 中间层均使用通用的 `tree.leaf` / `tree.branch` 域标签，不另设专属标签。
+说明：交易输出哈希树（`HashOutputs = Hash256:Tree<Outputs>`）、区块交易哈希树、UTXO/UTCO 中间层均使用通用的 `tree.leaf` / `tree.branch` 域标签，不另设专属标签；交易输入根按 DEC-0004 专用规则计算，不套通用二叉树构造。
 
 ### 算法 profile
 
 沿用 conception `blockchain.md#哈希策略`：
 
 - 区块头、交易头、CheckRoot、UTXO/UTCO 叶：`SHA3-384`。
-- 通用哈希树分支（含区块交易树、交易输入树、交易输出树、UTXO/UTCO 中间层）：`BLAKE3-256`。
+- 通用哈希树分支（含区块交易树、交易输出树、UTXO/UTCO 中间层）：`BLAKE3-256`。
 - 通用哈希树叶（默认）：`SHA3-384`。
 - 附件完整指纹：`SHA3-512`。
 - 公钥哈希：`SHA3-256(BLAKE2b-512(...))`。

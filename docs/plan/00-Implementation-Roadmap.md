@@ -119,7 +119,7 @@ git commit -m "feat: add canonical encoding types"
 
 - `canonical unsigned varint`（ULEB128）由 DEC-0001 关闭，必须实现最短编码并拒绝非最短编码；BigInt 按 `slen||magnitude`（DEC-0001）。
 - Hash domain tag 策略由 DEC-0002 关闭，14 项域标签全集（含 `utxo.empty`/`utco.empty`）必须使用固定字符串前缀；附件片组树是唯一免域标签例外。
-- 哈希树空根、单叶根和奇数层提升策略由 DEC-0004 关闭，必须按 DEC-0004 实现；验证路径禁止携带 `leafIndex`。
+- 哈希树空根、单叶根归一化和奇数层提升策略由 DEC-0004 关闭，必须按 DEC-0004 实现；验证路径禁止携带 `leafIndex`。
 - 地址与多签复合公钥哈希、ML-DSA-65 profile 由 DEC-0104 关闭，当前固定 `cloudflare/circl`；A-2 仅作为未来兼容观察项，不属于全局待决项，编码时不得混用标准库实现。
 - PoH 铸凭哈希、铸凭交易窗口与 `Stakes` 取值由 DEC-0301 固定；分叉竞争归一化与 RandomX 平局由 DEC-0303 固定。`Stakes` 三种语义（区块头累计值/铸凭取 -32 块/分叉比较）须分章分上下文区分，禁止混用。
 - Coinbase `HashInputs` 省略、奖励分配余数、兑奖槽 bit 顺序由 DEC-0401 关闭；金额一律以 `chx` 整数承载（`1 Bi = 10^8 chx`）。

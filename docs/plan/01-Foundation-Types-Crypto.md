@@ -2,7 +2,7 @@
 
 **Goal:** 实现 Evidcoin 的基础类型、规范化编码、Hash/ID 类型、密码学抽象和基础哈希树工具。
 
-**Architecture:** `pkg/types/` 只提供无内部依赖的类型、常量和编码能力，`pkg/crypto/` 在其上提供 Hash、域标签、地址/多签复合公钥哈希和签名抽象，`pkg/hashtree/` 提供通用二叉树与专用树规则。DEC-0004 已固定哈希树边界策略（空根由各结构自定义、单叶即根、奇数层提升不复制、验证路径不含 leafIndex）为协议默认。
+**Architecture:** `pkg/types/` 只提供无内部依赖的类型、常量和编码能力，`pkg/crypto/` 在其上提供 Hash、域标签、地址/多签复合公钥哈希和签名抽象，`pkg/hashtree/` 提供通用二叉树与专用树规则。DEC-0004 已固定哈希树边界策略（空根由各结构自定义、单叶根按 tree.branch profile 归一化为 32B、奇数层提升不复制、验证路径不含 leafIndex）为协议默认。
 
 **Tech Stack:** Go 1.26.2、`golang.org/x/crypto/sha3`、`golang.org/x/crypto/blake2b`、`lukechampine.com/blake3`、`github.com/cloudflare/circl`（ML-DSA-65，DEC-0104）、`github.com/mr-tron/base58`、表驱动测试。
 
@@ -355,14 +355,15 @@ git commit -m "feat: add amount unit helpers"
 - 同一叶子主体配不同 3-byte sequence prefix 得到不同 leaf hash。
 - 同一叶子主体配不同 2-byte sequence prefix 得到不同 leaf hash。
 - 证明路径方向错误时验证失败；验证路径不携带 `leafIndex`（DEC-0004）。
-- 单叶树根等于该叶哈希（不额外套一层分支）。
+- 单叶树根不等于 48B 叶哈希，而是 `BLAKE3-256(DomainTag("tree.branch") || leafHash)`，长度为 32B。
+- 单叶证明兄弟路径为空，但验证时必须先对 48B 叶哈希执行一元归一化。
 - 奇数层最后一个节点**直接提升**到下一层，**不复制自身**。
 - 同一叶子主体配不同 3-byte 序号前缀得到不同 leaf hash（区块交易树）。
 - 空根由各结构自定义（通用树不预设全零根；UTXO/UTCO 空根 `utxo.empty`/`utco.empty` 由第 05 章承载）。
 
 **Step 2: 最小实现**
 
-实现 DEC-0004 固定的默认协议行为：**奇数层直接提升（不复制）、单叶树根等于叶哈希、验证路径携带方向位且不含 `leafIndex`**。分支 BLAKE3-256 + `tree.branch`，叶 SHA3-384 + `tree.leaf`（附件片组树走免域标签路径）。空根策略由各专用树自定义，不得在通用树中硬编为全零。
+实现 DEC-0004 固定的默认协议行为：**奇数层直接提升（不复制）、单叶树根一元归一化为 32B、验证路径携带方向位且不含 `leafIndex`**。分支 BLAKE3-256 + `tree.branch`，叶 SHA3-384 + `tree.leaf`（附件片组树走免域标签路径）。空根策略由各专用树自定义，不得在通用树中硬编为全零。
 
 **Step 3: 验证并提交**
 
@@ -392,4 +393,4 @@ golangci-lint run
 - `pkg/crypto` 不依赖 `internal/*`。
 - 所有 Hash 输出长度与 Proposal 一致。
 - 固定长度 ID 不能语义混用。
-- DEC-0004 固定的哈希树边界策略（奇数层提升不复制、单叶即根、路径不含 leafIndex）已实现；空根交由各专用树承载，未被默认为全零协议事实。
+- DEC-0004 固定的哈希树边界策略（奇数层提升不复制、单叶根按 tree.branch profile 一元归一化为 32B、路径不含 leafIndex）已实现；空根交由各专用树承载，未被默认为全零协议事实。
