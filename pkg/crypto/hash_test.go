@@ -89,6 +89,35 @@ func TestEmptyRoots(t *testing.T) {
 	}
 }
 
+// TestHashInputListNoDomainTag 校验输入项列表哈希 ListHash 为无域标签 SHA3-384
+// （第 04 章 §3.3 交易输入根专用规则）。
+func TestHashInputListNoDomainTag(t *testing.T) {
+	data := []byte("input-list-bytes")
+	want := sha3.Sum384(data)
+	got := HashInputList(data)
+	if !bytes.Equal(got.Bytes(), want[:]) {
+		t.Fatalf("ListHash = %x, want %x (must be domain-tag-free SHA3-384)", got.Bytes(), want)
+	}
+	if len(got.Bytes()) != 48 {
+		t.Fatalf("ListHash len = %d, want 48", len(got.Bytes()))
+	}
+}
+
+// TestHashInputRootNoDomainTag 校验输入根 HashInputs 为无域标签
+// BLAKE3-256(ListHash || LeadPKHash)（第 04 章 §3.3）。
+func TestHashInputRootNoDomainTag(t *testing.T) {
+	listHash := bytes.Repeat([]byte{0xAA}, 48)
+	leadPKHash := bytes.Repeat([]byte{0xBB}, 32)
+	want := blake3.Sum256(append(append([]byte{}, listHash...), leadPKHash...))
+	got := HashInputRoot(listHash, leadPKHash)
+	if !bytes.Equal(got.Bytes(), want[:]) {
+		t.Fatalf("HashInputs = %x, want %x (must be domain-tag-free BLAKE3-256)", got.Bytes(), want)
+	}
+	if len(got.Bytes()) != 32 {
+		t.Fatalf("HashInputs len = %d, want 32", len(got.Bytes()))
+	}
+}
+
 func TestAttachmentPieceTreeNoDomainTag(t *testing.T) {
 	piece := []byte("file-piece-data")
 	pieceHash := blake3.Sum256(piece)

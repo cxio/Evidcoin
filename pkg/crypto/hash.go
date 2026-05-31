@@ -156,6 +156,20 @@ func EmptyUTCORoot() types.Hash48 {
 	return h
 }
 
+// HashInputList 计算交易输入项列表的串联哈希 ListHash（第 04 章 §3.3）：
+// SHA3-384(data)，无域标签。这是交易输入根的专用规则：按 proposal 04 §3.3 与
+// DEC-0002 域标签全集，输入根未分配域标签，故此处不前置域标签。
+func HashInputList(data []byte) types.Hash48 {
+	h, _ := types.NewHash48(sha3_384(data))
+	return h
+}
+
+// HashInputRoot 计算交易输入根 HashInputs（第 04 章 §3.3）：
+// BLAKE3-256( listHash || leadPKHash )，无域标签（输入根专用规则）。
+func HashInputRoot(listHash, leadPKHash []byte) types.Hash32 {
+	return types.Hash32(blake3_256(listHash, leadPKHash))
+}
+
 // HashAttachmentPieceLeaf 对附件分片树叶子做哈希。这是唯一不带域标签的例外
 // （DEC-0002）：BLAKE3-256(2-byte seq || BLAKE3-256(piece))，
 // 原像长度 34 字节且不含域标签，以便外部文件分享工具复用。
