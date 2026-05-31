@@ -58,32 +58,54 @@ func AddressHashSingle(pubKey []byte) types.AddressHash {
 // 要求 m、n 均非 0 且 m <= n，len(pubKeys) == n，并且公钥不能重复。
 func AddressHashMulti(m, n uint8, pubKeys [][]byte) (types.AddressHash, error) {
 	var zero types.AddressHash
-	if m == 0 || n == 0 || m > n {
-		return zero, ErrMultisigRatio
-	}
 	if len(pubKeys) != int(n) {
 		return zero, ErrMultisigRatio
 	}
-
 	baseHashes := make([][]byte, len(pubKeys))
 	for i, pk := range pubKeys {
 		bh := blake3_256(pk)
 		baseHashes[i] = bh[:]
 	}
-	sort.Slice(baseHashes, func(i, j int) bool {
-		return bytes.Compare(baseHashes[i], baseHashes[j]) < 0
+	return AddressHashMultiFromBase(m, n, baseHashes)
+}
+
+// PubKeyBaseHash 返回公钥的初级哈希 BaseH = BLAKE3-256(pubKey)（DEC-0104）。
+// 多签复合公钥哈希派生与见证补全集均以此初级哈希为单位；多签验证时，已签名公钥
+// 经本函数转为初级哈希后与补全集（直接携带初级哈希）合并参与复合哈希派生。
+func PubKeyBaseHash(pubKey []byte) [32]byte {
+	return blake3_256(pubKey)
+}
+
+// AddressHashMultiFromBase 由 n 个公钥初级哈希 BaseH（BLAKE3-256(pubKey)）直接计算
+// 组合公钥哈希（DEC-0104）。该路径用于多签验证：见证补全集携带的是未签名公钥的初级哈希
+// 而非公钥本身，故需从初级哈希直接派生地址进行接收者比对。派生规则与 AddressHashMulti
+// 完全一致（字典序排序、前置 m||n、域标签 address.multi）。
+//
+// 要求 m、n 均非 0 且 m <= n，len(baseHashes) == n，初级哈希不得重复。
+func AddressHashMultiFromBase(m, n uint8, baseHashes [][]byte) (types.AddressHash, error) {
+	var zero types.AddressHash
+	if m == 0 || n == 0 || m > n {
+		return zero, ErrMultisigRatio
+	}
+	if len(baseHashes) != int(n) {
+		return zero, ErrMultisigRatio
+	}
+	sorted := make([][]byte, len(baseHashes))
+	copy(sorted, baseHashes)
+	sort.Slice(sorted, func(i, j int) bool {
+		return bytes.Compare(sorted[i], sorted[j]) < 0
 	})
-	// 拒绝重复公钥（排序后其 base hash 会相邻）。
-	for i := 1; i < len(baseHashes); i++ {
-		if bytes.Equal(baseHashes[i-1], baseHashes[i]) {
+	// 拒绝重复初级哈希（排序后相邻）。
+	for i := 1; i < len(sorted); i++ {
+		if bytes.Equal(sorted[i-1], sorted[i]) {
 			return zero, ErrMultisigDuplicate
 		}
 	}
 
-	pre := make([]byte, 0, len(tagAddressMulti)+2+32*len(baseHashes))
+	pre := make([]byte, 0, len(tagAddressMulti)+2+32*len(sorted))
 	pre = append(pre, tagAddressMulti...)
 	pre = append(pre, m, n)
-	for _, bh := range baseHashes {
+	for _, bh := range sorted {
 		pre = append(pre, bh...)
 	}
 	inner := blake2b.Sum512(pre)
