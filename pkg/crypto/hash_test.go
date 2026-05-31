@@ -2,9 +2,9 @@ package crypto
 
 import (
 	"bytes"
+	"crypto/sha3"
 	"testing"
 
-	"golang.org/x/crypto/sha3"
 	"lukechampine.com/blake3"
 )
 

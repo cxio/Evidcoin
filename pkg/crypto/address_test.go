@@ -3,8 +3,6 @@ package crypto
 import (
 	"bytes"
 	"testing"
-
-	"github.com/cxio/evidcoin/pkg/types"
 )
 
 func TestAddressHashSingleLength(t *testing.T) {
@@ -130,6 +128,4 @@ func TestSingleAndMultiIndistinguishable(t *testing.T) {
 	if len(single.Bytes()) != len(multi.Bytes()) {
 		t.Fatal("single and multisig address hashes differ in length")
 	}
-	var _ types.AddressHash = single
-	var _ types.AddressHash = multi
 }

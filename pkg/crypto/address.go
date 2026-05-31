@@ -3,13 +3,13 @@ package crypto
 import (
 	"bytes"
 	"crypto/sha256"
+	"crypto/sha3"
 	"errors"
 	"sort"
 
 	"github.com/cxio/evidcoin/pkg/types"
 	"github.com/mr-tron/base58"
 	"golang.org/x/crypto/blake2b"
-	"golang.org/x/crypto/sha3"
 )
 
 // Network 标识地址所属网络，并决定文本前缀（DEC-0104）。

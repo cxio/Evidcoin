@@ -3,10 +3,10 @@
 package crypto
 
 import (
+	"crypto/sha3"
 	"hash"
 
 	"github.com/cxio/evidcoin/pkg/types"
-	"golang.org/x/crypto/sha3"
 	"lukechampine.com/blake3"
 )
 
@@ -76,7 +76,7 @@ func sha3_512(parts ...[]byte) []byte { return sum(sha3.New512(), parts...) }
 func blake3_256(parts ...[]byte) [32]byte {
 	h := blake3.New(32, nil)
 	for _, p := range parts {
-		h.Write(p)
+		_, _ = h.Write(p)
 	}
 	var out [32]byte
 	h.Sum(out[:0])
