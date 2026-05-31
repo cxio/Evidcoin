@@ -3,7 +3,7 @@ package hashtree
 import "bytes"
 
 // 通用验证路径编码（DEC-0004）。验证路径携带方向位，但不单独携带 leafIndex；
-// 序号（若有）已包含在 leaf payload 中，由 leaf 哈希反演即可。
+// 序号（若有）已包含在 leaf payload 中，验证方应由外部提供 payload 并重算 leaf 哈希。
 
 // Direction 表示验证时兄弟哈希相对当前运行节点哈希位于哪一侧。
 type Direction uint8
@@ -65,6 +65,9 @@ func (t *Tree) Proof(idx int) (Proof, error) {
 // Verify 基于叶哈希与兄弟链重算根哈希，并与证明中的根进行比较。
 func Verify(p Proof) bool {
 	cur := cloneBytes(p.LeafHash)
+	if len(p.Siblings) == 0 {
+		cur = singleRootHash(cur)
+	}
 	for _, s := range p.Siblings {
 		switch s.Direction {
 		case SiblingLeft:

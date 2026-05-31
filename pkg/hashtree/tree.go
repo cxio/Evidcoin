@@ -1,7 +1,8 @@
 // Package hashtree 实现协议范围内的通用二叉哈希树与验证路径编码（DEC-0004），
-// 并提供有序叶子辅助函数，供专用树（区块交易树、输入/输出树、UTXO/UTCO
-// 中间层）复用。节点哈希使用 []byte 承载，因为通用树会混合 48 字节 SHA3-384
-// 叶子层与 32 字节 BLAKE3-256 分支层，且单叶根即该 48 字节叶哈希本身。
+// 并提供有序叶子辅助函数，供专用树（区块交易树、输出树、UTXO/UTCO 中间层）复用；
+// 交易输入根按专用规则计算，不使用本通用树。
+// 节点哈希使用 []byte 承载，因为通用树会混合 48 字节 SHA3-384 叶子层与 32 字节 BLAKE3-256 分支层；
+// 单叶根按 tree.branch profile 归一化为 32 字节。
 package hashtree
 
 import (
@@ -40,9 +41,12 @@ func branchHash(left, right []byte) []byte {
 	return h.Bytes()
 }
 
+func singleRootHash(leaf []byte) []byte {
+	return crypto.HashTreeBranch(leaf).Bytes()
+}
+
 // BuildTree 基于预计算叶哈希构建通用二叉哈希树。
-// leafHashes 为空时返回 ErrEmptyTree。只有一个叶子时，
-// 树根即该叶哈希（不会额外生成分支层）。
+// leafHashes 为空时返回 ErrEmptyTree。只有一个叶子时，树根归一化为分支哈希。
 func BuildTree(leafHashes [][]byte) (*Tree, error) {
 	if len(leafHashes) == 0 {
 		return nil, ErrEmptyTree
@@ -54,6 +58,10 @@ func BuildTree(leafHashes [][]byte) (*Tree, error) {
 		level[i] = cp
 	}
 	t := &Tree{levels: [][][]byte{level}}
+	if len(level) == 1 {
+		t.levels = append(t.levels, [][]byte{singleRootHash(level[0])})
+		return t, nil
+	}
 	for len(level) > 1 {
 		next := make([][]byte, 0, (len(level)+1)/2)
 		for i := 0; i < len(level); i += 2 {

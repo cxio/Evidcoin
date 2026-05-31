@@ -1,7 +1,10 @@
 package hashtree
 
 import (
+	"bytes"
 	"testing"
+
+	"github.com/cxio/evidcoin/pkg/crypto"
 )
 
 func TestProofVerifyAllLeaves(t *testing.T) {
@@ -19,6 +22,31 @@ func TestProofVerifyAllLeaves(t *testing.T) {
 				t.Fatalf("n=%d leaf %d proof failed to verify", n, i)
 			}
 		}
+	}
+}
+
+func TestSingleLeafProofHasNoSiblingsAndVerifies(t *testing.T) {
+	l := leaves(1)
+	tree, err := BuildTree(l)
+	if err != nil {
+		t.Fatal(err)
+	}
+	p, err := tree.Proof(0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(p.LeafHash, l[0]) {
+		t.Fatal("single leaf proof leaf hash must equal original leaf hash")
+	}
+	wantRoot := crypto.HashTreeBranch(l[0]).Bytes()
+	if !bytes.Equal(p.Root, wantRoot) {
+		t.Fatal("single leaf proof root must be normalized to branch hash")
+	}
+	if len(p.Siblings) != 0 {
+		t.Fatalf("single leaf proof siblings = %d, want 0", len(p.Siblings))
+	}
+	if !Verify(p) {
+		t.Fatal("single leaf proof must verify")
 	}
 }
 

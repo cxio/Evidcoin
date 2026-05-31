@@ -3,6 +3,8 @@ package hashtree
 import (
 	"bytes"
 	"testing"
+
+	"github.com/cxio/evidcoin/pkg/crypto"
 )
 
 func leaves(n int) [][]byte {
@@ -13,17 +15,21 @@ func leaves(n int) [][]byte {
 	return out
 }
 
-func TestSingleLeafRootEqualsLeaf(t *testing.T) {
+func TestSingleLeafRootNormalizedToBranchHash(t *testing.T) {
 	l := leaves(1)
 	tree, err := BuildTree(l)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !bytes.Equal(tree.Root(), l[0]) {
-		t.Fatal("single leaf root must equal the leaf hash")
+	want := crypto.HashTreeBranch(l[0]).Bytes()
+	if !bytes.Equal(tree.Root(), want) {
+		t.Fatal("single leaf root must be normalized to branch hash")
 	}
-	if len(tree.Root()) != 48 {
-		t.Fatalf("single leaf root len = %d, want 48", len(tree.Root()))
+	if bytes.Equal(tree.Root(), l[0]) {
+		t.Fatal("single leaf root must not equal the leaf hash")
+	}
+	if len(tree.Root()) != 32 {
+		t.Fatalf("single leaf root len = %d, want 32", len(tree.Root()))
 	}
 }
 
