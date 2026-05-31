@@ -16,4 +16,6 @@ var (
 	ErrPrevBlockMismatch = errors.New("blockchain: prev block does not link to tip")
 	// ErrBlockIDMismatch 表示调用方声明的 BlockID 与重算结果不一致。
 	ErrBlockIDMismatch = errors.New("blockchain: block id mismatch")
+	// ErrYearBlockMissing 表示请求的年度边界区块头（年块）未存储，无法提供年块引用。
+	ErrYearBlockMissing = errors.New("blockchain: year block not found")
 )
