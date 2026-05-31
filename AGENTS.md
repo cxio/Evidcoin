@@ -1,174 +1,51 @@
-# AGENTS.md - Evidcoin 开发指南
+# AGENTS.md - Evidcoin 仓库指令
 
-This file provides guidance to AI Coding Agent when working with code in this repository.
+## 先读哪里
 
-## 项目概述
+- 本仓库是按文档驱动的 Go 协议实现；不是纯设计仓库，当前已有 `pkg/*` 与 `internal/blockchain` 生产代码。
+- 实现功能前先读对应 `docs/plan/NN-*.md`，再追溯 `docs/proposal/NN.*.md`；若冲突，权威顺序为 `docs/conception/` > `docs/decision/` > `docs/proposal/` > `docs/plan/`。
+- `docs/plan/00-Implementation-Roadmap.md` 是阶段与分层索引；`docs/plan/12-Open-Questions-And-Acceptance.md` 是待决项、验收和依赖检查索引。
+- `working/` 与 `docs/plans/` 是用户/Agent 临时区，`opencode.json` 也配置为忽略它们；不要把它们当规范来源或提交内容。
 
-**Evidcoin（证信链）** 是一个基于区块链的通用信用载体系统，使用 Go 1.26+ 开发。目前处于**预实施阶段**——设计文档完整，但尚无生产代码。
+## 命令
 
-项目的核心特色：
-- **三种凭证单元**：Coin（可分割货币）、Credit（不可分割证书/合约）、Proof（不可转让存证）
-- **历史证明共识（PoH）**：铸币权基于历史交易 ID，而非算力或财富
-- **后量子密码学**：使用 ML-DSA-65 签名算法
+- Go 版本来自 `go.mod`：`go 1.26.2`，模块名 `github.com/cxio/evidcoin`。没有 Makefile 或 CI workflow，直接用 Go 命令验证。
+- 全量验证：`go fmt ./... && go test ./... && go test -cover ./... && go build ./... && go mod tidy && go mod verify && golangci-lint run`。
+- 聚焦包测试：`go test ./internal/blockchain -run TestName -v` 或 `go test ./pkg/types -run TestName -v`。
+- 阶段验收要求核心逻辑覆盖率至少 80%，`golangci-lint run` 无 warning；若本机未安装 lint，只能报告环境阻塞，不能写“lint 通过”。
+- 运行 `go mod tidy` 后必须检查 `go.mod`/`go.sum` diff，只保留任务需要的依赖变化。
 
-## 常用命令
+## 分层边界
 
-```bash
-# 构建
-go build ./...
+- Layer 0：`pkg/types`、`pkg/crypto`、`pkg/hashtree`；不能依赖 `internal/*`。
+- Layer 1：`internal/blockchain`、`internal/tx`；只依赖 Layer 0。
+- Layer 2：`internal/utxo`、`internal/utco`；依赖 Layer 0-1。
+- Layer 3：`internal/script`；依赖低层接口，不反向依赖。
+- Layer 4：`internal/consensus`；依赖 Layer 0-3。
+- Layer 5：`internal/validation`、`internal/rewards`、`internal/services`、`cmd/evidcoin`、`test`；不能被 Layer 0-4 import。
+- 检查方向可用：`go list -deps ./internal/blockchain | grep -E 'internal/(tx|utxo|utco|script|consensus|rewards|validation|services)'`，应无输出。
 
-# 运行所有测试
-go test ./...
+## 协议实现规则
 
-# 运行单个测试
-go test -v ./path/to/package -run TestName
+- 所有协议字节序列必须由显式编码函数生成；不要用 JSON、反射、map 遍历顺序或平台字节序做共识前像。
+- 固定宽度整数使用 `pkg/types` 的大端追加/读取工具；BigInt 遵循 DEC-0001 的 `slen||magnitude` 最短编码，拒绝前导零与负零。
+- 哈希必须走 `pkg/crypto` 中按用途绑定的函数；不要在调用处拼自定义 domain tag。唯一免域标签例外是附件分片树 profile。
+- `pkg/hashtree` 通用树混合 48B 叶哈希与 32B 分支哈希，`Root()` 返回 `[]byte`；空根由具体结构定义，单叶根会归一化为分支哈希，奇数层最后节点直接提升。
+- `internal/blockchain` 只管理区块头链与最小衔接验证；不计算交易树、不执行交易/脚本/状态转移、不判断 PoH、不做自动长期分叉重组。
+- 区块头规范编码：`Version||Height||PrevBlock||CheckRoot||Stakes`，仅年块追加 `YearBlock`；创世高度 0 是年块且 `YearBlock` 全零。
+- `CheckRoot` 状态根取前一区块完成后的 UTXO/UTCO 指纹；创世使用空状态根。UTXO 与 UTCO 顺序不可交换。
 
-# 查看测试覆盖率
-go test -cover ./...
+## 待决项不能硬编码
 
-# 格式化代码
-go fmt ./... && gofmt -s -w .
+- 当前全局待决项只限 C-6、C-7、C-9、C-10；编码时用策略参数、接口注入、明确错误或阻塞标注隔离。
+- C-6：脚本成本数值未定，不能固化 opcode 成本向量。
+- C-7：禁用指令解除方式未定，不能预设激活路径。
+- C-9：创世时间戳与 mainnet `Genesis-ID` 未冻结；只能固定创世工件结构与验证规则，不能伪造具体值。
+- C-10：P2P 线格式、版本分叉治理、通用子链派生协议未抽象；只声明接口边界，外包给相关服务/库。
 
-# 静态分析
-golangci-lint run
+## 代码与测试约定
 
-# 整理依赖
-go mod tidy && go mod verify
-```
-
-各阶段验收标准：`go build ./...` 通过、`go test ./...` 通过、核心逻辑覆盖率 ≥80%、`go fmt` 无变更、`golangci-lint` 无警告。
-
-## 文档四层体系
-
-这是本项目最关键的架构特征，所有实现必须追溯到文档：
-
-| 层级 | 目录 | 作者 | 内容 |
-|------|------|------|------|
-| 构想层（Tier 1） | `docs/conception/` | 人工编写 | 原始设计思想（中文） |
-| 决策层（Tier 2） | `docs/decision/` | AI 生成 | 补充决策（`DEC-NNNN`），仅记录 conception 尚未明确的规范化细节 |
-| 提案层（Tier 3） | `docs/proposal/` | AI 生成 | 详细技术规格，追溯自构想层 + 决策层 |
-| 方案层（Tier 4） | `docs/plan/` | AI 生成 | 按阶段的实施计划，含代码骨架，追溯自提案层 |
-
-**权威顺序：** `conception` > `decision` > `proposal` > `plan`，冲突以更上层为准。
-
-实现任何功能前，应先阅读对应的 `docs/plan/` 文件，再追溯到 `docs/proposal/`，如有疑问再查 `docs/decision/` 与 `docs/conception/`。
-
-## 代码架构
-
-### 分层结构（严格单向依赖）
-
-```
-Layer 5 集成层:    cmd/evidcoin/, test/
-Layer 4 共识层:    internal/consensus/      ← PoH 实现
-Layer 3 脚本层:    internal/script/         ← 栈式虚拟机，254 个操作码
-Layer 2 状态层:    internal/utxo/, internal/utco/
-Layer 1 核心层:    internal/blockchain/, internal/tx/
-Layer 0 基础层:    pkg/types/, pkg/crypto/  ← 无内部依赖
-```
-
-**禁止跨层或反向依赖**。高层依赖低层，低层不能 import 高层。
-
-### 实施阶段（11 阶段，对应 `docs/plan/`）
-
-| 阶段 | 重点 | 包 |
-|------|------|----|
-| 01 | 基础类型、密码学与哈希树 | `pkg/types/`, `pkg/crypto/`, `pkg/hashtree/` |
-| 02 | 区块链核心 | `internal/blockchain/` |
-| 03 | 交易模型与信元 | `internal/tx/` |
-| 04 | 签名与见证 | `internal/tx/` |
-| 05 | UTXO/UTCO 状态 | `internal/utxo/`, `internal/utco/` |
-| 06 | 脚本系统 | `internal/script/` |
-| 07 | PoH 共识 | `internal/consensus/` |
-| 08 | 端点约定与分叉选择 | `internal/consensus/` |
-| 09 | 组队校验 | `internal/validation/`（接口） |
-| 10 | 激励与 Coinbase | `internal/rewards/` |
-| 11 | 公共服务接口 | `internal/services/`（接口） |
-
-> `docs/plan/00-Implementation-Roadmap.md` 为路线图索引，`12-Open-Questions-And-Acceptance.md` 汇总全局待决与验收。
-
-## 关键常量与密码学
-
-### 哈希算法分配
-
-| 用途 | 算法 | 长度 | 备注 |
-|------|------|------|----|
-| 区块头 | SHA3-384 | 48B | 兼顾量子安全与数据量 |
-| CheckRoot（校验根） | SHA3-384 | 48B | 由交易树根、UTXO/UTCO 指纹合并计算 |
-| 交易ID（TxID） | SHA3-384 | 48B | 与区块头设计一致 |
-| 树结构（分支） | BLAKE3-256 | 32B | 处理多哈希场景，提高性能并节省内存 |
-| 树叶子节点 | SHA3-384 | 48B | 与树枝段采用不同算法 |
-| 附件指纹 | SHA3-512 | 64B | 确保超长期安全 |
-| 公钥哈希（账户地址） | SHA3-256( BLAKE2b-512 ) | 32B | 适量节省空间 |
-| UTXO/UTCO 指纹 | SHA3-384 | 48B | 末端叶子节点数据摘要 |
-| 铸凭哈希 | BLAKE3-256 | 32B | 大量参与者场景下的速度与信息熵兼顾 |
-
-### 核心常量（实现时参考）
-
-```go
-BlockInterval   = 6 * time.Minute
-BlocksPerYear   = 87661
-MaxStackHeight  = 255
-MaxStackItem    = 4095
-MaxLockScript   = 8191
-MaxUnlockScript = 8191
-MaxTxSize       = 65535
-```
-
-### 计划中的外部依赖
-
-```
-golang.org/x/crypto              # SHA3
-lukechampine.com/blake3          # BLAKE3
-github.com/cloudflare/circl      # ML-DSA-65（观察：未来可能迁移到标准库）
-github.com/mr-tron/base58        # Base58 地址编码
-```
-
-## 代码规范
-
-### 命名
-
-- 接口名：动词+er（`Validator`、`Signer`）
-- 结构体/函数：PascalCase
-- 私有函数：camelCase
-- 常量：PascalCase 或 UPPER_SNAKE
-
-### import 分组（空行分隔）
-
-1. 标准库
-2. 第三方库
-3. 项目内部包
-
-### 注释
-
-- **中文**：面向作者理解的注释（行内注释、逻辑说明）
-- **英文 Godoc**：所有导出符号必须有 Godoc 注释
-- **英文**：程序运行时输出的日志和错误消息（`errors.New()`、`log.Println()` 等的实参）
-
-### 并发
-
-- 用 `context.Context` 管理生命周期
-- 优先用 channel，而非 mutex
-- 禁止裸 goroutine
-
-### 测试
-
-- 单元测试：`*_test.go` 与源文件同目录
-- 集成测试：`test/` 目录
-- 必须使用表驱动测试（table-driven tests）
-
-
-## 附：实现边界
-
-- P2P的节点发现和连网分享，归由外部库实现（cxio/p2p...等），本项目仅需考虑合理的接口设计。
-- 组队校验中，各个角色单独实现（独立的App），它们之间通过连接相互通讯。因为联系紧密，应考虑高效的通讯方式。
-- 区块/交易及附件数据的长期存储，主要由外部第三方公共服务提供。
-
-> **提示：**
-> 交易数据的检索由区块查询服务（`Blockqs`）提供。
-> 附件数据的获取由数据驿站服务（`Depots`）支持（以文件P2P分享的方式）。
-
-
-## 附：排除目录
-
-- `working/`：工作目录，为用户的杂项私有空间，包含临时文件和草稿代码等，不纳入任何参考。
-- `docs/plans/`：AI Agent 执行过程中的临时方案，由用户管理，不纳入任何参考。
+- 导出符号写英文 Godoc；解释实现意图的源码注释用中文；`errors.New`、日志、程序输出使用英文文本。
+- 测试使用 table-driven tests，并覆盖成功、失败和边界值；协议编码测试必须断言字节级输出。
+- 生产存储、网络、长期数据保存尚不是低层包职责；测试替身放 `_test.go`，避免被误用为生产实现。
+- 提交只在用户明确要求时执行；若按 plan 分任务提交，每个 Task 通过局部测试后单独提交，不混合层级，不提交 `.DS_Store`、临时日志、覆盖率文件或本地 IDE 配置。
