@@ -121,76 +121,58 @@ func TestNormalizeTxVolume(t *testing.T) {
 			wantOK:   true,
 		},
 		{
-			name: "后位未满足任一条件，停止于 rank0",
+			name: "后位 Stakes 不足 3x，停止于 rank0",
 			candidates: []ForkBlock{
 				{PoolRank: 0, Stakes: 100, TxCount: 10},
-				{PoolRank: 1, Stakes: 200, TxCount: 20}, // Stakes=2x非严格>3x，TxCount=2x非严格>2x
+				{PoolRank: 1, Stakes: 300, TxCount: 999}, // Stakes=300=3x，非严格>3x；TxCount 无关
 			},
 			wantRank: 0,
 			wantOK:   true,
 		},
 		{
-			name: "仅 TxCount 超 2x（Stakes 未超 3x）→ 替换",
+			name: "后位 Stakes 严格超 3x，替换 winner",
 			candidates: []ForkBlock{
 				{PoolRank: 0, Stakes: 100, TxCount: 10},
-				{PoolRank: 1, Stakes: 200, TxCount: 21}, // TxCount=21>2x(10)，Stakes=200不足>3x(300)
+				{PoolRank: 1, Stakes: 301, TxCount: 1}, // Stakes=301>3x(300)
 			},
 			wantRank: 1,
 			wantOK:   true,
 		},
 		{
-			name: "仅 Stakes 超 3x（TxCount 未超 2x）→ 替换",
+			name: "TxCount 超 2x 但 Stakes 不足 3x → 不替换",
 			candidates: []ForkBlock{
 				{PoolRank: 0, Stakes: 100, TxCount: 10},
-				{PoolRank: 1, Stakes: 301, TxCount: 15}, // Stakes=301>3x(300)，TxCount=15不足>2x(20)
-			},
-			wantRank: 1,
-			wantOK:   true,
-		},
-		{
-			name: "Stakes 恰好 3x（非严格）且 TxCount 未超 2x → 不替换",
-			candidates: []ForkBlock{
-				{PoolRank: 0, Stakes: 100, TxCount: 10},
-				{PoolRank: 1, Stakes: 300, TxCount: 15}, // Stakes=300刚好=3x，非严格>3x
+				{PoolRank: 1, Stakes: 200, TxCount: 21}, // TxCount>2x 但 Stakes 不足>3x
 			},
 			wantRank: 0,
 			wantOK:   true,
 		},
 		{
-			name: "连续多次超越",
+			name: "连续多次超越（每步 Stakes 严格>3x）",
 			candidates: []ForkBlock{
-				{PoolRank: 0, Stakes: 10, TxCount: 5},
-				{PoolRank: 1, Stakes: 21, TxCount: 11},  // >2x → 替换
-				{PoolRank: 2, Stakes: 43, TxCount: 23},  // >2x → 替换
-				{PoolRank: 3, Stakes: 87, TxCount: 47},  // >2x → 替换
-				{PoolRank: 4, Stakes: 100, TxCount: 48}, // TxCount 未超 2x，停止
+				{PoolRank: 0, Stakes: 10},
+				{PoolRank: 1, Stakes: 31},  // 31>3*10=30 → 替换
+				{PoolRank: 2, Stakes: 94},  // 94>3*31=93 → 替换
+				{PoolRank: 3, Stakes: 283}, // 283>3*94=282 → 替换
+				{PoolRank: 4, Stakes: 849}, // 849=3*283=849，非严格 → 停止
 			},
 			wantRank: 3,
 			wantOK:   true,
 		},
 		{
-			name: "winner.Stakes==0，后位 Stakes>0 即满足 Stakes 条件（无论 3x）",
+			name: "winner.Stakes==0，后位 Stakes>0 即满足",
 			candidates: []ForkBlock{
-				{PoolRank: 0, Stakes: 0, TxCount: 5},
-				{PoolRank: 1, Stakes: 1, TxCount: 11}, // TxCount >2x，Stakes>0 满足
+				{PoolRank: 0, Stakes: 0},
+				{PoolRank: 1, Stakes: 1}, // >3*0=0 → 替换
 			},
 			wantRank: 1,
 			wantOK:   true,
 		},
 		{
-			name: "winner.TxCount==0，后位 TxCount>0 即满足 TxCount 条件（无论 2x）",
+			name: "Stakes 相等不算超越",
 			candidates: []ForkBlock{
-				{PoolRank: 0, Stakes: 10, TxCount: 0},
-				{PoolRank: 1, Stakes: 21, TxCount: 1}, // TxCount>0 满足 TxCount 条件
-			},
-			wantRank: 1,
-			wantOK:   true,
-		},
-		{
-			name: "TxCount 相等不算超越",
-			candidates: []ForkBlock{
-				{PoolRank: 0, Stakes: 10, TxCount: 10},
-				{PoolRank: 1, Stakes: 21, TxCount: 10}, // TxCount 相等 ≠ >2x
+				{PoolRank: 0, Stakes: 100, TxCount: 10},
+				{PoolRank: 1, Stakes: 100, TxCount: 999}, // Stakes 相等，TxCount 无关
 			},
 			wantRank: 0,
 			wantOK:   true,
@@ -214,7 +196,7 @@ func TestNormalizeTxVolume(t *testing.T) {
 }
 
 func TestSelectCandidate(t *testing.T) {
-	// 集成测试：多签归一化后的 2 倍交易量归一化
+	// 集成测试：多签归一化后的 Stakes>3x 约束归一化
 	minter1 := [32]byte{1}
 	minter2 := [32]byte{2}
 
@@ -222,11 +204,11 @@ func TestSelectCandidate(t *testing.T) {
 	candidates := []ForkBlock{
 		{BlockID: mockBlockID(0xAA), MintPKHash: minter1, MinterReward: 500, Stakes: 100, TxCount: 10, PoolRank: 0},
 		{BlockID: mockBlockID(0xAB), MintPKHash: minter1, MinterReward: 200, Stakes: 100, TxCount: 10, PoolRank: 0},
-		{BlockID: mockBlockID(0xBB), MintPKHash: minter2, MinterReward: 300, Stakes: 100, TxCount: 21, PoolRank: 1},
+		{BlockID: mockBlockID(0xBB), MintPKHash: minter2, MinterReward: 300, Stakes: 301, TxCount: 1, PoolRank: 1},
 	}
 
-	// 多签归一化后：minter1 → MinterReward=200 的块，minter2 保留自身
-	// 然后 minter2 的 TxCount=21>2x(10)=20 满足 TxCount 条件 → 替换 winner
+	// 多签归一化后：minter1 → MinterReward=200 的块（Stakes=100），minter2 保留自身（Stakes=301）
+	// 然后 minter2 的 Stakes=301>3x(100)=300 → 替换 winner
 	winner, ok := SelectCandidate(candidates)
 	if !ok {
 		t.Fatal("SelectCandidate: expected ok=true")

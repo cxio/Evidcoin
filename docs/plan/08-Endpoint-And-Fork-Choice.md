@@ -99,11 +99,12 @@ git commit -m "feat: add block publish stages"
 4. 仍相同 → 保留 `BlockID` 更小者。
 - 「个人可得收益」= Coinbase 中直接分配给铸造者身份（铸凭者）的金额，**不含**校验组报酬/公共服务奖励/其它第三方收益。
 
-**3.2 交易量约束归一化（Stakes `>3x` 或 TxCount `>2x`）：**
+**3.2 交易量约束归一化（Stakes `>3x`）：**
 
 - 仅比较同高度、同前块上的冗余出块；按铸造者择优池排名升序排列，缺位跳过、不生成空候选。
-- 从当前最优 `winner` 起考察后位 `challenger`；`challenger` 满足 `challenger.Stakes > winner.Stakes×3` **或** `challenger.TxCount > winner.TxCount×2`（任一条件成立即替换）时替换并继续；否则停止。
-- `TxCount` 含 Coinbase；相等不算超越（Stakes 必须严格 `>3x`，TxCount 必须严格 `>2x`）；`winner.Stakes==0` 或 `winner.TxCount==0` 时仍按公式（后位对应指标 `>0` 即满足超越条件）。
+- 从当前最优 `winner` 起考察后位 `challenger`；`challenger.Stakes > winner.Stakes×3` 时替换并继续；否则停止。
+- `TxCount` 仅作上层统计与展示，不参与归一化比较。
+- 相等不算超越（必须严格 `>3x`）；`winner.Stakes==0` 时后位 `Stakes>0` 即满足条件。
 
 **Step 2: 实现**
 
