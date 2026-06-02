@@ -2,17 +2,24 @@
 
 ## 先读哪里
 
-- 本仓库是按文档驱动的 Go 协议实现；不是纯设计仓库，当前已有 `pkg/*` 与 `internal/blockchain` 生产代码。
 - 实现功能前先读对应 `docs/plan/NN-*.md`，再追溯 `docs/proposal/NN.*.md`；若冲突，权威顺序为 `docs/conception/` > `docs/decision/` > `docs/proposal/` > `docs/plan/`。
 - `docs/plan/00-Implementation-Roadmap.md` 是阶段与分层索引；`docs/plan/12-Open-Questions-And-Acceptance.md` 是待决项、验收和依赖检查索引。
-- `working/` 与 `docs/plans/` 是用户/Agent 临时区，`opencode.json` 也配置为忽略它们；不要把它们当规范来源或提交内容。
+- `docs/AGENTS.md` 说明了 `docs/` 目录的四层文档结构与维护规则，实现前应阅读。
+- `working/` 与 `docs/plans/`（注意：是复数 `plans`，是临时区）不是规范来源，也不提交；`opencode.json` 配置为忽略它们。`docs/plan/`（单数）才是正式计划。
+
+## 当前代码状态
+
+所有生产包均已实现：`pkg/types`、`pkg/crypto`、`pkg/hashtree`（Layer 0），`internal/blockchain`、`internal/tx`（Layer 1），`internal/utxo`、`internal/utco`（Layer 2），`internal/script`（Layer 3），`internal/consensus`（Layer 4），`internal/validation`、`internal/rewards`、`internal/services`（Layer 5）。`test/` 集成目录尚未创建（Plan 12 阶段）。
+
+- `internal/script` 当前覆盖率约 64.7%，低于 80% 目标，是覆盖率缺口包。
+- `pkg/types` 当前覆盖率约 78.3%，低于 90% 目标。
 
 ## 命令
 
 - Go 版本来自 `go.mod`：`go 1.26.2`，模块名 `github.com/cxio/evidcoin`。没有 Makefile 或 CI workflow，直接用 Go 命令验证。
 - 全量验证：`go fmt ./... && go test ./... && go test -cover ./... && go build ./... && go mod tidy && go mod verify && golangci-lint run`。
 - 聚焦包测试：`go test ./internal/blockchain -run TestName -v` 或 `go test ./pkg/types -run TestName -v`。
-- 阶段验收要求核心逻辑覆盖率至少 80%，`golangci-lint run` 无 warning；先尝试执行，若本机未安装 lint，只能报告环境阻塞，不能写“lint 通过”。
+- 阶段验收要求核心逻辑覆盖率至少 80%，`golangci-lint run` 无 warning；先尝试执行，若本机未安装 lint，只能报告环境阻塞，不能写"lint 通过"。
 - 运行 `go mod tidy` 后必须检查 `go.mod`/`go.sum` diff，只保留任务需要的依赖变化。
 
 ## 分层边界
@@ -34,6 +41,17 @@
 - `internal/blockchain` 只管理区块头链与最小衔接验证；不计算交易树、不执行交易/脚本/状态转移、不判断 PoH、不做自动长期分叉重组。
 - 区块头规范编码：`Version||Height||PrevBlock||CheckRoot||Stakes`，仅年块追加 `YearBlock`；创世高度 0 是年块且 `YearBlock` 全零。
 - `CheckRoot` 状态根取前一区块完成后的 UTXO/UTCO 指纹；创世使用空状态根。UTXO 与 UTCO 顺序不可交换。
+
+## 特殊实现注意
+
+**RandomX（`internal/consensus/randomx`）：**
+- 默认构建使用桩实现，`Hash()` 始终返回 `ErrUnavailable`。
+- 生产环境需以 `-tags randomx_cgo` 构建，并先链接官方 C 库（参见 `cgo_impl.go` 中的接入步骤）。
+- `cgo_impl.go` 头部为 `//go:build ignore`，接入 C 库后将其改为 `//go:build randomx_cgo`。
+
+**ML-DSA-65 / cloudflare-circl（`pkg/crypto`）：**
+- `cloudflare/circl` 尚未加入 `go.mod`；当前 `crypto.Signer` / `crypto.Verifier` 只是接口，无真实签名库绑定。
+- 测试以空接口实现替代；生产绑定是后续阶段任务，不要假设 circl 已可用。
 
 ## 待决项不能硬编码
 
