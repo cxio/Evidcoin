@@ -4,7 +4,7 @@ Status: Accepted
 
 ## Context（背景）
 
-Conception 已明确 31 块分叉竞争、16 块过半胜出、长度 20 临界裁决、同铸造者低收益原则和 RandomX 平局方案。本决策冻结完整比较算法、低收益定义、RandomX profile 和 2 倍交易量流程。
+Conception 已明确 31 块分叉竞争、16 块过半胜出、长度 20 临界裁决、同铸造者低收益原则和 RandomX 平局方案。本决策冻结完整比较算法、低收益定义、RandomX profile 和交易量约束流程（币权销毁超3倍或交易数量超2倍，满足其一即替换）。
 
 ## Decision（决策）
 
@@ -48,19 +48,19 @@ RandomX profile：
 - 使用完整 VM 语义计算；实现可以通过 CGO 封装官方 C/C++ 库。
 - 不得使用会改变哈希结果的非官方兼容实现或参数变体。
 
-2 倍币权销毁/交易量确定性算法：
+交易量约束确定性算法（Stakes `>3x` 或 TxCount `>2x`）：
 
 - 只比较同一高度、同一前一区块上的冗余出块。
 - 候选块按铸造者在择优池中的排名升序排列。
 - 缺位候选者跳过，不生成空候选。
 - 从当前最优候选 `winner` 开始，依次考察后位候选 `challenger`。
-- `challenger` 同时满足以下两个条件时，替换 `winner` 并继续考察后位候选：
-  - `challenger.Stakes > winner.Stakes * 2`
+- `challenger` 满足以下**任一**条件时，替换 `winner` 并继续考察后位候选：
+  - `challenger.Stakes > winner.Stakes * 3`
   - `challenger.TxCount > winner.TxCount * 2`
 - 否则停止比较，当前 `winner` 胜出。
 - `TxCount` 包含 Coinbase 交易。
-- 若 `winner.Stakes == 0` 或 `winner.TxCount == 0`，仍按上述公式处理；因此后位候选只要对应指标大于 0 即可满足该指标的 `> 2x`。
-- 相等不算超越，必须严格 `> 2x`。
+- 若 `winner.Stakes == 0` 或 `winner.TxCount == 0`，仍按上述公式处理；因此后位候选只要对应指标大于 0 即可满足该指标的超越条件（Stakes `>0` 满足 `>3x`，TxCount `>0` 满足 `>2x`）。
+- 相等不算超越，必须严格满足 `>3x` 或 `>2x`。
 
 ## Rationale（理由）
 
@@ -70,8 +70,8 @@ RandomX profile：
 
 - 实现需要引入官方 RandomX 库，Go 实现可通过 CGO 简单封装。
 - 低收益比较依赖 Coinbase 中铸造者个人收益金额的可验证计算。
-- 2 倍币权销毁的冗余出块规则需在区块接收阶段独立实现，并在分叉链段比较前完成候选块选择。
-- 测试需要覆盖同铸造者多签、`MintHash` 相等、31 块平局、RandomX 裁决、连续后位超越、`Stakes=0`、`TxCount=0` 和相等边界。
+- 交易量约束（Stakes `>3x` 或 TxCount `>2x`）的冗余出块规则需在区块接收阶段独立实现，并在分叉链段比较前完成候选块选择。
+- 测试需要覆盖同铸造者多签、`MintHash` 相等、31 块平局、RandomX 裁决、连续后位超越、`Stakes=0`、`TxCount=0`、仅 Stakes 超越、仅 TxCount 超越和相等边界。
 
 ## Conception References（构想层依据）
 

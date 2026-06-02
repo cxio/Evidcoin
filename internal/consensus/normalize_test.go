@@ -121,21 +121,39 @@ func TestNormalizeTxVolume(t *testing.T) {
 			wantOK:   true,
 		},
 		{
-			name: "后位未超 2x，停止于 rank0",
+			name: "后位未满足任一条件，停止于 rank0",
 			candidates: []ForkBlock{
 				{PoolRank: 0, Stakes: 100, TxCount: 10},
-				{PoolRank: 1, Stakes: 200, TxCount: 20}, // Stakes=2x 但非严格 >2x
+				{PoolRank: 1, Stakes: 200, TxCount: 20}, // Stakes=2x非严格>3x，TxCount=2x非严格>2x
 			},
 			wantRank: 0,
 			wantOK:   true,
 		},
 		{
-			name: "后位严格超 2x，替换 winner",
+			name: "仅 TxCount 超 2x（Stakes 未超 3x）→ 替换",
 			candidates: []ForkBlock{
 				{PoolRank: 0, Stakes: 100, TxCount: 10},
-				{PoolRank: 1, Stakes: 201, TxCount: 21}, // 严格 >2x
+				{PoolRank: 1, Stakes: 200, TxCount: 21}, // TxCount=21>2x(10)，Stakes=200不足>3x(300)
 			},
 			wantRank: 1,
+			wantOK:   true,
+		},
+		{
+			name: "仅 Stakes 超 3x（TxCount 未超 2x）→ 替换",
+			candidates: []ForkBlock{
+				{PoolRank: 0, Stakes: 100, TxCount: 10},
+				{PoolRank: 1, Stakes: 301, TxCount: 15}, // Stakes=301>3x(300)，TxCount=15不足>2x(20)
+			},
+			wantRank: 1,
+			wantOK:   true,
+		},
+		{
+			name: "Stakes 恰好 3x（非严格）且 TxCount 未超 2x → 不替换",
+			candidates: []ForkBlock{
+				{PoolRank: 0, Stakes: 100, TxCount: 10},
+				{PoolRank: 1, Stakes: 300, TxCount: 15}, // Stakes=300刚好=3x，非严格>3x
+			},
+			wantRank: 0,
 			wantOK:   true,
 		},
 		{
@@ -151,7 +169,7 @@ func TestNormalizeTxVolume(t *testing.T) {
 			wantOK:   true,
 		},
 		{
-			name: "winner.Stakes==0，后位 Stakes>0 即满足 Stakes 条件",
+			name: "winner.Stakes==0，后位 Stakes>0 即满足 Stakes 条件（无论 3x）",
 			candidates: []ForkBlock{
 				{PoolRank: 0, Stakes: 0, TxCount: 5},
 				{PoolRank: 1, Stakes: 1, TxCount: 11}, // TxCount >2x，Stakes>0 满足
@@ -160,10 +178,10 @@ func TestNormalizeTxVolume(t *testing.T) {
 			wantOK:   true,
 		},
 		{
-			name: "winner.TxCount==0，后位 TxCount>0 满足",
+			name: "winner.TxCount==0，后位 TxCount>0 即满足 TxCount 条件（无论 2x）",
 			candidates: []ForkBlock{
 				{PoolRank: 0, Stakes: 10, TxCount: 0},
-				{PoolRank: 1, Stakes: 21, TxCount: 1}, // Stakes >2x，TxCount>0 满足
+				{PoolRank: 1, Stakes: 21, TxCount: 1}, // TxCount>0 满足 TxCount 条件
 			},
 			wantRank: 1,
 			wantOK:   true,
@@ -204,11 +222,11 @@ func TestSelectCandidate(t *testing.T) {
 	candidates := []ForkBlock{
 		{BlockID: mockBlockID(0xAA), MintPKHash: minter1, MinterReward: 500, Stakes: 100, TxCount: 10, PoolRank: 0},
 		{BlockID: mockBlockID(0xAB), MintPKHash: minter1, MinterReward: 200, Stakes: 100, TxCount: 10, PoolRank: 0},
-		{BlockID: mockBlockID(0xBB), MintPKHash: minter2, MinterReward: 300, Stakes: 201, TxCount: 21, PoolRank: 1},
+		{BlockID: mockBlockID(0xBB), MintPKHash: minter2, MinterReward: 300, Stakes: 100, TxCount: 21, PoolRank: 1},
 	}
 
 	// 多签归一化后：minter1 → MinterReward=200 的块，minter2 保留自身
-	// 然后 minter2 的 Stakes=201>100×2，TxCount=21>10×2 → 替换 winner
+	// 然后 minter2 的 TxCount=21>2x(10)=20 满足 TxCount 条件 → 替换 winner
 	winner, ok := SelectCandidate(candidates)
 	if !ok {
 		t.Fatal("SelectCandidate: expected ok=true")
