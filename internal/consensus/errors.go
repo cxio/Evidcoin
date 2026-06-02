@@ -34,4 +34,13 @@ var (
 	ErrNotAuthorizedSyncer = errors.New("consensus: syncer not authorized")
 	// ErrSyncReplay 表示同一授权节点对同一目标池重复发起同步。
 	ErrSyncReplay = errors.New("consensus: sync replay rejected")
+
+	// ErrPublishStageInvalid 表示区块发布阶段迁移非法（回退或重复）。
+	ErrPublishStageInvalid = errors.New("consensus: publish stage advance invalid")
+	// ErrForkTooLong 表示新观察到的分叉超过接收上限 20。
+	ErrForkTooLong = errors.New("consensus: fork segment exceeds accept limit")
+	// ErrDecisionNoQuorum 表示长度 20 临界分叉裁决中前 5 名均未签名，默认否决。
+	ErrDecisionNoQuorum = errors.New("consensus: critical fork decision rejected by no quorum")
+	// ErrRandomXUnavailable 表示 RandomX 哈希器未注入，无法执行平局裁决。
+	ErrRandomXUnavailable = errors.New("consensus: randomx hasher unavailable")
 )
