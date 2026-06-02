@@ -7,14 +7,14 @@ import "github.com/cxio/evidcoin/pkg/types"
 //
 // 公共服务（Blockqs/Depots）仅作查询加速层，不是信任根；验证函数本地执行。
 type VerificationAnchor struct {
-	// BlockID is the locally-known block identifier for the block being verified.
+	// BlockID 是本地已知的待验证区块标识。
 	BlockID types.BlockID
-	// CheckRoot is the locally-known CheckRoot for the block at BlockID.
-	// It commits to the transaction tree root, UTXO root, and UTCO root.
+	// CheckRoot 是本地已知的该区块 CheckRoot。
+	// 它承诺交易树根、UTXO 根和 UTCO 根。
 	CheckRoot types.CheckRoot
-	// UTXORoot is the locally-held UTXO state root (from the completed block).
+	// UTXORoot 是本地持有的 UTXO 状态根（来自已完成区块）。
 	UTXORoot types.TreeHash
-	// UTCORoot is the locally-held UTCO state root (from the completed block).
+	// UTCORoot 是本地持有的 UTCO 状态根（来自已完成区块）。
 	UTCORoot types.TreeHash
 }
 
@@ -26,19 +26,19 @@ type VerificationAnchor struct {
 //   - 收益地址声明不作为响应真实性依据。
 //   - 客户端应向多个节点**交叉查询**关键数据。
 type ServiceKeyConstraint struct {
-	// ProveSourceOnly documents that the service key proves only the response source,
-	// not data authenticity.
+	// ProveSourceOnly 表示服务密钥仅证明响应来源，
+	// 不证明数据真实性。
 	ProveSourceOnly bool
-	// NotBoundToRewardAddress documents that the service key is not protocol-bound
-	// to the node's blockchain reward address.
+	// NotBoundToRewardAddress 表示服务密钥在协议层
+	// 不绑定到节点的链上收益地址。
 	NotBoundToRewardAddress bool
-	// CrossQueryRequired documents that clients must cross-query multiple Blockqs nodes
-	// for critical data.
+	// CrossQueryRequired 表示客户端对关键数据必须
+	// 向多个 Blockqs 节点交叉查询。
 	CrossQueryRequired bool
 }
 
 // DefaultServiceKeyConstraint 是协议要求的独立服务密钥约束（DEC-0603）。
-// 所有使用服务密钥的场景必须符合此约束。
+// 所有使用服务密钥的场景都必须满足该约束。
 var DefaultServiceKeyConstraint = ServiceKeyConstraint{
 	ProveSourceOnly:         true,
 	NotBoundToRewardAddress: true,
@@ -48,8 +48,8 @@ var DefaultServiceKeyConstraint = ServiceKeyConstraint{
 // ValidateRecentBlockProofs 检查 RecentBlockProofsResponse 是否满足最小区块证明包数量要求
 // （至少 31 个，以覆盖分叉安全窗口，第 15 章 §6，DEC-0601）。
 //
-// 返回 ErrRecentBlockProofsInsufficient 若数量不足 MinRecentBlockProofs（31）；
-// 返回 nil 若满足要求。
+// 若数量不足 MinRecentBlockProofs（31）则返回 ErrRecentBlockProofsInsufficient；
+// 满足要求则返回 nil。
 func ValidateRecentBlockProofs(resp RecentBlockProofsResponse) error {
 	if len(resp.ProofPackages) < MinRecentBlockProofs {
 		return ErrRecentBlockProofsInsufficient
@@ -61,8 +61,8 @@ func ValidateRecentBlockProofs(resp RecentBlockProofsResponse) error {
 //   - TxCount 不为零。
 //   - TxIDPrefixes 数量与 TxCount 严格一致。
 //
-// 注意：此函数只验证内部一致性；最终验证仍须用完整 TxID 序列重算交易树根（DEC-0602）。
-// 返回 ErrInvalidSummary 若不一致；返回 nil 若一致。
+// 注意：此函数仅验证内部一致性；最终验证仍需用完整 TxID 序列重算交易树根（DEC-0602）。
+// 不一致返回 ErrInvalidSummary；一致返回 nil。
 func VerifyBlockSummaryConsistency(s *BlockSummary) error {
 	if s == nil || s.TxCount == 0 || len(s.TxIDPrefixes) == 0 {
 		return ErrInvalidSummary

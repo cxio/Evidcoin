@@ -29,12 +29,12 @@ func NewTxIDPrefix(txID types.TxID) TxIDPrefix {
 // 节点不得因短前缀无法解析就接受不完整区块；最终验证必须用完整 TxID 序列
 // 重算交易树根（DEC-0602）。
 type BlockSummary struct {
-	// BlockID is the block identifier (SHA3-384, 48 bytes).
+	// BlockID 是区块标识（SHA3-384，48 字节）。
 	BlockID types.BlockID
-	// TxCount is the total transaction count in the block (including Coinbase).
+	// TxCount 是区块交易总数（包含 Coinbase）。
 	TxCount uint64
-	// TxIDPrefixes contains the first 16 bytes of each transaction's TxID,
-	// ordered by in-block sequence position with Coinbase at index 0.
+	// TxIDPrefixes 包含每笔交易 TxID 的前 16 字节，
+	// 按区块内序位排序，Coinbase 位于索引 0。
 	TxIDPrefixes []TxIDPrefix
 }
 
@@ -77,10 +77,10 @@ func (s *BlockSummary) Encode() []byte {
 // CollisionFallback 不属于基础 BlockSummary 本体，是独立的按需响应。
 // 接收方收到完整 TxID 后，可精确匹配候选交易并继续组装区块。
 type CollisionFallback struct {
-	// BlockID identifies the block whose summary triggered the collision.
+	// BlockID 标识触发碰撞的区块概要所属区块。
 	BlockID types.BlockID
-	// TxIndex is the in-block sequence position (0-based) of the colliding prefix.
+	// TxIndex 是发生前缀碰撞的区块内序位（从 0 开始）。
 	TxIndex uint32
-	// FullTxID is the complete 48-byte TxID for the specified sequence position.
+	// FullTxID 是指定序位对应的完整 48 字节 TxID。
 	FullTxID types.TxID
 }
