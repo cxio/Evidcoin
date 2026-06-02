@@ -95,19 +95,19 @@ func TestEvalLevel1Review(t *testing.T) {
 			wantOutcome: OutcomeLegal,
 		},
 		{
-			name:        "超半数非法→非法",
+			name: "超半数非法→非法",
 			// 3 条，2 非法 > 3/2 → OutcomeIllegal
 			verdicts:    []Verdict{VerdictIllegal, VerdictIllegal, VerdictLegal},
 			wantOutcome: OutcomeIllegal,
 		},
 		{
-			name:        "恰好半数非法→需二级",
+			name: "恰好半数非法→需二级",
 			// 4 条，2 非法 = 4/2 → 不满足"严格超半数"→ NeedsLevel2
 			verdicts:    []Verdict{VerdictIllegal, VerdictIllegal, VerdictLegal, VerdictLegal},
 			wantOutcome: OutcomeNeedsLevel2,
 		},
 		{
-			name:        "少于半数非法→需二级",
+			name: "少于半数非法→需二级",
 			// 3 条，1 非法 < 3/2 → NeedsLevel2
 			verdicts:    []Verdict{VerdictIllegal, VerdictLegal, VerdictLegal},
 			wantOutcome: OutcomeNeedsLevel2,
