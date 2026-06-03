@@ -12,7 +12,7 @@
 
 - `docs/proposal/11.PoH-Consensus.md`（主源）
 - 依赖 `docs/proposal/05.Blockchain-Core.md`（区块头、`Stakes`、`CheckRoot`）、`06.Transaction-Model.md`（交易头、Coinbase、`MintPKHash`/`LeadPKHash`）、`04.Hash-Trees.md`（验证路径、输入根）、`08.Signatures-And-Witness.md`（铸造者签名）、`02.Cryptography-And-Hashing.md`（域标签/哈希 profile）。
-- **DEC-0301**：铸凭哈希前像字段顺序与编码、`X = BE(minimal_unsigned(BlockHeight × Mix))`（`Mix=0x517cc1b727220a95`）、`MintProof` 五字段顺序、择优三级升序（`MintHash → TxID → PubKey`）、`MintPKHash`/`LeadPKHash` 两路身份、Coinbase 铸凭资格。
+- **DEC-0301**：铸凭哈希两阶段算法（ChallengeSeed 无域标签、Equi-X 求解、最终哈希）、`X = BE(minimal_unsigned(BlockHeight × Mix))`（`Mix=0x517cc1b727220a95`）、`MintProof` 七字段顺序、择优四级升序（`Nonce → MintHash → TxID → PubKey`）、`MintPKHash`/`LeadPKHash` 两路身份、Coinbase 铸凭资格。
 - **DEC-0302**：创世工件双形式（`genesis.bin`/`genesis.json`）、创世 `MintHash` 全零、初段评参高度、初段铸凭高度放宽、#1/#2 规则、初段 Coinbase 资格、边界测试点。
 
 ## 包边界
@@ -27,7 +27,7 @@
 
 | 文件 | 内容 |
 |------|------|
-| `internal/consensus/mint_hash.go` | 铸凭哈希前像、`X` 编码、择优三级排序 |
+| `internal/consensus/mint_hash.go` | 铸凭哈希前像、ChallengeSeed、Equi-X 接口、择优四级排序 |
 | `internal/consensus/mint_eligibility.go` | 铸凭交易高度窗口（正常期/初段）判定 |
 | `internal/consensus/mint_proof.go` | `MintProof` 五字段编解码 |
 | `internal/consensus/mint_identity.go` | `MintPKHash`/`LeadPKHash` 两路身份规则 |
@@ -46,11 +46,13 @@
 
 **Step 1: 写失败测试**（proposal 11 §2 / DEC-0301）
 
-- 前像顺序固定：`BLAKE3-256( DomainTag("mint.hash") || MintPubKey || MintTxID || Stakes(BE u64) || RefMintHash || X )`，输出 32B。
+- 铸凭哈希采用两阶段算法：
+  1. `ChallengeSeed = BLAKE3-256(MintPubKey || MintTxID || Stakes(BE u64) || RefMintHash || X)`（无域标签）。
+  2. `[hashList, solution, nonce] = equix.Solve(ChallengeSeed)`，要求 `nonce ≥ BlockHeight`，`solution` 索引严格升序。
+  3. `MintHash = BLAKE3-256(DomainTag("mint.hash") || hashList[0] || hashList[1] || ...)`，输出 32B。
 - `X = BE(minimal_unsigned(BlockHeight × Mix))`，`Mix=0x517cc1b727220a95`；`X` 仅由区块高度与 `Mix` 决定，与 `Stakes` 无关。测试向量必须覆盖同一 `BlockHeight` 下 `Stakes=0` 与 `Stakes>0` 时 `X` 字节相同，但完整铸凭哈希因 `Stakes` 字段不同而不同。
 - `RefMintHash`：评参块 Coinbase 的铸凭哈希；创世块/初段无 `Minter` 时取全零 32B。
-- 择优对比：按 `MintHash` 32B 字典序升序，值小者胜；相等按完整 `TxID` 升序，再按 `MintPubKey` 字节升序（三级）。
-- 排序必须按 unsigned lexicographic byte order，不得按 hex 字符串。
+- 择优对比：四级升序（`Nonce → MintHash → TxID → PubKey`），unsigned lexicographic byte order，不得按 hex 字符串。
 
 > **已裁决标注：** `X` 与 `Stakes` 无关；DEC-0301 中曾存在的「Stakes 零值改变 X 编码」表述属于历史遗留错误，已从 decision/proposal 清除。本任务不得再生成或保留该旧规则的测试向量。
 
@@ -96,9 +98,9 @@ git commit -m "feat: add mint tx eligibility window"
 
 **Step 1: 写失败测试**（proposal 11 §3·§4 / DEC-0301）
 
-`MintProof` 五字段顺序（冻结）：
+`MintProof` 七字段顺序（冻结）：
 
-- `TxHeight uint32` → `TxID [48]byte` → `MintPubKey bytes` → `MintHash [32]byte` → `Signature bytes`。
+- `TxHeight uint32` → `TxID [48]byte` → `Nonce uint64` → `Solution bytes` → `MintPubKey bytes` → `MintHash [32]byte` → `Signature bytes`。
 - `MintHash` 置于签名前仅便于检索/预筛选；签名验证仍以**重新计算**的铸凭哈希为准。
 - 凭证签名是铸造资格证明，不是输入项花费签名，不进入见证剪枝范畴（见 04 章/见证）。
 
@@ -124,9 +126,9 @@ git commit -m "feat: add mint proof and identity rules"
 
 **Step 1: 写失败测试**（proposal 11 §5）
 
-- 容量最多 **20**，按 `MintHash` 升序（值小者优）。
+- 容量最多 **20**，按 **Nonce 升序**（值小者优），同 Nonce 下再按 `MintHash → TxID → PubKey` 四级排序。
 - 新候选更优时进入池并挤出最差；重复候选去重。
-- 相同 `MintHash` 不同候选按 `TxID → PubKey` 三级排序继续区分（DEC-0301）。
+- 相同 Nonce 不同候选按 `MintHash → TxID → PubKey` 三级继续区分（DEC-0301）。
 - 预选窗口：评参区块为 `-8` 号，候选者最多提前 7 个区块时段得知对比目标。
 - 授权同步成员为池中**后 15 名**；前 5 名不具同步发起权。
 
@@ -150,7 +152,7 @@ git commit -m "feat: add poh best pool"
 - 仅后 15 名授权节点可发起同步；每授权节点对同一目标池仅一次同步权。
 - 三段流程：裁判池（本地池副本 + 目标池合并，判断对端是否在后 15 位）→ 预合并（截止后合并暂存目标池，取后 15 位为授权集）→ 终合并（合并授权集成员目标池得最终择优池）。
 - 新上线节点本地池为空不影响裁判池创建。
-- 合并后仍按 `MintHash` 排序并截断到 20；签名错误拒绝；同步为**概略性**而非唯一性约束（不唯一时由 08 章分叉竞争收敛）。
+- 合并后仍按四级排序（Nonce → MintHash → TxID → PubKey）并截断到 20；签名错误拒绝；同步为**概略性**而非唯一性约束（不唯一时由 08 章分叉竞争收敛）。
 
 **Step 2: 实现并提交**
 

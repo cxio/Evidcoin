@@ -10,22 +10,29 @@ type MintProof struct {
 	TxHeight uint32
 	// TxID 是铸凭交易完整 48 字节 TxID。
 	TxID types.TxID
+	// Nonce 是 Equi-X 求解时使用的 nonce（须 >= 当前待铸区块高度）。
+	Nonce uint64
+	// Solution 是 Equi-X 解的 solution 字节（索引必须严格升序）。
+	Solution []byte
 	// MintPubKey 是铸造者公钥（验证身份与签名）。
 	MintPubKey []byte
-	// MintHash 是铸凭哈希值本身（可由前像推导，携带便于检索/预筛选）。
+	// MintHash 是铸凭哈希值本身（可由哈希列表推导，携带便于检索/预筛选）。
 	// 注意：MintHash 置于签名前仅便于检索；签名验证仍以重新计算的铸凭哈希为准。
 	MintHash types.MintHash
 	// Signature 是铸造者对 MintHash 的签名。
 	Signature []byte
 }
 
-// CanonicalBytes 按 DEC-0301 冻结的五字段顺序编码 MintProof：
+// CanonicalBytes 按 DEC-0301 冻结的七字段顺序编码 MintProof：
 //
-//	TxHeight(u32 BE) || TxID[48] || varint(len)||MintPubKey || MintHash[32] || varint(len)||Signature
+//	TxHeight(u32 BE) || TxID[48] || Nonce(u64 BE) || varint(len)||Solution ||
+//	varint(len)||MintPubKey || MintHash[32] || varint(len)||Signature
 func (p MintProof) CanonicalBytes() []byte {
-	out := make([]byte, 0, 4+48+1+len(p.MintPubKey)+32+1+len(p.Signature))
+	out := make([]byte, 0, 4+48+8+1+len(p.Solution)+1+len(p.MintPubKey)+32+1+len(p.Signature))
 	out = types.AppendUint32BE(out, p.TxHeight)
 	out = append(out, p.TxID.Bytes()...)
+	out = types.AppendUint64BE(out, p.Nonce)
+	out = types.AppendBytes(out, p.Solution)
 	out = types.AppendBytes(out, p.MintPubKey)
 	out = append(out, p.MintHash.Bytes()...)
 	out = types.AppendBytes(out, p.Signature)
@@ -54,6 +61,20 @@ func parseMintProof(src []byte) (MintProof, int, error) {
 	}
 	off += 48
 	p.TxID = txID
+
+	nonce, n, err := types.ReadUint64BE(src[off:])
+	if err != nil {
+		return p, 0, ErrMintProofTooShort
+	}
+	off += n
+	p.Nonce = nonce
+
+	solution, n, err := types.ReadBytes(src[off:])
+	if err != nil {
+		return p, 0, ErrMintProofTooShort
+	}
+	off += n
+	p.Solution = solution
 
 	pubKey, n, err := types.ReadBytes(src[off:])
 	if err != nil {
@@ -94,3 +115,4 @@ func ReadMintProof(src []byte) (MintProof, int, error) {
 	}
 	return p, n, nil
 }
+

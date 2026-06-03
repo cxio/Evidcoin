@@ -43,4 +43,8 @@ var (
 	ErrDecisionNoQuorum = errors.New("consensus: critical fork decision rejected by no quorum")
 	// ErrRandomXUnavailable 表示 RandomX 哈希器未注入，无法执行平局裁决。
 	ErrRandomXUnavailable = errors.New("consensus: randomx hasher unavailable")
+	// ErrEquiXUnavailable 表示 Equi-X 求解器未注入，无法执行铸凭哈希验证。
+	ErrEquiXUnavailable = errors.New("consensus: equix solver unavailable")
+	// ErrEquiXSolutionInvalid 表示 Equi-X solution 验证失败（非法 nonce、非升序索引或 solution 不匹配）。
+	ErrEquiXSolutionInvalid = errors.New("consensus: equix solution invalid")
 )

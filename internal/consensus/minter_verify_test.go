@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"testing"
 
+	"github.com/cxio/evidcoin/internal/consensus/equix"
 	"github.com/cxio/evidcoin/internal/tx"
 	"github.com/cxio/evidcoin/pkg/crypto"
 	"github.com/cxio/evidcoin/pkg/hashtree"
@@ -42,6 +43,32 @@ func (d *fakeDataSource) InclusionPath(id types.TxID) (hashtree.Proof, error) {
 	return d.proof, d.proofErr
 }
 
+// testEquiXHashList 是测试中使用的固定 Equi-X 哈希列表（代替真实算法输出）。
+var testEquiXHashList = [][]byte{
+	bytes.Repeat([]byte{0xAA}, 32),
+	bytes.Repeat([]byte{0xBB}, 32),
+}
+
+// fakeEquiXSolver 是测试替身：对任意输入返回 testEquiXHashList 并认为 solution 有效。
+type fakeEquiXSolver struct {
+	// returnInvalid 为 true 时模拟 solution 验证失败。
+	returnInvalid bool
+}
+
+func (f fakeEquiXSolver) Solve(_ []byte, startNonce uint64) ([][]byte, []byte, uint64, error) {
+	return testEquiXHashList, []byte{0x01, 0x02}, startNonce, nil
+}
+
+func (f fakeEquiXSolver) Verify(_ []byte, _ uint64, _ []byte) ([][]byte, bool, error) {
+	if f.returnInvalid {
+		return nil, false, nil
+	}
+	return testEquiXHashList, true, nil
+}
+
+// 确认 fakeEquiXSolver 满足 equix.Solver 接口（编译期检查）。
+var _ equix.Solver = fakeEquiXSolver{}
+
 // buildPKHashTxScenario 构造一个「含 MintPKHash」的合法铸凭交易场景，
 // 返回 MintProof、数据源与组合 CheckRoot 所需的状态根。
 func buildPKHashTxScenario(t *testing.T, currentHeight, txHeight uint32) (MintProof, *fakeDataSource, []byte) {
@@ -78,19 +105,22 @@ func buildPKHashTxScenario(t *testing.T, currentHeight, txHeight uint32) (MintPr
 	utcoRoot := crypto.EmptyUTCORoot()
 	checkRoot := computeCheckRootForTest(treeRoot, utxoRoot, utcoRoot)
 
-	// 计算铸凭哈希。
-	pre := MintHashPreimage{
+	// 计算铸凭哈希（使用两阶段算法，BlockHeight 为当前待铸区块高度）。
+	// 在测试中使用 fakeEquiXSolver 返回的 testEquiXHashList 作为 hashList。
+	_ = MintHashPreimage{
 		MintPubKey:  pubKey,
 		MintTxID:    txID,
 		Stakes:      500,
 		RefMintHash: types.MintHash{},
-		BlockHeight: txHeight,
+		BlockHeight: currentHeight,
 	}
-	mintHash := ComputeMintHash(pre)
+	mintHash := ComputeMintHash(testEquiXHashList)
 
 	proofMP := MintProof{
 		TxHeight:   txHeight,
 		TxID:       txID,
+		Nonce:      uint64(currentHeight),
+		Solution:   []byte{0x01, 0x02},
 		MintPubKey: pubKey,
 		MintHash:   mintHash,
 		Signature:  []byte("valid-sig"),
@@ -133,6 +163,7 @@ func TestVerifyMinterSuccess(t *testing.T) {
 		StateUTXORoot: crypto.EmptyUTXORoot(),
 		StateUTCORoot: crypto.EmptyUTCORoot(),
 		SigVerifier:   fakeMintSigVerifier{},
+		EquiXSolver:   fakeEquiXSolver{},
 	}
 	if err := VerifyMinter(ds, mp, cfg); err != nil {
 		t.Fatalf("expected success, got %v", err)
@@ -150,6 +181,7 @@ func TestVerifyMinterHeightOutOfWindow(t *testing.T) {
 		StateUTXORoot: crypto.EmptyUTXORoot(),
 		StateUTCORoot: crypto.EmptyUTCORoot(),
 		SigVerifier:   fakeMintSigVerifier{},
+		EquiXSolver:   fakeEquiXSolver{},
 	}
 	if err := VerifyMinter(ds, mp, cfg); err != ErrMintHeightOutOfWindow {
 		t.Fatalf("expected ErrMintHeightOutOfWindow, got %v", err)
@@ -169,6 +201,7 @@ func TestVerifyMinterTxIDMismatch(t *testing.T) {
 		StateUTXORoot: crypto.EmptyUTXORoot(),
 		StateUTCORoot: crypto.EmptyUTCORoot(),
 		SigVerifier:   fakeMintSigVerifier{},
+		EquiXSolver:   fakeEquiXSolver{},
 	}
 	if err := VerifyMinter(ds, mp, cfg); err != ErrMintIdentityMismatch {
 		t.Fatalf("expected ErrMintIdentityMismatch, got %v", err)
@@ -188,9 +221,46 @@ func TestVerifyMinterCheckRootMismatch(t *testing.T) {
 		StateUTXORoot: crypto.EmptyUTXORoot(),
 		StateUTCORoot: crypto.EmptyUTCORoot(),
 		SigVerifier:   fakeMintSigVerifier{},
+		EquiXSolver:   fakeEquiXSolver{},
 	}
 	if err := VerifyMinter(ds, mp, cfg); err != ErrCheckRootMismatch {
 		t.Fatalf("expected ErrCheckRootMismatch, got %v", err)
+	}
+}
+
+// TestVerifyMinterEquiXUnavailable 断言未注入 Equi-X 求解器时返回 ErrEquiXUnavailable（第三段）。
+func TestVerifyMinterEquiXUnavailable(t *testing.T) {
+	const current = uint32(100000)
+	const txHeight = uint32(50000)
+	mp, ds, _ := buildPKHashTxScenario(t, current, txHeight)
+
+	cfg := MinterVerifyConfig{
+		CurrentHeight: current,
+		StateUTXORoot: crypto.EmptyUTXORoot(),
+		StateUTCORoot: crypto.EmptyUTCORoot(),
+		SigVerifier:   fakeMintSigVerifier{},
+		EquiXSolver:   nil, // 未注入
+	}
+	if err := VerifyMinter(ds, mp, cfg); err != ErrEquiXUnavailable {
+		t.Fatalf("expected ErrEquiXUnavailable, got %v", err)
+	}
+}
+
+// TestVerifyMinterEquiXSolutionInvalid 断言 Equi-X solution 验证失败被拒绝（第三段）。
+func TestVerifyMinterEquiXSolutionInvalid(t *testing.T) {
+	const current = uint32(100000)
+	const txHeight = uint32(50000)
+	mp, ds, _ := buildPKHashTxScenario(t, current, txHeight)
+
+	cfg := MinterVerifyConfig{
+		CurrentHeight: current,
+		StateUTXORoot: crypto.EmptyUTXORoot(),
+		StateUTCORoot: crypto.EmptyUTCORoot(),
+		SigVerifier:   fakeMintSigVerifier{},
+		EquiXSolver:   fakeEquiXSolver{returnInvalid: true},
+	}
+	if err := VerifyMinter(ds, mp, cfg); err != ErrEquiXSolutionInvalid {
+		t.Fatalf("expected ErrEquiXSolutionInvalid, got %v", err)
 	}
 }
 
@@ -207,6 +277,7 @@ func TestVerifyMinterMintHashMismatch(t *testing.T) {
 		StateUTXORoot: crypto.EmptyUTXORoot(),
 		StateUTCORoot: crypto.EmptyUTCORoot(),
 		SigVerifier:   fakeMintSigVerifier{},
+		EquiXSolver:   fakeEquiXSolver{},
 	}
 	if err := VerifyMinter(ds, mp, cfg); err != ErrMintHashMismatch {
 		t.Fatalf("expected ErrMintHashMismatch, got %v", err)
@@ -225,6 +296,7 @@ func TestVerifyMinterBadSignature(t *testing.T) {
 		StateUTXORoot: crypto.EmptyUTXORoot(),
 		StateUTCORoot: crypto.EmptyUTCORoot(),
 		SigVerifier:   fakeMintSigVerifier{},
+		EquiXSolver:   fakeEquiXSolver{},
 	}
 	if err := VerifyMinter(ds, mp, cfg); err != ErrMintSignatureInvalid {
 		t.Fatalf("expected ErrMintSignatureInvalid, got %v", err)

@@ -1,6 +1,9 @@
 package consensus
 
 import (
+	"errors"
+
+	"github.com/cxio/evidcoin/internal/consensus/equix"
 	"github.com/cxio/evidcoin/internal/tx"
 	"github.com/cxio/evidcoin/pkg/crypto"
 	"github.com/cxio/evidcoin/pkg/hashtree"
@@ -54,7 +57,7 @@ type MintSignatureVerifier interface {
 
 // MinterVerifyConfig 是三段验证的上下文参数。
 type MinterVerifyConfig struct {
-	// CurrentHeight 是当前链高度（用于铸凭交易资格窗口判定）。
+	// CurrentHeight 是当前待铸区块高度（用于铸凭交易资格窗口判定与铸凭哈希前像计算）。
 	CurrentHeight uint32
 	// StateUTXORoot/StateUTCORoot 是目标区块的 UTXO/UTCO 状态指纹，
 	// 与验证路径推出的交易树根一起组合 CheckRoot 进行比对（第 05 章 §2）。
@@ -62,6 +65,9 @@ type MinterVerifyConfig struct {
 	StateUTCORoot types.TreeHash
 	// SigVerifier 校验铸造者对铸凭哈希的签名。
 	SigVerifier MintSignatureVerifier
+	// EquiXSolver 提供 Equi-X 解验证（DEC-0301 第二阶段）。
+	// 为 nil 时返回 ErrEquiXUnavailable。
+	EquiXSolver equix.Solver
 }
 
 // VerifyMinter 执行铸造者三段验证（第 11 章 §6）：
@@ -133,9 +139,23 @@ func VerifyMinter(ds MintDataSource, mp MintProof, cfg MinterVerifyConfig) error
 		MintTxID:    mp.TxID,
 		Stakes:      retrieved.Stakes,
 		RefMintHash: retrieved.RefMintHash,
-		BlockHeight: mp.TxHeight,
+		BlockHeight: cfg.CurrentHeight,
 	}
-	if ComputeMintHash(pre) != mp.MintHash {
+	if cfg.EquiXSolver == nil {
+		return ErrEquiXUnavailable
+	}
+	challengeSeed := ComputeChallengeSeed(pre)
+	hashList, valid, equixErr := cfg.EquiXSolver.Verify(challengeSeed, mp.Nonce, mp.Solution)
+	if equixErr != nil {
+		if errors.Is(equixErr, equix.ErrUnavailable) {
+			return ErrEquiXUnavailable
+		}
+		return equixErr
+	}
+	if !valid {
+		return ErrEquiXSolutionInvalid
+	}
+	if ComputeMintHash(hashList) != mp.MintHash {
 		return ErrMintHashMismatch
 	}
 	ok, err := cfg.SigVerifier.VerifyMintSignature(mp.MintPubKey, mp.MintHash.Bytes(), mp.Signature)

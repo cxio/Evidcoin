@@ -13,13 +13,15 @@ func sampleMintProof() MintProof {
 	return MintProof{
 		TxHeight:   123456,
 		TxID:       types.MustTxID(bytes.Repeat([]byte{0x11}, 48)),
+		Nonce:      0xDEADBEEFCAFE0001,
+		Solution:   []byte{0x0A, 0x0B, 0x0C, 0x0D},
 		MintPubKey: []byte{0xDE, 0xAD, 0xBE, 0xEF},
 		MintHash:   mh,
 		Signature:  []byte{0x01, 0x02, 0x03, 0x04, 0x05},
 	}
 }
 
-// TestMintProofRoundTrip 断言编码后解码可还原所有五字段。
+// TestMintProofRoundTrip 断言编码后解码可还原所有七字段。
 func TestMintProofRoundTrip(t *testing.T) {
 	p := sampleMintProof()
 	enc := p.CanonicalBytes()
@@ -36,6 +38,12 @@ func TestMintProofRoundTrip(t *testing.T) {
 	if got.TxID != p.TxID {
 		t.Errorf("TxID mismatch")
 	}
+	if got.Nonce != p.Nonce {
+		t.Errorf("Nonce = %d, want %d", got.Nonce, p.Nonce)
+	}
+	if !bytes.Equal(got.Solution, p.Solution) {
+		t.Errorf("Solution mismatch")
+	}
 	if !bytes.Equal(got.MintPubKey, p.MintPubKey) {
 		t.Errorf("MintPubKey mismatch")
 	}
@@ -47,8 +55,9 @@ func TestMintProofRoundTrip(t *testing.T) {
 	}
 }
 
-// TestMintProofFieldOrder 断言五字段冻结顺序：
-// TxHeight(u32 BE) || TxID[48] || varint(len)||MintPubKey || MintHash[32] || varint(len)||Signature。
+// TestMintProofFieldOrder 断言七字段冻结顺序：
+// TxHeight(u32 BE) || TxID[48] || Nonce(u64 BE) || varint(len)||Solution ||
+// varint(len)||MintPubKey || MintHash[32] || varint(len)||Signature。
 func TestMintProofFieldOrder(t *testing.T) {
 	p := sampleMintProof()
 	got := p.CanonicalBytes()
@@ -56,6 +65,8 @@ func TestMintProofFieldOrder(t *testing.T) {
 	var want []byte
 	want = types.AppendUint32BE(want, p.TxHeight)
 	want = append(want, p.TxID.Bytes()...)
+	want = types.AppendUint64BE(want, p.Nonce)
+	want = types.AppendBytes(want, p.Solution)
 	want = types.AppendBytes(want, p.MintPubKey)
 	want = append(want, p.MintHash.Bytes()...)
 	want = types.AppendBytes(want, p.Signature)
@@ -87,3 +98,4 @@ func TestReadMintProofTrailing(t *testing.T) {
 		t.Fatalf("expected ErrMintProofTrailing, got %v", err)
 	}
 }
+

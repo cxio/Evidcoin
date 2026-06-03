@@ -2,6 +2,7 @@ package consensus
 
 import (
 	"bytes"
+	"cmp"
 	"math/big"
 	"slices"
 
@@ -12,8 +13,8 @@ import (
 // mintMix 是铸凭哈希前像 X 字段使用的混淆常量（DEC-0301）。
 const mintMix uint64 = 0x517cc1b727220a95
 
-// MintHashPreimage 描述铸凭哈希前像的各组成字段（字段顺序由 DEC-0301 冻结）。
-// 域标签 "mint.hash" 由 crypto.HashMint 内部前置，本结构不包含域标签。
+// MintHashPreimage 描述铸凭挑战种子（ChallengeSeed）前像的各组成字段（DEC-0301 冻结）。
+// ChallengeSeed = BLAKE3-256(前像)，无域标签；最终 MintHash 由 Equi-X 哈希列表计算。
 type MintHashPreimage struct {
 	// MintPubKey 是铸造者公钥的规范字节（MintPKHash 或 LeadPKHash 的源公钥）。
 	MintPubKey []byte
@@ -23,7 +24,7 @@ type MintHashPreimage struct {
 	Stakes uint64
 	// RefMintHash 是评参区块 Coinbase 记录的铸凭哈希；创世/初段无 Minter 时全零。
 	RefMintHash types.MintHash
-	// BlockHeight 是铸凭交易实际所在区块高度，仅用于推导 X，与 Stakes 无关。
+	// BlockHeight 是当前待铸区块高度，仅用于推导 X，与 Stakes 无关。
 	BlockHeight uint32
 }
 
@@ -39,7 +40,7 @@ func encodeMintX(blockHeight uint32) []byte {
 	return prod.Bytes()
 }
 
-// CanonicalBytes 按 DEC-0301 冻结顺序拼装铸凭哈希前像（不含域标签）：
+// CanonicalBytes 按 DEC-0301 冻结顺序拼装挑战种子前像（不含域标签）：
 //
 //	MintPubKey || MintTxID || Stakes(BE u64) || RefMintHash || X
 func (p MintHashPreimage) CanonicalBytes() []byte {
@@ -53,25 +54,42 @@ func (p MintHashPreimage) CanonicalBytes() []byte {
 	return out
 }
 
-// ComputeMintHash 计算铸凭哈希：BLAKE3-256(DomainTag("mint.hash") || 前像)（DEC-0301）。
-func ComputeMintHash(p MintHashPreimage) types.MintHash {
-	return crypto.HashMint(p.CanonicalBytes())
+// ComputeChallengeSeed 计算 Equi-X 挑战种子：BLAKE3-256(前像)，无域标签（DEC-0301）。
+// 前像字段顺序见 MintHashPreimage.CanonicalBytes。
+func ComputeChallengeSeed(p MintHashPreimage) []byte {
+	return crypto.HashMintChallengeSeed(p.CanonicalBytes())
 }
 
-// MintCandidate 是择优排序中的候选者关键字段（用于三级比较）。
+// ComputeMintHash 根据 Equi-X 哈希列表计算最终铸凭哈希（DEC-0301）：
+//
+//	MintHash = BLAKE3-256( DomainTag("mint.hash") || HashList[0] || HashList[1] || ... )
+func ComputeMintHash(hashList [][]byte) types.MintHash {
+	var buf []byte
+	for _, h := range hashList {
+		buf = append(buf, h...)
+	}
+	return crypto.HashMint(buf)
+}
+
+// MintCandidate 是择优排序中的候选者关键字段（用于四级比较）。
 type MintCandidate struct {
-	// MintHash 是候选者的铸凭哈希（一级排序键）。
+	// Nonce 是 Equi-X 求解时使用的 nonce（一级排序键，升序）。
+	Nonce uint64
+	// MintHash 是候选者的铸凭哈希（二级排序键）。
 	MintHash types.MintHash
-	// TxID 是铸凭交易完整 48 字节 TxID（二级排序键）。
+	// TxID 是铸凭交易完整 48 字节 TxID（三级排序键）。
 	TxID types.TxID
-	// MintPubKey 是铸造者公钥规范字节（三级排序键）。
+	// MintPubKey 是铸造者公钥规范字节（四级排序键）。
 	MintPubKey []byte
 }
 
-// CompareMintCandidates 按择优三级升序比较两个候选者（DEC-0301）：
-// 先按 MintHash 32 字节无符号字典序，相等按完整 TxID，再按 MintPubKey 字节序。
-// 返回负值表示 a 优于（小于）b，0 表示三级全等，正值表示 a 劣于 b。
+// CompareMintCandidates 按择优四级升序比较两个候选者（DEC-0301）：
+// 先按 Nonce 升序，再按 MintHash 32 字节无符号字典序，相等按完整 TxID，再按 MintPubKey 字节序。
+// 返回负值表示 a 优于（小于）b，0 表示四级全等，正值表示 a 劣于 b。
 func CompareMintCandidates(a, b MintCandidate) int {
+	if c := cmp.Compare(a.Nonce, b.Nonce); c != 0 {
+		return c
+	}
 	if c := bytes.Compare(a.MintHash[:], b.MintHash[:]); c != 0 {
 		return c
 	}
@@ -83,7 +101,8 @@ func CompareMintCandidates(a, b MintCandidate) int {
 	return bytes.Compare(a.MintPubKey, b.MintPubKey)
 }
 
-// RankMintCandidates 就地按择优三级升序排序候选者（值小者优先，DEC-0301）。
+// RankMintCandidates 就地按择优四级升序排序候选者（值小者优先，DEC-0301）。
 func RankMintCandidates(candidates []MintCandidate) {
 	slices.SortFunc(candidates, CompareMintCandidates)
 }
+

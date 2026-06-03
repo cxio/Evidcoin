@@ -45,7 +45,7 @@ func TestMintHashXEncoding(t *testing.T) {
 }
 
 // TestMintHashXIndependentOfStakes 断言同一 BlockHeight 下 Stakes=0 与 Stakes>0
-// 时 X 字节相同，但完整铸凭哈希因 Stakes 字段不同而不同。
+// 时 X 字节相同，但挑战种子因 Stakes 字段不同而不同。
 func TestMintHashXIndependentOfStakes(t *testing.T) {
 	const height = uint32(12345)
 	xZero := encodeMintX(height)
@@ -65,15 +65,16 @@ func TestMintHashXIndependentOfStakes(t *testing.T) {
 	pre1 := pre0
 	pre1.Stakes = 999
 
-	h0 := ComputeMintHash(pre0)
-	h1 := ComputeMintHash(pre1)
-	if h0 == h1 {
-		t.Fatal("mint hash must differ when Stakes differs")
+	// 挑战种子因 Stakes 字段不同而不同。
+	s0 := ComputeChallengeSeed(pre0)
+	s1 := ComputeChallengeSeed(pre1)
+	if bytes.Equal(s0, s1) {
+		t.Fatal("challenge seed must differ when Stakes differs")
 	}
 }
 
-// TestMintHashPreimageLayout 断言前像字段顺序：
-// DomainTag("mint.hash") || MintPubKey || MintTxID || Stakes(BE u64) || RefMintHash || X。
+// TestMintHashPreimageLayout 断言挑战种子前像字段顺序：
+// MintPubKey || MintTxID || Stakes(BE u64) || RefMintHash || X（无域标签）。
 func TestMintHashPreimageLayout(t *testing.T) {
 	const height = uint32(42)
 	var ref types.MintHash
@@ -87,7 +88,7 @@ func TestMintHashPreimageLayout(t *testing.T) {
 		BlockHeight: height,
 	}
 
-	// 手工拼装期望前像（不含域标签，域标签由 crypto.HashMint 内部添加）。
+	// 手工拼装期望前像（不含域标签）。
 	var want []byte
 	want = append(want, testMintPubKey...)
 	want = append(want, testMintTxID.Bytes()...)
@@ -100,13 +101,43 @@ func TestMintHashPreimageLayout(t *testing.T) {
 		t.Fatalf("preimage = %x, want %x", got, want)
 	}
 
-	// ComputeMintHash 必须等于 crypto.HashMint(前像)。
-	if ComputeMintHash(pre) != crypto.HashMint(want) {
-		t.Fatal("ComputeMintHash must equal crypto.HashMint(canonical preimage)")
+	// ComputeChallengeSeed 必须等于 crypto.HashMintChallengeSeed(前像)。
+	gotSeed := ComputeChallengeSeed(pre)
+	wantSeed := crypto.HashMintChallengeSeed(want)
+	if !bytes.Equal(gotSeed, wantSeed) {
+		t.Fatal("ComputeChallengeSeed must equal crypto.HashMintChallengeSeed(canonical preimage)")
 	}
 }
 
-// TestRankMintCandidates 断言三级升序：MintHash → TxID → PubKey，按无符号字节序。
+// TestComputeMintHash 断言 ComputeMintHash 对哈希列表进行拼接后计算
+// BLAKE3-256(DomainTag("mint.hash") || hashList...)。
+func TestComputeMintHash(t *testing.T) {
+	hashList := [][]byte{
+		bytes.Repeat([]byte{0x11}, 32),
+		bytes.Repeat([]byte{0x22}, 32),
+		bytes.Repeat([]byte{0x33}, 32),
+	}
+	got := ComputeMintHash(hashList)
+
+	// 手工拼接哈希列表后计算期望结果。
+	var concat []byte
+	for _, h := range hashList {
+		concat = append(concat, h...)
+	}
+	want := crypto.HashMint(concat)
+	if got != want {
+		t.Fatalf("ComputeMintHash = %x, want %x", got[:4], want[:4])
+	}
+
+	// 空哈希列表与 nil 等价。
+	emptyGot := ComputeMintHash(nil)
+	emptyWant := crypto.HashMint(nil)
+	if emptyGot != emptyWant {
+		t.Fatalf("ComputeMintHash(nil) = %x, want %x", emptyGot[:4], emptyWant[:4])
+	}
+}
+
+// TestRankMintCandidates 断言四级升序：Nonce → MintHash → TxID → PubKey，按无符号字节序。
 func TestRankMintCandidates(t *testing.T) {
 	mh := func(b byte) types.MintHash {
 		var h types.MintHash
@@ -119,31 +150,35 @@ func TestRankMintCandidates(t *testing.T) {
 		return types.MustTxID(bytes.Repeat([]byte{b}, 48))
 	}
 
-	// 一级：MintHash 不同，值小者胜。
-	a := MintCandidate{MintHash: mh(0x01), TxID: tx(0xFF), MintPubKey: []byte{0xFF}}
-	b := MintCandidate{MintHash: mh(0x02), TxID: tx(0x00), MintPubKey: []byte{0x00}}
-	// 二级：MintHash 相同，TxID 小者胜。
-	c := MintCandidate{MintHash: mh(0x03), TxID: tx(0x01), MintPubKey: []byte{0xFF}}
-	d := MintCandidate{MintHash: mh(0x03), TxID: tx(0x02), MintPubKey: []byte{0x00}}
-	// 三级：MintHash 与 TxID 相同，PubKey 小者胜。
-	e := MintCandidate{MintHash: mh(0x04), TxID: tx(0x05), MintPubKey: []byte{0x01}}
-	f := MintCandidate{MintHash: mh(0x04), TxID: tx(0x05), MintPubKey: []byte{0x02}}
+	// 零级（一级）：Nonce 不同，值小者胜（MintHash 更大也因 Nonce 更小而胜）。
+	a0 := MintCandidate{Nonce: 1, MintHash: mh(0x01), TxID: tx(0xFF), MintPubKey: []byte{0xFF}}
+	b0 := MintCandidate{Nonce: 2, MintHash: mh(0x00), TxID: tx(0x00), MintPubKey: []byte{0x00}}
+	// 二级（Nonce 相同）：MintHash 不同，值小者胜。
+	c := MintCandidate{Nonce: 3, MintHash: mh(0x01), TxID: tx(0xFF), MintPubKey: []byte{0xFF}}
+	d := MintCandidate{Nonce: 3, MintHash: mh(0x02), TxID: tx(0x00), MintPubKey: []byte{0x00}}
+	// 三级：Nonce 与 MintHash 相同，TxID 小者胜。
+	e := MintCandidate{Nonce: 4, MintHash: mh(0x03), TxID: tx(0x01), MintPubKey: []byte{0xFF}}
+	f := MintCandidate{Nonce: 4, MintHash: mh(0x03), TxID: tx(0x02), MintPubKey: []byte{0x00}}
+	// 四级：Nonce / MintHash / TxID 相同，PubKey 小者胜。
+	g := MintCandidate{Nonce: 5, MintHash: mh(0x04), TxID: tx(0x05), MintPubKey: []byte{0x01}}
+	h := MintCandidate{Nonce: 5, MintHash: mh(0x04), TxID: tx(0x05), MintPubKey: []byte{0x02}}
 
-	in := []MintCandidate{f, d, b, e, c, a}
+	in := []MintCandidate{h, f, d, b0, g, e, c, a0}
 	RankMintCandidates(in)
 
-	wantOrder := []MintCandidate{a, b, c, d, e, f}
+	wantOrder := []MintCandidate{a0, b0, c, d, e, f, g, h}
 	for i := range wantOrder {
-		if in[i].MintHash != wantOrder[i].MintHash ||
-			in[i].TxID != wantOrder[i].TxID ||
-			!bytes.Equal(in[i].MintPubKey, wantOrder[i].MintPubKey) {
-			t.Fatalf("rank[%d] mismatch: got mh=%x tx=%x pk=%x",
-				i, in[i].MintHash[:1], in[i].TxID.Bytes()[:1], in[i].MintPubKey)
+		wi := wantOrder[i]
+		gi := in[i]
+		if gi.Nonce != wi.Nonce || gi.MintHash != wi.MintHash ||
+			gi.TxID != wi.TxID || !bytes.Equal(gi.MintPubKey, wi.MintPubKey) {
+			t.Fatalf("rank[%d] mismatch: got nonce=%d mh=%x tx=%x pk=%x",
+				i, gi.Nonce, gi.MintHash[:1], gi.TxID.Bytes()[:1], gi.MintPubKey)
 		}
 	}
 }
 
-// TestCompareMintCandidates 单独断言比较函数的符号。
+// TestCompareMintCandidates 单独断言比较函数的符号，含四级排序所有路径。
 func TestCompareMintCandidates(t *testing.T) {
 	mh := func(b byte) types.MintHash {
 		var h types.MintHash
@@ -161,27 +196,39 @@ func TestCompareMintCandidates(t *testing.T) {
 		want int // 负=a<b，0=相等，正=a>b
 	}{
 		{
-			name: "mint hash less",
-			a:    MintCandidate{MintHash: mh(0x01), TxID: tx(0xFF), MintPubKey: []byte{0xFF}},
-			b:    MintCandidate{MintHash: mh(0x02), TxID: tx(0x00), MintPubKey: []byte{0x00}},
+			name: "nonce less",
+			a:    MintCandidate{Nonce: 1, MintHash: mh(0xFF), TxID: tx(0xFF), MintPubKey: []byte{0xFF}},
+			b:    MintCandidate{Nonce: 2, MintHash: mh(0x00), TxID: tx(0x00), MintPubKey: []byte{0x00}},
+			want: -1,
+		},
+		{
+			name: "nonce greater",
+			a:    MintCandidate{Nonce: 5, MintHash: mh(0x01)},
+			b:    MintCandidate{Nonce: 3, MintHash: mh(0xFF)},
+			want: 1,
+		},
+		{
+			name: "mint hash less (same nonce)",
+			a:    MintCandidate{Nonce: 0, MintHash: mh(0x01), TxID: tx(0xFF), MintPubKey: []byte{0xFF}},
+			b:    MintCandidate{Nonce: 0, MintHash: mh(0x02), TxID: tx(0x00), MintPubKey: []byte{0x00}},
 			want: -1,
 		},
 		{
 			name: "tx id tiebreak",
-			a:    MintCandidate{MintHash: mh(0x03), TxID: tx(0x01), MintPubKey: []byte{0xFF}},
-			b:    MintCandidate{MintHash: mh(0x03), TxID: tx(0x02), MintPubKey: []byte{0x00}},
+			a:    MintCandidate{Nonce: 0, MintHash: mh(0x03), TxID: tx(0x01), MintPubKey: []byte{0xFF}},
+			b:    MintCandidate{Nonce: 0, MintHash: mh(0x03), TxID: tx(0x02), MintPubKey: []byte{0x00}},
 			want: -1,
 		},
 		{
 			name: "pubkey tiebreak",
-			a:    MintCandidate{MintHash: mh(0x04), TxID: tx(0x05), MintPubKey: []byte{0x01}},
-			b:    MintCandidate{MintHash: mh(0x04), TxID: tx(0x05), MintPubKey: []byte{0x02}},
+			a:    MintCandidate{Nonce: 0, MintHash: mh(0x04), TxID: tx(0x05), MintPubKey: []byte{0x01}},
+			b:    MintCandidate{Nonce: 0, MintHash: mh(0x04), TxID: tx(0x05), MintPubKey: []byte{0x02}},
 			want: -1,
 		},
 		{
 			name: "fully equal",
-			a:    MintCandidate{MintHash: mh(0x04), TxID: tx(0x05), MintPubKey: []byte{0x01}},
-			b:    MintCandidate{MintHash: mh(0x04), TxID: tx(0x05), MintPubKey: []byte{0x01}},
+			a:    MintCandidate{Nonce: 7, MintHash: mh(0x04), TxID: tx(0x05), MintPubKey: []byte{0x01}},
+			b:    MintCandidate{Nonce: 7, MintHash: mh(0x04), TxID: tx(0x05), MintPubKey: []byte{0x01}},
 			want: 0,
 		},
 	}
@@ -194,3 +241,4 @@ func TestCompareMintCandidates(t *testing.T) {
 		})
 	}
 }
+

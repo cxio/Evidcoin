@@ -11,14 +11,15 @@ const (
 	bestPoolTopExempt = 5
 )
 
-// BestPool 是按铸凭哈希三级升序排列、去重、容量受限的择优池。
+// BestPool 是按 Nonce 优先四级升序排列（Nonce → MintHash → TxID → PubKey）、
+// 去重、容量受限的择优池。
 // 值小者优先（排名靠前）；满池时仅当新候选优于当前最差者才进池并挤出最差者。
 // 仅池中后 15 名成员具同步发起权（前 5 名因利益相关性被排除）。
 //
 // 注：预选窗口（评参 -8 号、最多提前 7 个区块时段得知对比目标）是择优流程的
 // 时序约束，由调用方在合适时机注入候选者；本结构只维护池的有序去重与授权集。
 type BestPool struct {
-	// candidates 始终保持三级升序且无重复。
+	// candidates 始终保持四级升序（Nonce → MintHash → TxID → PubKey）且无重复。
 	candidates []MintCandidate
 }
 
@@ -37,7 +38,7 @@ func (p *BestPool) Candidates() []MintCandidate {
 	return out
 }
 
-// find 用二分查找定位与 c 三级全等的候选者下标；未找到返回应插入位置与 false。
+// find 用二分查找定位与 c 四级全等的候选者下标；未找到返回应插入位置与 false。
 func (p *BestPool) find(c MintCandidate) (idx int, found bool) {
 	i := sort.Search(len(p.candidates), func(i int) bool {
 		return CompareMintCandidates(p.candidates[i], c) >= 0

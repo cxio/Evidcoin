@@ -131,9 +131,18 @@ func HashAttachment(data []byte) types.AttachmentHash {
 	return h
 }
 
-// HashMint 对铸凭证明原像做哈希（BLAKE3-256 + mint.hash，32 字节）。
+// HashMint 对铸凭哈希列表拼接做最终哈希（BLAKE3-256 + mint.hash，32 字节，DEC-0301）。
+// data 为 Equi-X hashList 各项顺序拼接的字节。
 func HashMint(data []byte) types.MintHash {
 	return types.MintHash(blake3_256(tagMintHash, data))
+}
+
+// HashMintChallengeSeed 计算铸凭 Equi-X 挑战种子（纯 BLAKE3-256，无域标签，DEC-0301）。
+// ChallengeSeed 是 Equi-X 内部挑战值，不单独命名，不分配域标签（DEC-0002）。
+// preimage 为 MintHashPreimage.CanonicalBytes() 的输出。
+func HashMintChallengeSeed(preimage []byte) []byte {
+	h := blake3_256(preimage)
+	return h[:]
 }
 
 // SignatureMessageTag 返回 signature.message 域标签字节，供签名消息配置使用

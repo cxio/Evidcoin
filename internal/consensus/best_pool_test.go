@@ -20,7 +20,7 @@ func mkCandidate(b byte) MintCandidate {
 	}
 }
 
-// TestBestPoolKeepsAscending 断言池内始终按 MintHash 升序（值小者优）。
+// TestBestPoolKeepsAscending 断言池内始终按四级升序（Nonce → MintHash → TxID → PubKey，值小者优）。
 func TestBestPoolKeepsAscending(t *testing.T) {
 	p := NewBestPool()
 	for _, b := range []byte{0x05, 0x01, 0x03, 0x02, 0x04} {
