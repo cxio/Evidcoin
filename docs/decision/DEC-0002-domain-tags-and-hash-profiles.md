@@ -15,6 +15,7 @@ Conception 已指定区块头、交易头、树枝、附件、公钥哈希和铸
 - 域标签作为 ASCII 字符串常量直接进入哈希前像，不压缩为整数编号。
 - 同一算法不同用途必须使用不同标签，即使输入结构当前不可混淆。
 - 版本号位于标签头部（`v1`），用于未来协议升级时整体替换；当前所有标签均使用 `v1`。
+- 上述“前像首段必须为域标签”规则适用于链上命名的最终哈希输出；PoH 的 `ChallengeSeed` 属于 Equi-X 内部挑战值，不单独命名，不要求域标签。
 
 ### 域标签清单
 
@@ -44,7 +45,7 @@ Conception 已指定区块头、交易头、树枝、附件、公钥哈希和铸
 - 通用哈希树叶（默认）：`SHA3-384`。
 - 附件完整指纹：`SHA3-512`。
 - 公钥哈希：`SHA3-256(BLAKE2b-512(...))`。
-- 铸凭哈希：`BLAKE3-256`。
+- 铸凭哈希：两段式 profile，`ChallengeSeed = BLAKE3-256(MintPubKey || MintTxID || Stakes || RefMintHash || X)`；随后 `MintHash = BLAKE3-256(DomainTag("mint.hash") || hashList...)`，其中 `hashList` 来自 Equi-X 对 `ChallengeSeed` 的有效解答。
 - BLAKE3 不使用 keyed mode，所有用途统一为普通 hash 加域标签前缀。
 
 ### 附件片组哈希树的例外
