@@ -1,7 +1,6 @@
 package utco
 
 import (
-	"bytes"
 	"context"
 
 	"github.com/cxio/evidcoin/internal/tx"
@@ -15,8 +14,8 @@ import (
 // 并无统一的 Input 类型（实为 LeadInput/RestInput）。此处适配为传入待转出 entry
 // 与该输入的解锁脚本字节——验证器据此结合 entry.LockScript 执行栈式校验。
 //
-// 转移的不可变字段一致性（Creator/Title/Description/AttachmentID）由 Apply 在调用
-// 验证器前自行检查，不依赖验证器实现（第 07 章 §5）。
+// 转移后输出字段的约束（如哪些字段可变、是否要求产生新输出）由锁定脚本决定；
+// 状态层不施加硬性约束（第 07 章 §5）。
 type ScriptVerifier interface {
 	// VerifyCreditTransfer 校验对 entry 的一次凭信转移是否被 unlockScript 合法解锁。
 	VerifyCreditTransfer(ctx context.Context, entry Entry, unlockScript []byte) error
@@ -37,9 +36,9 @@ type NewOutput struct {
 	Credit tx.Credit
 }
 
-// Transfer 描述批次内一次凭信转移请求：来源类别、短引用、解锁脚本与新产生的
-// 凭信输出。凭信为一次性转移：消费旧 UTCO 并插入新 UTCO（第 07 章 §5），新输出
-// 仅可更换持有人（Receiver），不可变字段必须与旧凭信一致。
+// Transfer 描述批次内一次凭信转移请求：来源类别、短引用、解锁脚本与可选的新
+// 凭信输出。凭信为一次性消费：消费旧 UTCO 后，若 NewOutput 非 nil 则插入新 UTCO，
+// 若 NewOutput 为 nil 则视为凭信销毁（第 07 章 §5）。输出字段约束由锁定脚本决定。
 type Transfer struct {
 	// Kind 是输入来源类别，UTCO apply 仅接受 tx.InputCredit。
 	Kind tx.InputKind
@@ -47,8 +46,8 @@ type Transfer struct {
 	Ref tx.OutPoint
 	// UnlockScript 是解锁脚本字节，交给 ScriptVerifier。
 	UnlockScript []byte
-	// NewOutput 是转移后新产生的凭信输出。
-	NewOutput NewOutput
+	// NewOutput 是转移后新产生的凭信输出；nil 表示销毁，不产生新 UTCO。
+	NewOutput *NewOutput
 }
 
 // Batch 是一个区块对 UTCO 集的状态变更请求：先消费转移输入，再插入新输出。
@@ -67,16 +66,16 @@ type Batch struct {
 //
 // 阶段一（消费转移）：逐个处理转移。非凭信来源类别拒绝；引用解析仅针对批次开始
 // 前的有效（未转出且未过期）状态，故同批次新输出不可被引用（解析为 ErrNotFound）；
-// 转移前先校验不可变字段（Creator/Title/Description/AttachmentID）一致，再执行脚本
-// 验证，二者任一失败立即返回且不标记转出；通过后消费旧凭信，新输出延迟到阶段二插入。
+// 脚本验证失败立即返回且不标记转出；通过后消费旧凭信，新输出延迟到阶段二插入。
+// Transfer.NewOutput 为 nil 时视为凭信销毁，不产生新 UTCO（第 07 章 §5）。
 //
 // 阶段二（插入）：先插入各转移的新凭信，再插入批次新建输出；仅凭信且非自定义类
 // 进入 UTCO，其余（自定义类、币金、存证）跳过。
 //
 // 失败时可能留下部分变更，原子回滚由快照层（Task 8）承载。
 func Apply(ctx context.Context, s *Store, v ScriptVerifier, b Batch) error {
-	// 阶段一：消费转移，收集待插入的新凭信输出。
-	pending := make([]NewOutput, 0, len(b.Transfers))
+	// 阶段一：消费转移，收集待插入的新凭信输出（nil 表示销毁）。
+	pending := make([]*NewOutput, 0, len(b.Transfers))
 	for i := range b.Transfers {
 		t := b.Transfers[i]
 		if t.Kind != tx.InputCredit {
@@ -85,9 +84,6 @@ func Apply(ctx context.Context, s *Store, v ScriptVerifier, b Batch) error {
 		old, err := s.Resolve(t.Ref, b.CurrentHeight)
 		if err != nil {
 			return err
-		}
-		if !immutableFieldsEqual(old, t.NewOutput.Credit) {
-			return ErrCreditImmutableFieldChanged
 		}
 		if v != nil {
 			if err := v.VerifyCreditTransfer(ctx, old, t.UnlockScript); err != nil {
@@ -99,9 +95,12 @@ func Apply(ctx context.Context, s *Store, v ScriptVerifier, b Batch) error {
 		}
 		pending = append(pending, t.NewOutput)
 	}
-	// 阶段二：插入新凭信（转移产物在前，新建在后）。
+	// 阶段二：插入新凭信（转移产物在前，新建在后）；nil 跳过（销毁）。
 	for i := range pending {
-		if err := insertCredit(s, pending[i]); err != nil {
+		if pending[i] == nil {
+			continue
+		}
+		if err := insertCredit(s, *pending[i]); err != nil {
 			return err
 		}
 	}
@@ -134,11 +133,4 @@ func insertCredit(s *Store, o NewOutput) error {
 	return s.Put(entry)
 }
 
-// immutableFieldsEqual 报告新凭信输出是否保持了旧凭信的全部不可变字段
-// （Creator/Title/Description/AttachmentID）。转移仅可更换 Receiver（持有人）。
-func immutableFieldsEqual(old Entry, c tx.Credit) bool {
-	return bytes.Equal(old.Creator, c.Creator) &&
-		bytes.Equal(old.Title, c.Title) &&
-		bytes.Equal(old.Description, c.Description) &&
-		bytes.Equal(old.AttachmentID, c.AttachmentID)
-}
+

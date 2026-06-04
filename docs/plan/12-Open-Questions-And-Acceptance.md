@@ -64,7 +64,7 @@
 | `test/foundation_encoding_test.go` | 基础编码与 Hash 跨包一致性（DEC-0001/0002/0004） |
 | `test/header_chain_test.go` | 创世头、连续头、年块、`CheckRoot`（创世具体值 C-9 占位） |
 | `test/transaction_state_test.go` | Coin 创建、消费、销毁、重复消费拒绝 |
-| `test/credit_lifecycle_test.go` | Credit 创建、转移、到期、不可变字段拒绝 |
+| `test/credit_lifecycle_test.go` | Credit 创建、转移、到期、重复转移拒绝 |
 | `test/script_validation_test.go` | unlock + lock script 公共验证（成本 C-6 框架） |
 | `test/poh_pool_test.go` | 铸凭哈希排序、择优池、三段同步 |
 | `test/fork_choice_test.go` | 20/31/16 分叉规则、两步归一化、RandomX 平局 |

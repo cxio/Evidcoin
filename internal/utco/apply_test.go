@@ -59,13 +59,13 @@ func TestApplyCreatesCredit(t *testing.T) {
 
 func TestApplyTransferConsumesAndInserts(t *testing.T) {
 	s := NewStore()
-	old := newCreditEntry(2025, testTxID(0x10), 0) // Receiver=recv,Creator/Title/Description/AttachmentID 见 newCreditEntry
+	old := newCreditEntry(2025, testTxID(0x10), 0)
 	_ = s.Put(old)
 	v := &stubVerifier{}
-	newOut := creditCreation(2026, testTxID(0x50), 0, "bob") // 不可变字段同 newCreditEntry
+	newOut := creditCreation(2026, testTxID(0x50), 0, "bob")
 	b := Batch{
 		CurrentHeight: applyHeight,
-		Transfers:     []Transfer{{Kind: tx.InputCredit, Ref: fullRef(2025, old.TxID, 0), NewOutput: newOut}},
+		Transfers:     []Transfer{{Kind: tx.InputCredit, Ref: fullRef(2025, old.TxID, 0), NewOutput: &newOut}},
 	}
 	if err := Apply(context.Background(), s, v, b); err != nil {
 		t.Fatalf("Apply: %v", err)
@@ -86,22 +86,49 @@ func TestApplyTransferConsumesAndInserts(t *testing.T) {
 	}
 }
 
-func TestApplyTransferImmutableChangeRejected(t *testing.T) {
+func TestApplyTransferDestroys(t *testing.T) {
+	// Transfer.NewOutput == nil 视为凭信销毁：消费旧 UTCO，不产生新 UTCO（第 07 章 §5）。
+	s := NewStore()
+	old := newCreditEntry(2025, testTxID(0x10), 0)
+	_ = s.Put(old)
+	b := Batch{
+		CurrentHeight: applyHeight,
+		Transfers:     []Transfer{{Kind: tx.InputCredit, Ref: fullRef(2025, old.TxID, 0), NewOutput: nil}},
+	}
+	if err := Apply(context.Background(), s, &stubVerifier{}, b); err != nil {
+		t.Fatalf("Apply destroy: %v", err)
+	}
+	oldGot, _ := s.Get(old.OutPoint())
+	if !oldGot.Spent {
+		t.Fatalf("destroyed credit must be marked spent")
+	}
+	// 不应产生任何新 UTCO。
+	if _, err := s.Get(OutPoint{Year: 2026, TxID: testTxID(0x50), OutIndex: 0}); !errors.Is(err, ErrNotFound) {
+		t.Fatalf("destroy must not insert new UTCO, got %v", err)
+	}
+}
+
+func TestApplyTransferImmutableChangeAllowed(t *testing.T) {
+	// 转移后新输出的字段（Creator/Title 等）可自由变更——约束由脚本决定，状态层不限制（第 07 章 §5）。
 	s := NewStore()
 	old := newCreditEntry(2025, testTxID(0x10), 0)
 	_ = s.Put(old)
 	newOut := creditCreation(2026, testTxID(0x50), 0, "bob")
-	newOut.Credit.Creator = []byte("tampered") // 篡改不可变字段
+	newOut.Credit.Creator = []byte("new-creator")
+	newOut.Credit.Title = []byte("new-title")
 	b := Batch{
 		CurrentHeight: applyHeight,
-		Transfers:     []Transfer{{Kind: tx.InputCredit, Ref: fullRef(2025, old.TxID, 0), NewOutput: newOut}},
+		Transfers:     []Transfer{{Kind: tx.InputCredit, Ref: fullRef(2025, old.TxID, 0), NewOutput: &newOut}},
 	}
-	if err := Apply(context.Background(), s, &stubVerifier{}, b); !errors.Is(err, ErrCreditImmutableFieldChanged) {
-		t.Fatalf("expected ErrCreditImmutableFieldChanged, got %v", err)
+	if err := Apply(context.Background(), s, &stubVerifier{}, b); err != nil {
+		t.Fatalf("Apply must allow changed credit fields, got %v", err)
 	}
-	oldGot, _ := s.Get(old.OutPoint())
-	if oldGot.Spent {
-		t.Fatalf("old credit must not be consumed when transfer is rejected")
+	newGot, err := s.Get(OutPoint{Year: 2026, TxID: testTxID(0x50), OutIndex: 0})
+	if err != nil {
+		t.Fatalf("new UTCO must be inserted: %v", err)
+	}
+	if string(newGot.Creator) != "new-creator" {
+		t.Fatalf("creator = %q, want new-creator", newGot.Creator)
 	}
 }
 
@@ -113,7 +140,7 @@ func TestApplyTransferScriptFailure(t *testing.T) {
 	newOut := creditCreation(2026, testTxID(0x50), 0, "bob")
 	b := Batch{
 		CurrentHeight: applyHeight,
-		Transfers:     []Transfer{{Kind: tx.InputCredit, Ref: fullRef(2025, old.TxID, 0), NewOutput: newOut}},
+		Transfers:     []Transfer{{Kind: tx.InputCredit, Ref: fullRef(2025, old.TxID, 0), NewOutput: &newOut}},
 	}
 	if err := Apply(context.Background(), s, &stubVerifier{err: verifyErr}, b); !errors.Is(err, verifyErr) {
 		t.Fatalf("expected script error, got %v", err)
@@ -132,7 +159,7 @@ func TestApplyRejectsNonCreditInput(t *testing.T) {
 		newOut := creditCreation(2026, testTxID(0x50), 0, "bob")
 		b := Batch{
 			CurrentHeight: applyHeight,
-			Transfers:     []Transfer{{Kind: kind, Ref: fullRef(2025, old.TxID, 0), NewOutput: newOut}},
+			Transfers:     []Transfer{{Kind: kind, Ref: fullRef(2025, old.TxID, 0), NewOutput: &newOut}},
 		}
 		if err := Apply(context.Background(), s, &stubVerifier{}, b); !errors.Is(err, ErrInputKindInvalid) {
 			t.Fatalf("kind %d: expected ErrInputKindInvalid, got %v", kind, err)
@@ -161,7 +188,7 @@ func TestApplySameBlockReferenceRejected(t *testing.T) {
 	sameBlockTx := testTxID(0x30)
 	creation := creditCreation(2025, sameBlockTx, 0, "alice")
 	newOut := creditCreation(2026, testTxID(0x50), 0, "alice")
-	transfer := Transfer{Kind: tx.InputCredit, Ref: fullRef(2025, sameBlockTx, 0), NewOutput: newOut}
+	transfer := Transfer{Kind: tx.InputCredit, Ref: fullRef(2025, sameBlockTx, 0), NewOutput: &newOut}
 	s := NewStore()
 	b := Batch{CurrentHeight: applyHeight, Creations: []NewOutput{creation}, Transfers: []Transfer{transfer}}
 	if err := Apply(context.Background(), s, &stubVerifier{}, b); !errors.Is(err, ErrNotFound) {

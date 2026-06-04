@@ -58,8 +58,8 @@ func TestSnapshotRestoreAfterFailedApply(t *testing.T) {
 	b := Batch{
 		CurrentHeight: applyHeight,
 		Transfers: []Transfer{
-			{Kind: tx.InputCredit, Ref: fullRef(2025, c1.TxID, 0), NewOutput: creditCreation(2026, testTxID(0x50), 0, "bob")},
-			{Kind: tx.InputCoin, Ref: fullRef(2025, c2.TxID, 0), NewOutput: creditCreation(2026, testTxID(0x51), 0, "carol")},
+			{Kind: tx.InputCredit, Ref: fullRef(2025, c1.TxID, 0), NewOutput: func() *NewOutput { v := creditCreation(2026, testTxID(0x50), 0, "bob"); return &v }()},
+			{Kind: tx.InputCoin, Ref: fullRef(2025, c2.TxID, 0), NewOutput: func() *NewOutput { v := creditCreation(2026, testTxID(0x51), 0, "carol"); return &v }()},
 		},
 	}
 	if err := Apply(context.Background(), s, nil, b); err == nil {

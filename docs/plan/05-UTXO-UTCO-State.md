@@ -177,14 +177,18 @@ git commit -m "feat: apply utxo state transitions"
 
 - 新建 Credit 插入 UTCO。
 - 转移 Credit 消费旧 UTCO 并插入新 UTCO（一次性转移，proposal 07 §5）。
-- payload 不可变字段（创建者/标题/描述/附件 ID）变更拒绝。
+- 转移时 `Transfer.NewOutput` 为 nil，视为凭信销毁：旧 UTCO 消费，不产生新 UTCO。
+- 转移后新输出的 Creator/Title 等字段可自由变更，状态层不施加硬性约束；字段约束由锁定脚本决定（第 07 章 §5）。
+- 同一输出重复转出/消费拒绝。
 - 过期 Credit（`age > 31 × 87661`）在区块结束清理：状态位失效，同 TxID 无任何有效 Credit 时删除该 UTCO 叶（proposal 09 §6）。
 - 同 TxID 仍有其它未转出且未过期 Credit 时保留叶并 `Count` 递减。
 - 同一区块 A 输出被 B 输入引用时拒绝，无论 A 是否在 B 之前；输入只能引用已确认历史区块中的 UTCO。
 
 **Step 2: 实现**
 
-定义 `ScriptVerifier` 接口，由调用方注入。Credit 转移验证必须同时检查签名/脚本结果和 payload 不可变字段。
+定义 `ScriptVerifier` 接口，由调用方注入。Credit 转移仅需验证解锁脚本/签名；
+字段约束（如 Creator/Title 是否可变）由脚本逻辑决定，状态层不施加硬性约束。
+`Transfer.NewOutput` 为 `*NewOutput`：非 nil 时消费并插入新凭信，nil 时视为销毁（只消费不插入）。
 
 **Step 3: 验证并提交**
 
