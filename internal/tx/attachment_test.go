@@ -44,12 +44,9 @@ func TestAttachmentEncodeNoPiece(t *testing.T) {
 	body = append(body, fpBytes(0xAA).Bytes()...)
 	body = types.AppendUint16BE(body, 0)
 	body = types.AppendVarUint(body, 1000)
-	want := append([]byte{byte(1 + len(body))}, body...)
+	want := body
 	if !bytes.Equal(got, want) {
 		t.Fatalf("无分片编码不匹配\n got=%x\nwant=%x", got, want)
-	}
-	if int(got[0]) != len(got) {
-		t.Fatalf("总长字节应等于整个结构长度: total=%d len=%d", got[0], len(got))
 	}
 }
 
@@ -73,7 +70,7 @@ func TestAttachmentEncodeWithPiece(t *testing.T) {
 		body = types.AppendUint16BE(body, pc)
 		body = append(body, ghBytes(0xCC).Bytes()...)
 		body = types.AppendVarUint(body, 2<<20)
-		want := append([]byte{byte(1 + len(body))}, body...)
+		want := body
 		if !bytes.Equal(got, want) {
 			t.Fatalf("含分片编码不匹配(pc=%d)\n got=%x\nwant=%x", pc, got, want)
 		}

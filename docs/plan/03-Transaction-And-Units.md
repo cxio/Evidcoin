@@ -200,7 +200,7 @@ git commit -m "feat: add credit payload"
 测试（proposal 07 §2/§4/§6）：
 
 - Proof payload 编码为 `Creator(<256) || Title(<256) || Content(≤2KB) || AttachmentID(optional)`；无接收者字段，不可作为输入。
-- AttachmentID 结构：`总长(1B<256) || 类型(2B) || 指纹(64B SHA3-512) || 分片数(2B) || 片组哈希(32B BLAKE3-256) || 大小(varint)`；分片数 `0` 时片组哈希字段不编码，`1` 时计算但无树，`>1` 时为含序片组树根。
+- AttachmentID 结构：`类型(2B) || 指纹(64B SHA3-512) || 分片数(2B) || 片组哈希(32B BLAKE3-256) || 大小(varint)`；编码长度由外层 varint(length) 表达，字节数须 <256；分片数 `0` 时片组哈希字段不编码，`1` 时计算但无树，`>1` 时为含序片组树根。
 - 附件指纹 64B 用 `attachment.fingerprint` 域 + SHA3-512；片组哈希 32B 走免域标签 BLAKE3-256 路径（第 01 章 hashtree）。
 - Mediator（介管脚本）属存证类（类型 3），不可作为输入项，由脚本 `GOTO/EMBED` 引用。
 - Custom（`bit7=1`，≤127B 私有 ID）不进入 UTXO/UTCO，不能作为公共输入源；节点仅校验编码合法性。

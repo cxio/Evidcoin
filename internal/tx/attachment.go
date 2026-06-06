@@ -7,11 +7,10 @@ import "github.com/cxio/evidcoin/pkg/types"
 //
 // 规范编码（Encode）顺序：
 //
-//	Total(1B) || Type(2B) || Fingerprint(64B) || PieceCount(2B,BE) ||
+//	Type(2B) || Fingerprint(64B) || PieceCount(2B,BE) ||
 //	[GroupHash(32B) if PieceCount>=1] || Size(varint)
 //
-// Total 为整个结构编码后的总字节数（含 Total 字节自身），须 <256；
-// 该取值口径对应「ID 总长 = 整个附件 ID 结构长度（包含结构）」（第 07 章 §4）。
+// 编码长度由外层 varint(length) 表达（第 07 章 §4），编码字节数须 <256。
 type AttachmentID struct {
 	// Type 是附件类型：前字节大类、后字节小类（参考 HTML:MIME 分类）。
 	Type [2]byte
@@ -28,7 +27,7 @@ type AttachmentID struct {
 
 // Encode 返回附件 ID 结构的规范编码（第 07 章 §4）。
 // PieceCount 为 0 时省略片组哈希字段；>=1 时编码 32 字节片组哈希。
-// 当整个结构长度（含总长字节）超过 255 时返回 ErrAttachmentIDTooLong。
+// 当编码字节数超过 255 时返回 ErrAttachmentIDTooLong。
 func (a AttachmentID) Encode() ([]byte, error) {
 	var body []byte
 	body = append(body, a.Type[0], a.Type[1])
@@ -38,12 +37,8 @@ func (a AttachmentID) Encode() ([]byte, error) {
 		body = append(body, a.GroupHash.Bytes()...)
 	}
 	body = types.AppendVarUint(body, a.Size)
-	total := 1 + len(body)
-	if total > 255 {
+	if len(body) > 255 {
 		return nil, ErrAttachmentIDTooLong
 	}
-	dst := make([]byte, 0, total)
-	dst = append(dst, byte(total))
-	dst = append(dst, body...)
-	return dst, nil
+	return body, nil
 }
