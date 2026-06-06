@@ -22,7 +22,7 @@ type ScriptVerifier interface {
 }
 
 // NewOutput 描述批次内一个新产生的输出及其定位信息。仅凭信（TypeCredit）且非
-// 自定义类的输出进入 UTCO；自定义类、币金、存证类被跳过（第 06、09 章）。
+// 仅凯信类输出进入 UTCO；币金、存证被跳过（第 06〉09 章）。摘要标记不影响归属。
 type NewOutput struct {
 	// Year 是产生该输出的交易年度。
 	Year uint64
@@ -30,7 +30,7 @@ type NewOutput struct {
 	TxID types.TxID
 	// Height 是产生该输出的区块高度，用于计算币龄与过期。
 	Height uint32
-	// Output 是输出 envelope（提供 Serial、IsCustom、Type、LockScript）。
+	// Output 是输出 envelope（提供 Serial、Type、LockScript）。
 	Output tx.Output
 	// Credit 是凭信详情，仅当 Output 为凭信类型时有意义。
 	Credit tx.Credit
@@ -112,10 +112,10 @@ func Apply(ctx context.Context, s *Store, v ScriptVerifier, b Batch) error {
 	return nil
 }
 
-// insertCredit 将一个新产生的输出按规则插入 UTCO：仅凭信且非自定义类进入状态集，
-// 其余（自定义类、币金、存证）跳过且不报错。
+// 仅凭信且非自定义类进入状态集，
+// 其余（币金、存证）跳过且不报错。
 func insertCredit(s *Store, o NewOutput) error {
-	if o.Output.IsCustom || o.Output.Type != tx.TypeCredit {
+	if o.Output.Type != tx.TypeCredit {
 		return nil
 	}
 	entry := Entry{

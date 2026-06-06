@@ -8,7 +8,7 @@ import (
 )
 
 // TestOutputConfigStandard 校验标准类输出 Config 字节布局：
-// bit[3:0] 类型值，bit7=0，bit4-bit6 未使用（始终为 0）。
+// bit[3:0] 类型值，高 4 位无摘要标记时全为 0。
 func TestOutputConfigStandard(t *testing.T) {
 	tests := []struct {
 		name string
@@ -29,41 +29,46 @@ func TestOutputConfigStandard(t *testing.T) {
 			if got != tc.want {
 				t.Fatalf("Config = %#x, 期望 %#x", got, tc.want)
 			}
-			// bit7 必须为 0（非自定义类）；bit4-bit6 未使用，必须为 0。
+			// 无摘要标记时高 4 位应全为 0。
 			if got&0xF0 != 0 {
-				t.Fatalf("标准类 Config 高 4 位应全为 0, got=%#x", got)
+				t.Fatalf("无摘要标记时 Config 高 4 位应全为 0, got=%#x", got)
 			}
 		})
 	}
 }
 
-// TestOutputConfigCustom 校验自定义类输出 Config：bit7=1，低 7 位为类 ID 长度计数。
-func TestOutputConfigCustom(t *testing.T) {
-	id := bytes.Repeat([]byte{0xEE}, 10)
-	o := Output{IsCustom: true, CustomID: id}
-	got, err := o.Config()
-	if err != nil {
-		t.Fatalf("Config: %v", err)
+// TestOutputConfigDigestFlags 校验摘要标记正确写入 Config 高 4 位（DEC-0101）。
+func TestOutputConfigDigestFlags(t *testing.T) {
+	tests := []struct {
+		name  string
+		flags uint8
+		typ   OutputType
+		want  byte
+	}{
+		{"content+script", DigestContent | DigestScript, TypeCoin, 0x61},
+		{"account", DigestAccount, TypeCredit, 0x82},
+		{"all three", DigestAccount | DigestContent | DigestScript, TypeProof, 0xE3},
+		{"none", 0, TypeCoin, 0x01},
 	}
-	if got != (0x80 | 10) {
-		t.Fatalf("自定义类 Config = %#x, 期望 %#x", got, 0x80|10)
-	}
-
-	// 编码须包含 CustomID 字节本身。
-	b, err := o.appendCanonical(nil)
-	if err != nil {
-		t.Fatalf("appendCanonical: %v", err)
-	}
-	if b[0] != (0x80|10) || !bytes.Contains(b, id) {
-		t.Fatalf("自定义类编码缺少 Config 或 CustomID: %x", b)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			o := Output{DigestFlags: tc.flags, Type: tc.typ}
+			got, err := o.Config()
+			if err != nil {
+				t.Fatalf("Config: %v", err)
+			}
+			if got != tc.want {
+				t.Fatalf("Config = %#x, 期望 %#x", got, tc.want)
+			}
+		})
 	}
 }
 
-// TestOutputCustomIDTooLong 校验自定义类 ID 超过 127 字节被拒绝。
-func TestOutputCustomIDTooLong(t *testing.T) {
-	o := Output{IsCustom: true, CustomID: bytes.Repeat([]byte{0x00}, 128)}
+// TestOutputDigestFlagsBit4Rejected 校验 bit4 置位被拒绝（未用位）。
+func TestOutputDigestFlagsBit4Rejected(t *testing.T) {
+	o := Output{DigestFlags: 0x10, Type: TypeCoin} // bit4 非法
 	if _, err := o.Config(); err == nil {
-		t.Fatal("CustomID 长度 128 应被拒绝")
+		t.Fatal("bit4 置位应被拒绝")
 	}
 }
 
@@ -77,7 +82,7 @@ func TestOutputReservedTypeRejected(t *testing.T) {
 	}
 }
 
-// TestOutputInState 校验自定义类与存证不进入 UTXO/UTCO，币金/凭信进入。
+// TestOutputInState 校验存证不进入 UTXO/UTCO，币金/凭信进入；摘要标记不影响归属。
 func TestOutputInState(t *testing.T) {
 	if !(Output{Type: TypeCoin}).InState() {
 		t.Error("币金输出应进入 UTXO")
@@ -88,8 +93,9 @@ func TestOutputInState(t *testing.T) {
 	if (Output{Type: TypeProof}).InState() {
 		t.Error("存证输出不应进入状态集")
 	}
-	if (Output{IsCustom: true, CustomID: []byte{0x01}}).InState() {
-		t.Error("自定义类输出不应进入状态集")
+	// 摘要标记不改变状态归属。
+	if !(Output{DigestFlags: DigestContent | DigestScript, Type: TypeCoin}).InState() {
+		t.Error("带摘要标记的币金输出仍应进入 UTXO")
 	}
 }
 

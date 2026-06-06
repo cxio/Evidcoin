@@ -89,7 +89,6 @@ func TestCoinbaseOutputsOnlyCoin(t *testing.T) {
 	cases := []Output{
 		{Serial: 0, Type: TypeCredit},
 		{Serial: 0, Type: TypeProof},
-		{Serial: 0, IsCustom: true},
 	}
 	for _, bad := range cases {
 		if err := ValidateCoinbaseOutputs([]Output{coin, bad}); err == nil {

@@ -13,8 +13,8 @@ var (
 	ErrUnlockScriptTooLong = errors.New("tx: unlock script exceeds maximum length")
 	// ErrInputKindInvalid 表示其余输入来源类别非法（仅允许币金/凭信，存证不可作输入源）。
 	ErrInputKindInvalid = errors.New("tx: input kind must be coin or credit")
-	// ErrCustomIDTooLong 表示自定义类私有标识 ID 超过 127 字节。
-	ErrCustomIDTooLong = errors.New("tx: custom class id exceeds 127 bytes")
+	// ErrOutputDigestFlags 表示 Config 字节中 bit4 或低 4 位出现非法置位（仅 bit7/6/5 允许）。
+	ErrOutputDigestFlags = errors.New("tx: invalid digest flag bits in output config")
 	// ErrOutputType 表示输出类型值为预留(0)或未知（非法位置）。
 	ErrOutputType = errors.New("tx: invalid output type value")
 	// ErrLockScriptTooLong 表示锁定脚本超过 MaxLockScript。

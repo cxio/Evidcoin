@@ -28,8 +28,8 @@ type SpendRef struct {
 	UnlockScript []byte
 }
 
-// NewOutput 描述批次内一个新产生的输出及其定位信息。仅币金且非自定义类的输出
-// 进入 UTXO；自定义类与存证类被跳过（第 06、09 章）。
+// NewOutput 描述批次内一个新产生的输出及其定位信息。仅币金类输出
+// 进入 UTXO；存证/凭信被跳过（第 06〉09 章）。摘要标记不影响状态归属。
 type NewOutput struct {
 	// Year 是产生该输出的交易年度。
 	Year uint64
@@ -37,7 +37,7 @@ type NewOutput struct {
 	TxID types.TxID
 	// Height 是产生该输出的区块高度。
 	Height uint32
-	// Output 是输出 envelope（提供 Serial、IsCustom、Type、LockScript）。
+	// Output 是输出 envelope（提供 Serial、Type、LockScript）。
 	Output tx.Output
 	// Coin 是币金详情，仅当 Output 为币金类型时有意义。
 	Coin tx.Coin
@@ -83,8 +83,8 @@ func Apply(ctx context.Context, s *Store, v ScriptVerifier, b Batch) error {
 	}
 	for i := range b.Outputs {
 		o := b.Outputs[i]
-		// 仅币金且非自定义类进入 UTXO；自定义类与存证/凭信跳过。
-		if o.Output.IsCustom || o.Output.Type != tx.TypeCoin {
+		// 仅币金类输出进入 UTXO；存证/凭信跳过。摘要标记不影响归属。
+		if o.Output.Type != tx.TypeCoin {
 			continue
 		}
 		entry := Entry{

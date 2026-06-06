@@ -167,20 +167,22 @@ func TestApplyRejectsNonCreditInput(t *testing.T) {
 	}
 }
 
-func TestApplyCustomCreationSkipped(t *testing.T) {
+// TestApplyNonCreditCreationSkipped 校验存证/币金输出不进入 UTCO（只有凭信进入）。
+func TestApplyNonCreditCreationSkipped(t *testing.T) {
 	s := NewStore()
+	// 存证类（TypeProof）输出不应进入 UTCO。
 	out := NewOutput{
 		Year:   2025,
 		TxID:   testTxID(0x30),
 		Height: 10,
-		Output: tx.Output{Serial: 0, IsCustom: true, CustomID: []byte{0x01}, LockScript: []byte{0x01}},
+		Output: tx.Output{Serial: 0, Type: tx.TypeProof, LockScript: []byte{0x01}},
 	}
 	b := Batch{CurrentHeight: applyHeight, Creations: []NewOutput{out}}
 	if err := Apply(context.Background(), s, &stubVerifier{}, b); err != nil {
 		t.Fatalf("Apply: %v", err)
 	}
 	if _, err := s.Get(OutPoint{Year: 2025, TxID: testTxID(0x30), OutIndex: 0}); !errors.Is(err, ErrNotFound) {
-		t.Fatalf("custom output must not enter UTCO, got %v", err)
+		t.Fatalf("proof output must not enter UTCO, got %v", err)
 	}
 }
 

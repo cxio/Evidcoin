@@ -11,7 +11,7 @@ func SumCoinOutputs(outputs []Output) (types.Amount, error) {
 	var sum uint64
 	for i := range outputs {
 		o := outputs[i]
-		if o.IsCustom || o.Type != TypeCoin {
+		if o.Type != TypeCoin {
 			continue
 		}
 		amount, _, err := types.ReadVarUint(o.Payload)

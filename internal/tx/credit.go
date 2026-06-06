@@ -62,12 +62,12 @@ func CreditExpired(age uint64) bool {
 }
 
 // ValidateCreditOutputCount 校验输出集中的凭信输出数量不超过 MaxCreditOutputsPerTx。
-// 仅统计入状态集的标准凭信输出（自定义类不计）。超过则返回 ErrTooManyCreditOutputs。
+// 仅统计入状态集的标准凭信输出。超过则返回 ErrTooManyCreditOutputs。
 func ValidateCreditOutputCount(outputs []Output) error {
 	count := 0
 	for i := range outputs {
 		o := outputs[i]
-		if !o.IsCustom && o.Type == TypeCredit {
+		if o.Type == TypeCredit {
 			count++
 		}
 	}

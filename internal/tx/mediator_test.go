@@ -9,9 +9,6 @@ import (
 func TestMediatorIsProofClass(t *testing.T) {
 	script := []byte{0x01, 0x02, 0x03}
 	o := NewMediatorOutput(script)
-	if o.IsCustom {
-		t.Fatal("介管脚本不应是自定义类")
-	}
 	if o.Type != TypeProof {
 		t.Fatalf("介管脚本类型应为存证(3)，got=%d", o.Type)
 	}
