@@ -97,20 +97,20 @@ func TestApplyInsertsCoinOutput(t *testing.T) {
 	}
 }
 
-func TestApplyCustomOutputSkipped(t *testing.T) {
+func TestApplyNonCoinOutputSkipped(t *testing.T) {
 	s := NewStore()
 	out := NewOutput{
 		Year:   2025,
 		TxID:   testTxID(0x30),
 		Height: 10,
-		Output: tx.Output{Serial: 0, IsCustom: true, CustomID: []byte{0x01}, LockScript: []byte{0x01}},
+		Output: tx.Output{Serial: 0, Type: tx.TypeProof, LockScript: []byte{0x01}},
 	}
 	b := Batch{Outputs: []NewOutput{out}}
 	if err := Apply(context.Background(), s, &stubVerifier{}, b); err != nil {
 		t.Fatalf("Apply: %v", err)
 	}
 	if _, err := s.Get(OutPoint{Year: 2025, TxID: testTxID(0x30), OutIndex: 0}); !errors.Is(err, ErrNotFound) {
-		t.Fatalf("custom output must not enter UTXO, got %v", err)
+		t.Fatalf("non-coin output must not enter UTXO, got %v", err)
 	}
 }
 
