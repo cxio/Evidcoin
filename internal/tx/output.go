@@ -34,8 +34,6 @@ type Output struct {
 	CustomID []byte
 	// Type 是标准类型值（仅非自定义类时有效）。
 	Type OutputType
-	// HasAttachment 是包含附件标记（Config bit6，仅标准类时有效）。
-	HasAttachment bool
 	// Payload 是信元载荷字节（三类编码见 coin.go/credit.go/proof.go）。
 	Payload []byte
 	// LockScript 是锁定脚本，长度受 MaxLockScript 限制。
@@ -44,7 +42,7 @@ type Output struct {
 
 // Config 计算输出公共头配置字节（第 06 章 §6）。
 // 自定义类（IsCustom）：bit7=1，低 7 位为 CustomID 长度计数（≤127）。
-// 标准类：bit6=HasAttachment，bit[3:0]=类型值（须为币金/凭信/存证之一）。
+// 标准类：bit[3:0]=类型值（须为币金/凭信/存证之一）。
 func (o Output) Config() (byte, error) {
 	if o.IsCustom {
 		if len(o.CustomID) > maxCustomIDLen {
@@ -58,12 +56,7 @@ func (o Output) Config() (byte, error) {
 		// 预留类型值 0 与未知类型值（非法位置）一律拒绝。
 		return 0, ErrOutputType
 	}
-	var cfg byte
-	if o.HasAttachment {
-		cfg |= 0x40
-	}
-	cfg |= byte(o.Type)
-	return cfg, nil
+	return byte(o.Type), nil
 }
 
 // InState 报告该输出是否进入 UTXO/UTCO 状态集并可作为后续输入源。

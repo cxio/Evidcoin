@@ -8,23 +8,20 @@ import (
 )
 
 // TestOutputConfigStandard 校验标准类输出 Config 字节布局：
-// bit6 包含附件标记，bit[3:0] 类型值，bit7=0。
+// bit[3:0] 类型值，bit7=0，bit4-bit6 未使用（始终为 0）。
 func TestOutputConfigStandard(t *testing.T) {
 	tests := []struct {
-		name       string
-		typ        OutputType
-		attachment bool
-		want       byte
+		name string
+		typ  OutputType
+		want byte
 	}{
-		{"coin", TypeCoin, false, 0x01},
-		{"credit", TypeCredit, false, 0x02},
-		{"proof", TypeProof, false, 0x03},
-		{"coin+attachment", TypeCoin, true, 0x41},
-		{"credit+attachment", TypeCredit, true, 0x42},
+		{"coin", TypeCoin, 0x01},
+		{"credit", TypeCredit, 0x02},
+		{"proof", TypeProof, 0x03},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			o := Output{Type: tc.typ, HasAttachment: tc.attachment}
+			o := Output{Type: tc.typ}
 			got, err := o.Config()
 			if err != nil {
 				t.Fatalf("Config: %v", err)
@@ -32,9 +29,9 @@ func TestOutputConfigStandard(t *testing.T) {
 			if got != tc.want {
 				t.Fatalf("Config = %#x, 期望 %#x", got, tc.want)
 			}
-			// bit7 必须为 0（非自定义类）。
-			if got&0x80 != 0 {
-				t.Fatalf("标准类 Config bit7 应为 0, got=%#x", got)
+			// bit7 必须为 0（非自定义类）；bit4-bit6 未使用，必须为 0。
+			if got&0xF0 != 0 {
+				t.Fatalf("标准类 Config 高 4 位应全为 0, got=%#x", got)
 			}
 		})
 	}
