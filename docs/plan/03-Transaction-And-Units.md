@@ -1,6 +1,6 @@
 # Transaction And Units Implementation Plan
 
-**Goal:** 实现交易头（普通/Coinbase）、输入模型、输出 envelope、Coin/Credit/Proof/Mediator/Custom payload、交易输入/输出哈希与 Coinbase 结构边界（签名消息与见证容器见第 04 章）。
+**Goal:** 实现交易头（普通/Coinbase）、输入模型、输出 envelope、Coin/Credit/Proof/Mediator payload、交易输入/输出哈希与 Coinbase 结构边界（签名消息与见证容器见第 04 章）。
 
 **Architecture:** `internal/tx/` 只表达交易数据、规范化编码、Hash 和本地可判定的结构规则；状态可用性、脚本执行、PoH 资格和完整 Coinbase 奖励结算通过接口或后续层处理。交易包可依赖 `pkg/types`、`pkg/crypto`、`pkg/hashtree` 和 `internal/blockchain` 的链身份类型，但不能依赖状态、脚本或共识具体实现。
 
@@ -15,7 +15,7 @@
 - `docs/proposal/14.Incentives-And-Coinbase.md` 的 Coinbase 头与交易费边界
 - 依赖 `docs/proposal/01.Types-And-Encoding.md`、`04.Hash-Trees.md`
 - DEC-0003：普通/Coinbase 交易头字段顺序与 `MintPKHash` 编码差异；Coinbase **无 `HashInputs` 字段**。
-- DEC-0101：交易体编码、输入项编码、输出公共头（Config 字节、**无销毁位**）、三类 payload、可选字段 `varint(0)`、自定义类不进 UTXO/UTCO、重复输入非法、Credit 31 年过期边界。
+- DEC-0101：交易体编码、输入项编码、输出公共头（Config 字节、摘要标记、**无销毁位**）、三类 payload、可选字段 `varint(0)`、重复输入非法、Credit 31 年过期边界。
 - DEC-0401（引用）：Coinbase 只允许 Coin 输出、奖励余数与 `BurnCoin` 销毁，金额单位 `chx`（详见第 10 章）。
 - 单位 C-8 已裁决：Coin `Amount` 以 `chx` 为协议单位（`1 Bi = 10^8 chx`，见第 01 章）。
 - 签名消息与见证容器移至第 04 章（DEC-0102/0103/0104）。
@@ -44,7 +44,6 @@
 | `internal/tx/proof.go` | Proof payload |
 | `internal/tx/attachment.go` | `AttachmentID`、片组树引用 |
 | `internal/tx/mediator.go` | Mediator payload |
-| `internal/tx/custom.go` | Custom payload 边界 |
 | `internal/tx/coinbase.go` | Coinbase 结构骨架和位置规则 |
 | `internal/tx/validate.go` | 本地结构验证 |
 | `internal/tx/errors.go` | 错误定义 |
@@ -120,12 +119,14 @@ git commit -m "feat: add transaction input hashing"
 
 测试（DEC-0101，Config 字节）：
 
-- `bit7` 自定义类：置位时余下低 7 位为类 ID 长度计数（≤127）。
-- `bit6` 未使用。
+- `bit7` 账户摘要：接收者使用哈希摘要参与计算输出项哈希。
+- `bit6` 内容摘要：内容部分使用哈希摘要参与计算输出项哈希。
+- `bit5` 脚本摘要：锁定脚本使用哈希摘要参与计算输出项哈希。
+- `bit4` 未使用且必须保持未置位。
 - `bit[3:0]` 类型值：`0=预留 / 1=币金 / 2=凭信 / 3=存证`；介管脚本属存证（类型 3）。
+- 摘要标记只影响输出项哈希/证明前像，不改变 payload 编码、输出类型、状态归属或签名授权；“内容”是除锁定脚本和接收者之外的条目。
 - 附件等可选字段由 `varint(length)` 表达缺省，`length==0` 表示未提供，不引入位图位。
 - **无销毁位**：普通交易不可销毁币金（销毁仅由 Coinbase `BurnCoin` 表达）；以空 `Receiver` 表达销毁的交易必须拒绝。
-- 自定义类（`bit7=1`）输出按公共头编码参与区块哈希，但**不进入 UTXO/UTCO**，不能作为后续输入源。
 - 输出项按创建者给定顺序编码，位置下标即序位；未知类型值（预留 0 等非法位置）拒绝。
 
 **Step 2: 实现并提交**
@@ -184,17 +185,15 @@ git add internal/tx/credit.go internal/tx/credit_test.go
 git commit -m "feat: add credit payload"
 ```
 
-## Task 6: Proof、Attachment、Mediator、Custom
+## Task 6: Proof、Attachment、Mediator
 
 **Files:**
 - Create: `internal/tx/proof.go`
 - Create: `internal/tx/attachment.go`
 - Create: `internal/tx/mediator.go`
-- Create: `internal/tx/custom.go`
 - Create: `internal/tx/proof_test.go`
 - Create: `internal/tx/attachment_test.go`
 - Create: `internal/tx/mediator_test.go`
-- Create: `internal/tx/custom_test.go`
 
 **Step 1: 写失败测试**
 
@@ -204,13 +203,12 @@ git commit -m "feat: add credit payload"
 - AttachmentID 结构：`类型(2B) || 指纹(64B SHA3-512) || 分片数(2B) || 片组哈希(32B BLAKE3-256) || 大小(varint)`；编码长度由外层 varint(length) 表达，字节数须 <256；分片数 `0` 时片组哈希字段不编码，`1` 时计算但无树，`>1` 时为含序片组树根。
 - 附件指纹 64B 用 `attachment.fingerprint` 域 + SHA3-512；片组哈希 32B 走免域标签 BLAKE3-256 路径（第 01 章 hashtree）。
 - Mediator（介管脚本）属存证类（类型 3），不可作为输入项，由脚本 `GOTO/EMBED` 引用。
-- Custom（`bit7=1`，≤127B 私有 ID）不进入 UTXO/UTCO，不能作为公共输入源；节点仅校验编码合法性。
 
 **Step 2: 实现并提交**
 
 ```bash
-go test ./internal/tx -run 'Test(Proof|Attachment|Mediator|Custom)' -v
-git add internal/tx/proof.go internal/tx/attachment.go internal/tx/mediator.go internal/tx/custom.go internal/tx/proof_test.go internal/tx/attachment_test.go internal/tx/mediator_test.go internal/tx/custom_test.go
+go test ./internal/tx -run 'Test(Proof|Attachment|Mediator)' -v
+git add internal/tx/proof.go internal/tx/attachment.go internal/tx/mediator.go internal/tx/proof_test.go internal/tx/attachment_test.go internal/tx/mediator_test.go
 git commit -m "feat: add non-coin transaction units"
 ```
 
@@ -282,7 +280,7 @@ git commit -m "feat: add transaction size limit"
 - Coinbase 头字段顺序（DEC-0003/DEC-0401）：`Version(uint16) || HashOutputs[32] || Timestamp(int64) || MintPKHash[32]定长 || BlockHeight(uint32) || Minter(MintProof) || FreeData(varint(len)||bytes, len≤255) || BurnCoin(int64) || AwardSlots[18]byte`；`AwardSlots` 对所有 Coinbase（含创世）始终存在，创世与百日前其值恒为全零；**无 `HashInputs` 字段**。
 - `Minter`（择优凭证）**当且仅当 `BlockHeight == 0`（创世）时省略**，无额外 presence 标识（结构见第 07 章 PoH）。
 - Coinbase 必须位于区块交易序列第 0 项；使用独立 parser，TxID 用 `tx.header` 域但前像为 Coinbase 字段集。
-- Coinbase 输出只能是 Coin；出现 Credit/Proof/Mediator/Custom 输出必须拒绝（DEC-0401）。
+- Coinbase 输出只能是 Coin；出现 Credit/Proof/Mediator 输出必须拒绝（DEC-0401）。
 - 奖励分配、`BurnCoin` 销毁与兑奖槽（`AwardSlots`）金额单位 `chx`，结算逻辑放第 10 章；本层只固定 Coinbase 结构编码与位置规则。
 
 **Step 2: 实现**
@@ -317,6 +315,6 @@ golangci-lint run
 - 输入规范编码必须包含 UnlockScript，且修改 UnlockScript 会改变 `TxID`（见证不参与 TxID，见第 04 章）。
 - `MaxTxSize` 按不含见证的规范交易编码检查，包含 UnlockScript；超过 65535 字节拒绝。
 - Coinbase 无 `HashInputs`、位于第 0 项、仅 Coin 输出；`Minter` 仅创世省略。
-- Proof、Mediator、Custom 默认不能作为公共输入源。
+- Proof、Mediator 默认不能作为公共输入源。
 - 三类 payload、输出 envelope、附件 ID 结构均有表驱动测试。
 - 交易包不 import `internal/utxo`、`internal/utco`、`internal/script`、`internal/consensus`。

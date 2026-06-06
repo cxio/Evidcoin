@@ -138,7 +138,7 @@ git commit -m "feat: resolve state references"
 - 正常 Coin 输入消费后无效。
 - 同一批次重复消费拒绝。
 - 输出 Coin 插入 UTXO。
-- 自定义类输出（Config bit7=1）不进入 UTXO；普通交易无销毁位（销毁仅由 Coinbase `BurnCoin` 表达，不产出可花费项）。
+- 输出摘要标记不改变状态归属；只有类型值为 Coin 的输出插入 UTXO。普通交易无销毁位（销毁仅由 Coinbase `BurnCoin` 表达，不产出可花费项）。
 - Proof/Credit 输入传入 UTXO apply 时拒绝。
 - 同一区块 A 输出被 B 输入引用时拒绝，无论 A 是否在 B 之前；输入只能引用已确认历史区块中的 UTXO。
 
@@ -302,7 +302,7 @@ golangci-lint run
 - UTXO 和 UTCO 状态语义隔离（空根/叶域标签不同）。
 - 局部引用歧义按 DEC-0101 拒绝（TxID 排序首个匹配）。
 - 同批次重复消费、同块链式引用拒绝。
-- Proof 不进入任一状态集；自定义类输出不进入状态集。
+- Proof 不进入任一状态集；摘要标记不改变状态归属，只有 Coin 进入 UTXO、Credit 进入 UTCO。
 - 五层宽成员树按 DEC-0201 完整实现：年度层升序 + TxID 0-based `[7]`/`[11]`/`[15]` 三层分组（第 8、12、16 个字节，覆盖最短 `TxIDPart >=16`）+ 末端完整 TxID 叶子层字典序；叶前像 `TxID || Count || FlagBytes`；空根用 `utxo.empty`/`utco.empty` 域标签的 `BLAKE3-256` 哈希（32B，非全零）。
 - 叶前像 `Count` 为有效输出数，FlagBytes 位序低位优先、尾部 0。
 - UTCO 过期（`age > 31×87661`）删叶逻辑与第 07 章联动。
