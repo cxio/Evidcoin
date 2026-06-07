@@ -1,5 +1,5 @@
 // Package tx 实现 Layer 1 交易模型：普通/Coinbase 交易头、输入项与短引用、
-// 输出 envelope、Coin/Credit/Proof/Mediator/Custom 信元载荷、交易输入/输出哈希
+// 输出 envelope、Coin/Credit/Proof 信元载荷、交易输入/输出哈希
 // 与本地可判定的结构规则。本包只表达交易数据、规范化编码、Hash 与本地结构验证，
 // 不检查状态可用性、不执行脚本、不验证 PoH 资格、不做完整 Coinbase 奖励结算。
 // 仅依赖 pkg/types、pkg/crypto、pkg/hashtree 与 internal/blockchain 的链身份类型，

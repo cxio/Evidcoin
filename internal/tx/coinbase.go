@@ -86,7 +86,7 @@ func (h *CoinbaseHeader) TxID() (types.TxID, error) {
 }
 
 // ValidateCoinbaseOutputs 校验 Coinbase 输出集仅含币金输出（DEC-0401）。
-// 出现凭信/存证/介管脚本输出时返回 ErrCoinbaseOutputNotCoin。
+// 出现凭信/存证输出时返回 ErrCoinbaseOutputNotCoin。
 func ValidateCoinbaseOutputs(outputs []Output) error {
 	for i := range outputs {
 		o := outputs[i]

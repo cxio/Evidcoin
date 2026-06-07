@@ -29,7 +29,7 @@ const (
 	TypeCoin OutputType = 1
 	// TypeCredit 是凭信输出（可作输入源，入 UTCO）。
 	TypeCredit OutputType = 2
-	// TypeProof 是存证输出（不可作输入源，不入集；介管脚本亦属此类）。
+	// TypeProof 是存证输出（不可作输入源，不入集）。
 	TypeProof OutputType = 3
 )
 
@@ -114,7 +114,7 @@ func (o Output) appendCanonical(dst []byte) ([]byte, error) {
 //	DigestScript  → SHA3-384("output.digest.script"   || lockscript_raw)   替代 LockScript 编码字段
 //
 // TypeCoin/Credit 通过 parseCoin/parseCredit + payloadLeafPreimage 计算载荷部分；
-// TypeProof 直接使用 o.Payload 原始字节（兼容 Mediator 空载荷，不经 round-trip 解码）。
+// TypeProof 直接使用 o.Payload 原始字节（空载荷合法，不经 round-trip 解码）。
 // DigestAccount 对 Proof 无效（无接收者字段）。
 func (o Output) appendLeafPreimage(dst []byte) ([]byte, error) {
 	if len(o.LockScript) > types.MaxLockScript {
@@ -140,8 +140,7 @@ func (o Output) appendLeafPreimage(dst []byte) ([]byte, error) {
 		}
 		dst = c.payloadLeafPreimage(dst, o.DigestFlags)
 	case TypeProof:
-		// Proof 无接收者/内容拆分；直接以 Payload 字节作为内容段，
-		// 兼容 Mediator（空 Payload）不经结构体 round-trip。
+		// Proof 无接收者/内容拆分；直接以 Payload 字节作为内容段（空载荷合法）。
 		if o.DigestFlags&DigestContent != 0 {
 			h := crypto.HashOutputDigestContent(o.Payload)
 			dst = append(dst, h.Bytes()...)
