@@ -75,8 +75,12 @@ func TestCoinbase(t *testing.T) {
 			if o.Serial != uint32(i) {
 				t.Errorf("outputs[%d].Serial = %d, want %d", i, o.Serial, i)
 			}
-			// Payload 必须以 Amount varint 开头。
-			amt, _, err := types.ReadVarUint(o.Payload)
+			// 币金 Payload 编码顺序为 Receiver || Amount || Memo；跳过 Receiver 再读 Amount。
+			_, n, err := types.ReadBytes(o.Payload)
+			if err != nil {
+				t.Errorf("outputs[%d]: failed to skip receiver: %v", i, err)
+			}
+			amt, _, err := types.ReadVarUint(o.Payload[n:])
 			if err != nil {
 				t.Errorf("outputs[%d]: failed to read amount varint: %v", i, err)
 			}

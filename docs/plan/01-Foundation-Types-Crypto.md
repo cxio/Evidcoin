@@ -224,7 +224,7 @@ git commit -m "feat: add canonical encoding helpers"
 
 - `SHA3-384` 输出 48B；`SHA3-512` 输出 64B；`BLAKE3-256` 输出 32B。
 - DEC-0002 域标签格式为 `"Evidcoin/v1/" || name || 0x00`（ASCII 常量，作为前像首段）。
-- 14 项域标签全集齐备：`block.header`、`tx.header`、`tree.leaf`、`tree.branch`、`checkroot`、`utxo.leaf`、`utco.leaf`、`mint.hash`、`signature.message`、`attachment.fingerprint`、`address.single`、`address.multi`、`utxo.empty`、`utco.empty`。
+- 17 项域标签全集齐备：`block.header`、`tx.header`、`tree.leaf`、`tree.branch`、`checkroot`、`utxo.leaf`、`utco.leaf`、`mint.hash`、`signature.message`、`attachment.fingerprint`、`address.single`、`address.multi`、`output.digest.account`、`output.digest.content`、`output.digest.script`、`utxo.empty`、`utco.empty`。
 - 同 payload 不同域标签输出不同。
 - 调用方不能传入协议域标签；协议标签必须由 `pkg/crypto` 内部按用途绑定。
 - 附件片组树为唯一免域标签例外（DEC-0002）：`BLAKE3-256(2-byte seq || BLAKE3-256(piece))`，前像不前置域标签。

@@ -3,9 +3,9 @@ package tx
 import "github.com/cxio/evidcoin/pkg/types"
 
 // SumCoinOutputs 累加输出集中所有币金输出的 Amount 字段（第 06 章 §7）。
-// 币金输出的 Payload 以 Amount varint 开头（见 coin.go），此处仅解码该前导 varint，
-// 不做完整输出反序列化。非币金输出（凭信/存证/自定义）忽略不计。
-// 当某币金输出 Payload 的 Amount 解码失败时返回 ErrCoinAmountDecode；
+// 币金输出 Payload 编码顺序为 Receiver || Amount || Memo（见 coin.go），通过 parseCoin 解析。
+// 非币金输出（凭信/存证/自定义）忽略不计。
+// 当某币金输出 Payload 解码失败时返回 ErrCoinAmountDecode；
 // 累加溢出 uint64 时返回 types.ErrAmountOverflow。
 func SumCoinOutputs(outputs []Output) (types.Amount, error) {
 	var sum uint64
@@ -14,10 +14,11 @@ func SumCoinOutputs(outputs []Output) (types.Amount, error) {
 		if o.Type != TypeCoin {
 			continue
 		}
-		amount, _, err := types.ReadVarUint(o.Payload)
+		coin, err := parseCoin(o.Payload)
 		if err != nil {
 			return 0, ErrCoinAmountDecode
 		}
+		amount := uint64(coin.Amount)
 		if sum > ^uint64(0)-amount {
 			return 0, types.ErrAmountOverflow
 		}

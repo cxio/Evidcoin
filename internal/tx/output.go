@@ -1,6 +1,9 @@
 package tx
 
-import "github.com/cxio/evidcoin/pkg/types"
+import (
+	"github.com/cxio/evidcoin/pkg/crypto"
+	"github.com/cxio/evidcoin/pkg/types"
+)
 
 // 输出项配置字节（Config byte）高 4 位摘要标记（第 06 章 §6，DEC-0101）。
 // 摘要标记只影响输出项叶子哈希前像的选择：被标记的片段先对实际字段字节计算摘要，
@@ -90,5 +93,72 @@ func (o Output) appendCanonical(dst []byte) ([]byte, error) {
 	dst = append(dst, cfg)
 	dst = append(dst, o.Payload...)
 	dst = types.AppendBytes(dst, o.LockScript)
+	return dst, nil
+}
+
+// appendLeafPreimage 追加输出项叶哈希前像（第 04 章 §3.4 / DEC-0101 / DEC-0002）。
+// 与 appendCanonical 不同，当摘要标记（DigestAccount/Content/Script）置位时，
+// 相应片段由 SHA3-384 摘要（48B）替代原始字节，且替代发生在片段的规范编码位置。
+// 未设置任何标记时，前像字节与规范编码等同。
+//
+// 前像结构（各类型，无标记时等于规范编码）：
+//
+//	Coin  : Config || Receiver(encoded) || Amount(varint) || Memo(encoded) || Script(encoded)
+//	Credit: Config || Receiver(encoded) || Content(encoded fields...) || Script(encoded)
+//	Proof : Config || Content(encoded fields...) || Script(encoded)
+//
+// 摘要域标签（DEC-0002）：
+//
+//	DigestAccount → SHA3-384("output.digest.account"  || receiver_raw)     替代 Receiver 编码字段
+//	DigestContent → SHA3-384("output.digest.content"  || content_bytes)    替代全部内容字段
+//	DigestScript  → SHA3-384("output.digest.script"   || lockscript_raw)   替代 LockScript 编码字段
+//
+// TypeCoin/Credit 通过 parseCoin/parseCredit + payloadLeafPreimage 计算载荷部分；
+// TypeProof 直接使用 o.Payload 原始字节（兼容 Mediator 空载荷，不经 round-trip 解码）。
+// DigestAccount 对 Proof 无效（无接收者字段）。
+func (o Output) appendLeafPreimage(dst []byte) ([]byte, error) {
+	if len(o.LockScript) > types.MaxLockScript {
+		return nil, ErrLockScriptTooLong
+	}
+	cfg, err := o.Config()
+	if err != nil {
+		return nil, err
+	}
+	dst = append(dst, cfg)
+
+	switch o.Type {
+	case TypeCoin:
+		c, err := parseCoin(o.Payload)
+		if err != nil {
+			return nil, err
+		}
+		dst = c.payloadLeafPreimage(dst, o.DigestFlags)
+	case TypeCredit:
+		c, err := parseCredit(o.Payload)
+		if err != nil {
+			return nil, err
+		}
+		dst = c.payloadLeafPreimage(dst, o.DigestFlags)
+	case TypeProof:
+		// Proof 无接收者/内容拆分；直接以 Payload 字节作为内容段，
+		// 兼容 Mediator（空 Payload）不经结构体 round-trip。
+		if o.DigestFlags&DigestContent != 0 {
+			h := crypto.HashOutputDigestContent(o.Payload)
+			dst = append(dst, h.Bytes()...)
+		} else {
+			dst = append(dst, o.Payload...)
+		}
+	default:
+		return nil, ErrOutputType
+	}
+
+	// 脚本段（LockScript）。
+	if o.DigestFlags&DigestScript != 0 {
+		h := crypto.HashOutputDigestScript(o.LockScript)
+		dst = append(dst, h.Bytes()...)
+	} else {
+		dst = types.AppendBytes(dst, o.LockScript)
+	}
+
 	return dst, nil
 }

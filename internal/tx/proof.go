@@ -1,6 +1,8 @@
 package tx
 
-import "github.com/cxio/evidcoin/pkg/types"
+import (
+	"github.com/cxio/evidcoin/pkg/types"
+)
 
 // Proof 是存证信元载荷（类型值 3，不入集，第 07 章 §2）。
 // 编码顺序固定为 Creator || Title || Content || AttachmentID（第 07 章 §51）。

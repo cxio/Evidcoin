@@ -147,7 +147,7 @@ git commit -m "feat: add transaction output envelope"
 
 测试（DEC-0101 / proposal 07 §2，payload 字段顺序）：
 
-- Coin payload 编码为 `Amount(varint) || Receiver(varint(len)||bytes, len<256) || Memo(varint(len)||bytes, len<256)`。
+- Coin payload 编码为 `Receiver(varint(len)||bytes, len<256) || Amount(varint) || Memo(varint(len)||bytes, len<256)`。
 - `Amount` 以 `chx` 为最小单位，`varint` 编码；不得用小数 Bi 参与协议编码（C-8）。
 - `Receiver` 为接收者公钥哈希；若脚本自定义验证（不用 `SYS_CHKPASS`），`Receiver` 可空或任意 <256B 字节序列。
 - `Memo` 可选，最多 255 字节；缺省以 `varint(0)` 表示并参与前像。

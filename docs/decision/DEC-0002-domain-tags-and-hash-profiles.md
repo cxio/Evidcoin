@@ -33,8 +33,13 @@ Conception 已指定区块头、交易头、树枝、附件、公钥哈希和铸
 - `attachment.fingerprint`
 - `address.single`
 - `address.multi`
+- `output.digest.account`
+- `output.digest.content`
+- `output.digest.script`
+- `utxo.empty`
+- `utco.empty`
 
-说明：交易输出哈希树（`HashOutputs = Hash256:Tree<Outputs>`）、区块交易哈希树、UTXO/UTCO 中间层均使用通用的 `tree.leaf` / `tree.branch` 域标签，不另设专属标签；交易输入根按 DEC-0004 专用规则计算，不套通用二叉树构造。
+说明：交易输出哈希树（`HashOutputs = Hash256:Tree<Outputs>`）、区块交易哈希树、UTXO/UTCO 中间层均使用通用的 `tree.leaf` / `tree.branch` 域标签，不另设专属标签；交易输入根按 DEC-0004 专用规则计算，不套通用二叉树构造。后三个标签用于输出项配置字节中摘要标记（`bit7`/`bit6`/`bit5`）置位时，对接收者、内容、脚本片段分别计算 SHA3-384 摘要，再以该摘要替代原始字节参与输出项叶哈希前像（DEC-0101）。
 
 ### 算法 profile
 

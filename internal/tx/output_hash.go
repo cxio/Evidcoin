@@ -6,8 +6,9 @@ import (
 )
 
 // HashOutputs 计算交易输出根 HashOutputs = Hash256:Tree<Outputs>（第 04 章 §3.4）。
-// 各输出按其规范 envelope 编码（Config||Payload||LockScript）作为叶 payload，按出现
-// 顺序进入通用二叉哈希树（叶 tree.leaf profile，分支/单叶根 tree.branch profile）。
+// 各输出按叶哈希前像进入通用二叉哈希树（叶 tree.leaf profile，分支/单叶根 tree.branch profile）。
+// 叶前像由 appendLeafPreimage 计算：未设置摘要标记时等同于规范编码；设置摘要标记时，
+// 相应片段（接收者/内容/脚本）以 SHA3-384 摘要（48B）替代原始字节（DEC-0101 / DEC-0002）。
 //
 // 普通交易输出集不得为空（第 06 章 §7：币金输出数量须 >0），空集返回 ErrNoOutputs。
 // 每个输出的 Serial 必须等于其位置下标，否则返回 ErrOutputSerialMismatch（序位是输出在
@@ -21,11 +22,11 @@ func HashOutputs(outputs []Output) (types.Hash32, error) {
 		if uint64(outputs[i].Serial) != uint64(i) {
 			return types.Hash32{}, ErrOutputSerialMismatch
 		}
-		canon, err := outputs[i].appendCanonical(nil)
+		preimage, err := outputs[i].appendLeafPreimage(nil)
 		if err != nil {
 			return types.Hash32{}, err
 		}
-		payloads[i] = canon
+		payloads[i] = preimage
 	}
 	tree, err := hashtree.BuildFromPayloads(payloads)
 	if err != nil {

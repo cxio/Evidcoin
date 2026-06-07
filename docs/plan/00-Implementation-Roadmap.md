@@ -50,7 +50,7 @@
 ## 推荐实施顺序
 
 1. 完成 `pkg/types/` 的固定长度类型、ID 类型、常量和规范化编码工具（DEC-0001）。
-2. 完成 `pkg/crypto/` 的 Hash API、14 项域标签、地址/多签复合公钥哈希、ML-DSA-65 抽象（DEC-0002/0104）。
+2. 完成 `pkg/crypto/` 的 Hash API、17 项域标签、地址/多签复合公钥哈希、ML-DSA-65 抽象（DEC-0002/0104）。
 3. 完成 `pkg/hashtree/` 通用二叉树与专用树规则（DEC-0004）；附件片组树走免域标签路径。
 4. 完成区块头、`BlockID`、CheckRoot、头链存储接口和最小衔接验证（DEC-0003）；创世参数（C-9）以占位阻塞。
 5. 完成交易头、输入输出 envelope、`TxID` 和 Coin/Credit/Proof payload（DEC-0101/0003）。
@@ -118,7 +118,7 @@ git commit -m "feat: add canonical encoding types"
 ## 主要风险
 
 - `canonical unsigned varint`（ULEB128）由 DEC-0001 关闭，必须实现最短编码并拒绝非最短编码；BigInt 按 `slen||magnitude`（DEC-0001）。
-- Hash domain tag 策略由 DEC-0002 关闭，14 项域标签全集（含 `utxo.empty`/`utco.empty`）必须使用固定字符串前缀；附件片组树是唯一免域标签例外。
+- Hash domain tag 策略由 DEC-0002 关闭，17 项域标签全集（含 `output.digest.account`/`output.digest.content`/`output.digest.script` 与 `utxo.empty`/`utco.empty`）必须使用固定字符串前缀；附件片组树是唯一免域标签例外。
 - 哈希树空根、单叶根归一化和奇数层提升策略由 DEC-0004 关闭，必须按 DEC-0004 实现；验证路径禁止携带 `leafIndex`。
 - 地址与多签复合公钥哈希、ML-DSA-65 profile 由 DEC-0104 关闭，当前固定 `cloudflare/circl`；A-2 仅作为未来兼容观察项，不属于全局待决项，编码时不得混用标准库实现。
 - PoH 铸凭哈希、铸凭交易窗口与 `Stakes` 取值由 DEC-0301 固定；分叉竞争归一化与 RandomX 平局由 DEC-0303 固定。`Stakes` 三种语义（区块头累计值/铸凭取 -32 块/分叉比较）须分章分上下文区分，禁止混用。

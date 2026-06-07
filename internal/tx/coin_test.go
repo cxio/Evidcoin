@@ -7,7 +7,7 @@ import (
 	"github.com/cxio/evidcoin/pkg/types"
 )
 
-// TestCoinPayloadLayout 校验 Coin payload 编码顺序：Amount || Receiver || Memo。
+// TestCoinPayloadLayout 校验 Coin payload 编码顺序：Receiver || Amount || Memo。
 func TestCoinPayloadLayout(t *testing.T) {
 	recv := bytes.Repeat([]byte{0xA0}, 32)
 	memo := []byte("hello")
@@ -18,8 +18,8 @@ func TestCoinPayloadLayout(t *testing.T) {
 		t.Fatalf("Payload: %v", err)
 	}
 	var want []byte
-	want = types.AppendVarUint(want, 12345) // Amount(varint, chx)
 	want = types.AppendBytes(want, recv)    // Receiver(varint(len)||bytes)
+	want = types.AppendVarUint(want, 12345) // Amount(varint, chx)
 	want = types.AppendBytes(want, memo)    // Memo(varint(len)||bytes)
 	if !bytes.Equal(got, want) {
 		t.Fatalf("Coin payload 不匹配\n got=%x\nwant=%x", got, want)
@@ -33,7 +33,7 @@ func TestCoinMemoDefault(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Payload: %v", err)
 	}
-	// Amount(1B) || Receiver(1B len + 1B) || Memo(1B len=0x00)
+	// Receiver(1B len + 1B) || Amount(1B) || Memo(1B len=0x00)
 	if got[len(got)-1] != 0x00 {
 		t.Fatalf("缺省 Memo 末字节应为 0x00, got=%x", got)
 	}

@@ -13,41 +13,47 @@ import (
 // domainPrefix 是所有域标签统一使用的固定命名空间前缀（DEC-0002）。
 const domainPrefix = "Evidcoin/v1/"
 
-// 域标签名称（完整 14 项：DEC-0002 的 12 项 + DEC-0201 的两个空根标签）。
+// 域标签名称（完整 17 项：DEC-0002 的 12 项 + DEC-0201 的两个空根标签 + 三个输出摘要标签）。
 const (
-	tagNameBlockHeader   = "block.header"
-	tagNameTxHeader      = "tx.header"
-	tagNameTreeLeaf      = "tree.leaf"
-	tagNameTreeBranch    = "tree.branch"
-	tagNameCheckRoot     = "checkroot"
-	tagNameUTXOLeaf      = "utxo.leaf"
-	tagNameUTCOLeaf      = "utco.leaf"
-	tagNameMintHash      = "mint.hash"
-	tagNameSignatureMsg  = "signature.message"
-	tagNameAttachment    = "attachment.fingerprint"
-	tagNameAddressSingle = "address.single"
-	tagNameAddressMulti  = "address.multi"
-	tagNameUTXOEmpty     = "utxo.empty"
-	tagNameUTCOEmpty     = "utco.empty"
+	tagNameBlockHeader        = "block.header"
+	tagNameTxHeader           = "tx.header"
+	tagNameTreeLeaf           = "tree.leaf"
+	tagNameTreeBranch         = "tree.branch"
+	tagNameCheckRoot          = "checkroot"
+	tagNameUTXOLeaf           = "utxo.leaf"
+	tagNameUTCOLeaf           = "utco.leaf"
+	tagNameMintHash           = "mint.hash"
+	tagNameSignatureMsg       = "signature.message"
+	tagNameAttachment         = "attachment.fingerprint"
+	tagNameAddressSingle      = "address.single"
+	tagNameAddressMulti       = "address.multi"
+	tagNameUTXOEmpty          = "utxo.empty"
+	tagNameUTCOEmpty          = "utco.empty"
+	tagNameOutputDigestAcct   = "output.digest.account"
+	tagNameOutputDigestConten = "output.digest.content"
+	tagNameOutputDigestScript = "output.digest.script"
 )
 
 // 预计算域标签（`"Evidcoin/v1/" || name || 0x00`）。这些是协议唯一权威标签；
 // 调用方不得向哈希 API 传入任意自定义标签，域隔离由下方按用途函数绑定。
 var (
-	tagBlockHeader   = DomainTag(tagNameBlockHeader)
-	tagTxHeader      = DomainTag(tagNameTxHeader)
-	tagTreeLeaf      = DomainTag(tagNameTreeLeaf)
-	tagTreeBranch    = DomainTag(tagNameTreeBranch)
-	tagCheckRoot     = DomainTag(tagNameCheckRoot)
-	tagUTXOLeaf      = DomainTag(tagNameUTXOLeaf)
-	tagUTCOLeaf      = DomainTag(tagNameUTCOLeaf)
-	tagMintHash      = DomainTag(tagNameMintHash)
-	tagSignatureMsg  = DomainTag(tagNameSignatureMsg)
-	tagAttachment    = DomainTag(tagNameAttachment)
-	tagAddressSingle = DomainTag(tagNameAddressSingle)
-	tagAddressMulti  = DomainTag(tagNameAddressMulti)
-	tagUTXOEmpty     = DomainTag(tagNameUTXOEmpty)
-	tagUTCOEmpty     = DomainTag(tagNameUTCOEmpty)
+	tagBlockHeader        = DomainTag(tagNameBlockHeader)
+	tagTxHeader           = DomainTag(tagNameTxHeader)
+	tagTreeLeaf           = DomainTag(tagNameTreeLeaf)
+	tagTreeBranch         = DomainTag(tagNameTreeBranch)
+	tagCheckRoot          = DomainTag(tagNameCheckRoot)
+	tagUTXOLeaf           = DomainTag(tagNameUTXOLeaf)
+	tagUTCOLeaf           = DomainTag(tagNameUTCOLeaf)
+	tagMintHash           = DomainTag(tagNameMintHash)
+	tagSignatureMsg       = DomainTag(tagNameSignatureMsg)
+	tagAttachment         = DomainTag(tagNameAttachment)
+	tagAddressSingle      = DomainTag(tagNameAddressSingle)
+	tagAddressMulti       = DomainTag(tagNameAddressMulti)
+	tagUTXOEmpty          = DomainTag(tagNameUTXOEmpty)
+	tagUTCOEmpty          = DomainTag(tagNameUTCOEmpty)
+	tagOutputDigestAcct   = DomainTag(tagNameOutputDigestAcct)
+	tagOutputDigestConten = DomainTag(tagNameOutputDigestConten)
+	tagOutputDigestScript = DomainTag(tagNameOutputDigestScript)
 )
 
 // DomainTag 根据用途名称构造域标签："Evidcoin/v1/" || name || 0x00
@@ -161,6 +167,27 @@ func EmptyUTXORoot() types.TreeHash {
 // EmptyUTCORoot 返回 UTCO 空状态树根：BLAKE3-256(DomainTag("utco.empty")).
 func EmptyUTCORoot() types.TreeHash {
 	return types.TreeHash(blake3_256(tagUTCOEmpty))
+}
+
+// HashOutputDigestAccount 对输出项接收者片段计算摘要（SHA3-384 + output.digest.account，DEC-0002）。
+// 当输出项配置 bit7（DigestAccount）置位时，以此摘要替代原始接收者字节参与输出项叶哈希前像。
+func HashOutputDigestAccount(data []byte) types.Hash48 {
+	h, _ := types.NewHash48(sha3_384(tagOutputDigestAcct, data))
+	return h
+}
+
+// HashOutputDigestContent 对输出项内容片段计算摘要（SHA3-384 + output.digest.content，DEC-0002）。
+// 当输出项配置 bit6（DigestContent）置位时，以此摘要替代原始内容字节参与输出项叶哈希前像。
+func HashOutputDigestContent(data []byte) types.Hash48 {
+	h, _ := types.NewHash48(sha3_384(tagOutputDigestConten, data))
+	return h
+}
+
+// HashOutputDigestScript 对输出项锁定脚本片段计算摘要（SHA3-384 + output.digest.script，DEC-0002）。
+// 当输出项配置 bit5（DigestScript）置位时，以此摘要替代原始脚本字节参与输出项叶哈希前像。
+func HashOutputDigestScript(data []byte) types.Hash48 {
+	h, _ := types.NewHash48(sha3_384(tagOutputDigestScript, data))
+	return h
 }
 
 // HashInputList 计算交易输入项列表的串联哈希 ListHash（第 04 章 §3.3）：

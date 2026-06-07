@@ -30,7 +30,7 @@ Conception 明确交易体由输入项和输出项构成，输出项可承载 Co
 
 ### 三类 payload 编码
 
-- **Coin**：`Amount(varint) || Receiver(bytes, length<256) || Memo(bytes, length<256)`
+- **Coin**：`Receiver(bytes, length<256) || Amount(varint) || Memo(bytes, length<256)`
 - **Credit**：`Receiver(bytes, length<256) || Creator(bytes, length<256) || Title(bytes, length<256) || Description(bytes) || AttachmentID(bytes)`
 - **Proof**：`Creator(bytes, length<256) || Title(bytes, length<256) || Content(bytes) || AttachmentID(bytes)`
 

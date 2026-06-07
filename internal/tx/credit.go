@@ -1,6 +1,9 @@
 package tx
 
-import "github.com/cxio/evidcoin/pkg/types"
+import (
+	"github.com/cxio/evidcoin/pkg/crypto"
+	"github.com/cxio/evidcoin/pkg/types"
+)
 
 // maxDescription 是 Credit.Description / Proof.Content 的最大长度（2KB，第 07 章 §2）。
 const maxDescription = 2048
@@ -53,6 +56,66 @@ func (c Credit) Payload() ([]byte, error) {
 	dst = types.AppendBytes(dst, c.Description)
 	dst = types.AppendBytes(dst, c.AttachmentID)
 	return dst, nil
+}
+
+// parseCredit 从规范载荷字节解码为 Credit 结构体（DEC-0101 字段顺序：Receiver||Creator||Title||Description||AttachmentID）。
+func parseCredit(payload []byte) (Credit, error) {
+	receiver, n, err := types.ReadBytes(payload)
+	if err != nil {
+		return Credit{}, err
+	}
+	creator, n2, err := types.ReadBytes(payload[n:])
+	if err != nil {
+		return Credit{}, err
+	}
+	title, n3, err := types.ReadBytes(payload[n+n2:])
+	if err != nil {
+		return Credit{}, err
+	}
+	desc, n4, err := types.ReadBytes(payload[n+n2+n3:])
+	if err != nil {
+		return Credit{}, err
+	}
+	attachID, _, err := types.ReadBytes(payload[n+n2+n3+n4:])
+	if err != nil {
+		return Credit{}, err
+	}
+	return Credit{
+		Receiver: receiver, Creator: creator, Title: title,
+		Description: desc, AttachmentID: attachID,
+	}, nil
+}
+
+// payloadLeafPreimage 将 Credit 在输出项叶哈希前像中的载荷部分追加到 dst（DEC-0101/DEC-0002）。
+// flags 为 Output.DigestFlags，bit7=账户摘要（Receiver），bit6=内容摘要（Creator||Title||Description||AttachmentID）；
+// bit5=脚本摘要由调用方处理。
+func (c Credit) payloadLeafPreimage(dst []byte, flags uint8) []byte {
+	digestAcct := flags&DigestAccount != 0
+	digestCont := flags&DigestContent != 0
+
+	// 内容段 = Creator||Title||Description||AttachmentID（各字段含长度前缀）。
+	var cb []byte
+	cb = types.AppendBytes(cb, c.Creator)
+	cb = types.AppendBytes(cb, c.Title)
+	cb = types.AppendBytes(cb, c.Description)
+	cb = types.AppendBytes(cb, c.AttachmentID)
+
+	// 账户段 = Receiver。
+	if digestAcct {
+		h := crypto.HashOutputDigestAccount(c.Receiver)
+		dst = append(dst, h.Bytes()...)
+	} else {
+		dst = types.AppendBytes(dst, c.Receiver)
+	}
+
+	// 内容段。
+	if digestCont {
+		h := crypto.HashOutputDigestContent(cb)
+		dst = append(dst, h.Bytes()...)
+	} else {
+		dst = append(dst, cb...)
+	}
+	return dst
 }
 
 // CreditExpired 报告给定币龄（age，区块高度差）的凭信是否已过期失效。
