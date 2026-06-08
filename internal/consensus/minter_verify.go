@@ -145,6 +145,13 @@ func VerifyMinter(ds MintDataSource, mp MintProof, cfg MinterVerifyConfig) error
 		return ErrEquiXUnavailable
 	}
 	challengeSeed := ComputeChallengeSeed(pre)
+	// 基本规则检查（第 11 章 §4）：优先排除不合法项，再调用工作量验证。
+	if mp.Nonce < uint64(cfg.CurrentHeight) {
+		return ErrNonceTooSmall
+	}
+	if !isStrictAscendingUniqueSolution(mp.Solution) {
+		return ErrEquiXSolutionInvalid
+	}
 	hashList, valid, equixErr := cfg.EquiXSolver.Verify(challengeSeed, mp.Nonce, mp.Solution)
 	if equixErr != nil {
 		if errors.Is(equixErr, equix.ErrUnavailable) {
@@ -195,6 +202,17 @@ func YearSearchHeights(height uint32) []uint32 {
 		return []uint32{height, (year - 1) * types.BlocksPerYear}
 	}
 	return []uint32{height}
+}
+
+// isStrictAscendingUniqueSolution 校验 solution 字节序列严格升序且无重复。
+// 该前置检查用于在调用 Equi-X 验证前快速拒绝明显不合法的解。
+func isStrictAscendingUniqueSolution(solution []byte) bool {
+	for i := 1; i < len(solution); i++ {
+		if solution[i] <= solution[i-1] {
+			return false
+		}
+	}
+	return true
 }
 
 // ExpiryWindowBlocks 是「年初 1 天」回退窗口的区块数（与第 03 章 ExpiryWindow 一致）。

@@ -264,6 +264,45 @@ func TestVerifyMinterEquiXSolutionInvalid(t *testing.T) {
 	}
 }
 
+// TestVerifyMinterNonceTooSmall 断言 Nonce < CurrentHeight 被拒绝（第三段基本规则检查）。
+func TestVerifyMinterNonceTooSmall(t *testing.T) {
+	const current = uint32(100000)
+	const txHeight = uint32(50000)
+	mp, ds, _ := buildPKHashTxScenario(t, current, txHeight)
+	// 设置 Nonce 小于当前待铸区块高度。
+	mp.Nonce = uint64(current) - 1
+
+	cfg := MinterVerifyConfig{
+		CurrentHeight: current,
+		StateUTXORoot: crypto.EmptyUTXORoot(),
+		StateUTCORoot: crypto.EmptyUTCORoot(),
+		SigVerifier:   fakeMintSigVerifier{},
+		EquiXSolver:   fakeEquiXSolver{},
+	}
+	if err := VerifyMinter(ds, mp, cfg); err != ErrNonceTooSmall {
+		t.Fatalf("expected ErrNonceTooSmall, got %v", err)
+	}
+}
+
+// TestVerifyMinterRejectsDuplicateSolution 断言 solution 非严格升序（含重复）会被拒绝。
+func TestVerifyMinterRejectsDuplicateSolution(t *testing.T) {
+	const current = uint32(100000)
+	const txHeight = uint32(50000)
+	mp, ds, _ := buildPKHashTxScenario(t, current, txHeight)
+	mp.Solution = []byte{0x01, 0x01, 0x02}
+
+	cfg := MinterVerifyConfig{
+		CurrentHeight: current,
+		StateUTXORoot: crypto.EmptyUTXORoot(),
+		StateUTCORoot: crypto.EmptyUTCORoot(),
+		SigVerifier:   fakeMintSigVerifier{},
+		EquiXSolver:   fakeEquiXSolver{},
+	}
+	if err := VerifyMinter(ds, mp, cfg); err != ErrEquiXSolutionInvalid {
+		t.Fatalf("expected ErrEquiXSolutionInvalid, got %v", err)
+	}
+}
+
 // TestVerifyMinterMintHashMismatch 断言重算铸凭哈希与凭证不符被拒绝（第三段）。
 func TestVerifyMinterMintHashMismatch(t *testing.T) {
 	const current = uint32(100000)

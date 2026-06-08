@@ -48,7 +48,7 @@
 
 - 铸凭哈希采用两阶段算法：
   1. `ChallengeSeed = BLAKE3-256(MintPubKey || MintTxID || Stakes(BE u64) || RefMintHash || X)`（无域标签）。
-  2. `[hashList, solution, nonce] = equix.Solve(ChallengeSeed)`，要求 `nonce ≥ BlockHeight`，`solution` 索引严格升序。
+  2. `[hashList, solution, nonce] = equix.Solve(ChallengeSeed)`，要求 `nonce ≥ BlockHeight`，`solution` 索引严格升序且无重复。
   3. `MintHash = BLAKE3-256(DomainTag("mint.hash") || hashList[0] || hashList[1] || ...)`，输出 32B。
 - `X = BE(minimal_unsigned(BlockHeight × Mix))`，`Mix=0x517cc1b727220a95`；`X` 仅由区块高度与 `Mix` 决定，与 `Stakes` 无关。测试向量必须覆盖同一 `BlockHeight` 下 `Stakes=0` 与 `Stakes>0` 时 `X` 字节相同，但完整铸凭哈希因 `Stakes` 字段不同而不同。
 - `RefMintHash`：评参块 Coinbase 的铸凭哈希；创世块/初段无 `Minter` 时取全零 32B。

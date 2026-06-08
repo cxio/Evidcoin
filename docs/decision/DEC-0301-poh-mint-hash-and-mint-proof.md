@@ -33,7 +33,7 @@ Equi-X 规则：
 
 - 求解输入固定为 `ChallengeSeed`。
 - `Nonce` 必须满足 `Nonce >= BlockHeight`。
-- `Solution` 在解析为索引序列后必须严格升序。
+- `Solution` 在解析为索引序列后必须严格升序且无重复。
 - 验证端必须对 `ChallengeSeed`、`Nonce`、`Solution` 运行 Equi-X 验证，且仅在验证通过时接受返回的 `HashList`。
 
 最终铸凭哈希为：
@@ -73,7 +73,7 @@ MintHash = BLAKE3-256(DomainTag("mint.hash") || HashList[0] || ... || HashList[n
 ## Consequences（影响）
 
 - `MintPubKey` 必须能证明其哈希等于 `MintPKHash`，或在无 `MintPKHash` 时作为 `LeadPKHash` 参与输入根验证。
-- `MintProof` 验证包含 `Nonce >= BlockHeight`、`Solution` 升序和 Equi-X 有效性检查。
+- `MintProof` 验证包含 `Nonce >= BlockHeight`、`Solution` 升序且无重复和 Equi-X 有效性检查。
 - 初段 Coinbase 作为铸凭交易时必须设置 `MintPKHash`，并且必须已经确认。
 
 ## Conception References（构想层依据）

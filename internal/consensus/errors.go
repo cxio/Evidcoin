@@ -45,6 +45,8 @@ var (
 	ErrRandomXUnavailable = errors.New("consensus: randomx hasher unavailable")
 	// ErrEquiXUnavailable 表示 Equi-X 求解器未注入，无法执行铸凭哈希验证。
 	ErrEquiXUnavailable = errors.New("consensus: equix solver unavailable")
-	// ErrEquiXSolutionInvalid 表示 Equi-X solution 验证失败（非法 nonce、非升序索引或 solution 不匹配）。
+	// ErrEquiXSolutionInvalid 表示 Equi-X solution 验证失败（非法 nonce、非升序索引或有重复或 solution 不匹配）。
 	ErrEquiXSolutionInvalid = errors.New("consensus: equix solution invalid")
+	// ErrNonceTooSmall 表示 MintProof.Nonce 小于当前待铸区块高度，违反 nonce >= Height 约束（第 11 章 §4）。
+	ErrNonceTooSmall = errors.New("consensus: nonce is less than current block height")
 )

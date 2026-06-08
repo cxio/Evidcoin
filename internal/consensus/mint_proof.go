@@ -12,7 +12,7 @@ type MintProof struct {
 	TxID types.TxID
 	// Nonce 是 Equi-X 求解时使用的 nonce（须 >= 当前待铸区块高度）。
 	Nonce uint64
-	// Solution 是 Equi-X 解的 solution 字节（索引必须严格升序）。
+	// Solution 是 Equi-X 解的 solution 字节（索引必须严格升序且无重复）。
 	Solution []byte
 	// MintPubKey 是铸造者公钥（验证身份与签名）。
 	MintPubKey []byte
