@@ -1,0 +1,15 @@
+{
+  "project": {
+    "name": "cxio:Evidcoin",
+    "include": [
+      "src/**/*",
+      "docs/**/*.md"
+    ],
+    "exclude": [
+      "**/node_modules/**",
+      "working/**",
+      "docs/plans/**/*.md"
+    ]
+  }
+}
+

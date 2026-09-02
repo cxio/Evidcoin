@@ -30,7 +30,7 @@
 | [DEC-0201](DEC-0201-utxo-utco-state-fingerprint.md) | UTXO/UTCO State Fingerprint | Accepted | 状态 |
 | [DEC-0301](DEC-0301-poh-mint-hash-and-mint-proof.md) | PoH Mint Hash and Mint Proof | Accepted | PoH |
 | [DEC-0302](DEC-0302-genesis-and-initial-window.md) | Genesis and Initial Window | Accepted | 创世初段 |
-| [DEC-0303](DEC-0303-fork-choice-and-randomx-tiebreaker.md) | Fork Choice and RandomX Tiebreaker | Accepted | 分叉 |
+| [DEC-0303](DEC-0303-fork-choice-and-argon2-tiebreaker.md) | Fork Choice and Argon2 Tiebreaker | Accepted | 分叉 |
 | [DEC-0401](DEC-0401-coinbase-serialization-rewards-and-award-slots.md) | Coinbase Serialization, Rewards and Award Slots | Accepted | Coinbase |
 | [DEC-0501](DEC-0501-script-bytecode-encoding.md) | Script Bytecode Encoding | Accepted | 脚本 |
 | [DEC-0502](DEC-0502-script-float-profile.md) | Script Float Profile | Accepted | 脚本 |
@@ -48,7 +48,7 @@
 | 基础编码与哈希 | [DEC-0001](DEC-0001-canonical-integer-and-bytes-encoding.md), [DEC-0002](DEC-0002-domain-tags-and-hash-profiles.md), [DEC-0003](DEC-0003-block-and-transaction-field-encoding.md), [DEC-0004](DEC-0004-hash-tree-and-proof-edge-cases.md) |
 | 交易、签名与密码学 | [DEC-0101](DEC-0101-transaction-body-and-output-payloads.md), [DEC-0102](DEC-0102-signature-message-profile.md), [DEC-0103](DEC-0103-witness-container-and-pruning.md), [DEC-0104](DEC-0104-address-and-ml-dsa-profile.md) |
 | 状态 | [DEC-0201](DEC-0201-utxo-utco-state-fingerprint.md) |
-| 共识 | [DEC-0301](DEC-0301-poh-mint-hash-and-mint-proof.md), [DEC-0302](DEC-0302-genesis-and-initial-window.md), [DEC-0303](DEC-0303-fork-choice-and-randomx-tiebreaker.md) |
+| 共识 | [DEC-0301](DEC-0301-poh-mint-hash-and-mint-proof.md), [DEC-0302](DEC-0302-genesis-and-initial-window.md), [DEC-0303](DEC-0303-fork-choice-and-argon2-tiebreaker.md) |
 | 激励 | [DEC-0401](DEC-0401-coinbase-serialization-rewards-and-award-slots.md) |
 | 脚本 | [DEC-0501](DEC-0501-script-bytecode-encoding.md), [DEC-0502](DEC-0502-script-float-profile.md), [DEC-0503](DEC-0503-script-registry-and-environment-boundary.md), [DEC-0504](DEC-0504-script-cost-budget.md), [DEC-0505](DEC-0505-script-failure-and-disabled-opcodes.md) |
 | 证明与服务 | [DEC-0601](DEC-0601-block-proof-package.md), [DEC-0602](DEC-0602-network-summary-txid-profile.md), [DEC-0603](DEC-0603-blockqs-verification-data-profile.md) |

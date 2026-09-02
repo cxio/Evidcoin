@@ -42,17 +42,6 @@
 - 区块头规范编码：`Version||Height||PrevBlock||CheckRoot||Stakes`，仅年块追加 `YearBlock`；创世高度 0 是年块且 `YearBlock` 全零。
 - `CheckRoot` 状态根取前一区块完成后的 UTXO/UTCO 指纹；创世使用空状态根。UTXO 与 UTCO 顺序不可交换。
 
-## 特殊实现注意
-
-**RandomX（`internal/consensus/randomx`）：**
-- 默认构建使用桩实现，`Hash()` 始终返回 `ErrUnavailable`。
-- 生产环境需以 `-tags randomx_cgo` 构建，并先链接官方 C 库（参见 `cgo_impl.go` 中的接入步骤）。
-- `cgo_impl.go` 头部为 `//go:build ignore`，接入 C 库后将其改为 `//go:build randomx_cgo`。
-
-**ML-DSA-65 / cloudflare-circl（`pkg/crypto`）：**
-- `cloudflare/circl` 尚未加入 `go.mod`；当前 `crypto.Signer` / `crypto.Verifier` 只是接口，无真实签名库绑定。
-- 测试以空接口实现替代；生产绑定是后续阶段任务，不要假设 circl 已可用。
-
 ## 待决项不能硬编码
 
 - 当前全局待决项只限 C-6、C-7、C-9、C-10；编码时用策略参数、接口注入、明确错误或阻塞标注隔离。
