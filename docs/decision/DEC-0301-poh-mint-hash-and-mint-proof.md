@@ -26,7 +26,7 @@ ChallengeSeed = BLAKE3-256(MintPubKey || MintTxID || Stakes || RefMintHash || X)
 
 - `MintPubKey` 为铸造者公钥的 canonical bytes。
 - `MintTxID` 为铸凭交易完整 48 字节 TxID。
-- `Stakes` 为链末端 `-32` 区块头中的币权销毁值，uint64 按大端序编码。
+- `Stakes` 为链末端 `-63` 区块头中的币权销毁值，uint64 按大端序编码。
 - `RefMintHash` 为评参区块 Coinbase 中记录的铸凭哈希；创世块或初段无 `Minter` 时取全零 32 字节。
 
 Equi-X 规则：
