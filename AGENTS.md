@@ -2,9 +2,8 @@
 
 ## 命令
 
-- Go 版本来自 `go.mod`：`go 1.26.2`，模块名 `github.com/cxio/evidcoin`。没有 Makefile 或 CI workflow，直接用 Go 命令验证。
+- Go 版本来自 `go.mod`：`go 1.27.1`，模块名 `github.com/cxio/evidcoin`。没有 Makefile 或 CI workflow，直接用 Go 命令验证。
 - 全量验证：`go fmt ./... && go test ./... && go test -cover ./... && go build ./... && go mod tidy && go mod verify && golangci-lint run`。
-- 聚焦包测试：`go test ./internal/blockchain -run TestName -v` 或 `go test ./pkg/types -run TestName -v`。
 - 阶段验收要求核心逻辑覆盖率至少 80%，`golangci-lint run` 无 warning；先尝试执行，若本机未安装 lint，只能报告环境阻塞，不能写"lint 通过"。
 - 运行 `go mod tidy` 后必须检查 `go.mod`/`go.sum` diff，只保留任务需要的依赖变化。
 
@@ -16,7 +15,6 @@
 - Layer 3：`internal/script`；封装对 https://github.com/cxio/Escript 的调用。
 - Layer 4：`internal/consensus`；依赖 Layer 0-3。
 - Layer 5：`internal/validation`、`internal/rewards`、`internal/services`、`cmd/evidcoin`、`test`；不能被 Layer 0-4 import。
-- 检查方向可用：`go list -deps ./internal/blockchain | grep -E 'internal/(tx|utxo|utco|script|consensus|rewards|validation|services)'`，应无输出。
 
 ## 协议实现规则
 
@@ -25,7 +23,7 @@
 - 哈希必须走 `pkg/crypto` 中按用途绑定的函数；不要在调用处拼自定义 domain tag。唯一免域标签例外是附件分片树 profile。
 - `pkg/hashtree` 通用树混合 48B 叶哈希与 32B 分支哈希，`Root()` 返回 `[]byte`；空根由具体结构定义，单叶根会归一化为分支哈希，奇数层最后节点直接提升。
 - `internal/blockchain` 只管理区块头链与最小衔接验证；不计算交易树、不执行交易/脚本/状态转移、不判断 PoH、不做自动长期分叉重组。
-- 区块头规范编码：`Version||Height||PrevBlock||CheckRoot||Stakes`，仅年块追加 `YearBlock`；创世高度 0 是年块且 `YearBlock` 全零。
+- 区块头规范编码：`Version||Height||PrevBlock||CheckRoot||Weight`，仅年块追加 `YearBlock`；创世高度 0 是年块且 `YearBlock` 全零。
 - `CheckRoot` 状态根取前一区块完成后的 UTXO/UTCO 指纹；创世使用空状态根。UTXO 与 UTCO 顺序不可交换。
 
 ## 代码与测试约定
